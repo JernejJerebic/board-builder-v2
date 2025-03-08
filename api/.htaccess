@@ -20,6 +20,10 @@ Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ $1 [R=200,L]
 
+# Special case for setup.php - allow direct access
+RewriteCond %{REQUEST_URI} ^/aplikacija/api/setup/setup.php$
+RewriteRule .* - [L]
+
 # Handle customer requests
 RewriteRule ^customers/?$ customers/index.php [L]
 RewriteRule ^customers/([0-9]+)/?$ customers/customer.php?id=$1 [L]
@@ -41,7 +45,7 @@ RewriteRule ^email/order/?$ email/order.php [L]
 # Handle authorization headers
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-# Prevent direct access to PHP files
+# Prevent direct access to PHP files except for setup.php
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*\.php
 RewriteCond %{REQUEST_URI} !^/aplikacija/api/setup/setup.php
 RewriteRule ^(.*)\.php$ /$1 [R=301,L]
