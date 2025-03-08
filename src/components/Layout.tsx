@@ -11,11 +11,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   
   const navItems = [
-    { name: 'Board Designer', path: '/' },
-    { name: 'Customers', path: '/customers' },
-    { name: 'Orders', path: '/orders' },
-    { name: 'Colors', path: '/colors' },
-    { name: 'Logs', path: '/logs' },
+    { name: 'Oblikovalec desk', path: '/' },
+    { name: 'Stranke', path: '/customers' },
+    { name: 'Naročila', path: '/orders' },
+    { name: 'Barve', path: '/colors' },
+    { name: 'Dnevniki', path: '/logs' },
   ];
 
   return (
@@ -24,7 +24,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary">WoodBoard</h1>
+              <Link to="/">
+                <h1 className="text-2xl font-bold text-primary">WoodBoard</h1>
+              </Link>
             </div>
             <nav className="hidden md:flex space-x-8">
               {navItems.map((item) => (
@@ -51,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="bg-white border-t border-gray-200 py-4">
         <div className="container mx-auto px-4">
           <p className="text-center text-gray-500 text-sm">
-            © {new Date().getFullYear()} WoodBoard - Custom Wooden Board Cutting App
+            © {new Date().getFullYear()} WoodBoard - Aplikacija za rezanje po meri
           </p>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBasket } from '@/context/BasketContext';
@@ -42,7 +43,6 @@ const formSchema = z.object({
   email: z.string().email('Neveljaven e-poštni naslov'),
   phone: z.string().min(6, 'Telefonska številka je obvezna'),
   paymentMethod: z.enum(['credit_card', 'payment_on_delivery', 'pickup_at_shop', 'bank_transfer']),
-  // Credit card fields (only required when payment method is credit_card)
   cardNumber: z.string().optional().refine(val => {
     if (val === undefined) return true;
     return val === '' || (val.replace(/\s/g, '').length === 16 && /^\d+$/.test(val.replace(/\s/g, '')));
@@ -66,6 +66,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const [submitting, setSubmitting] = useState(false);
   const [braintreeReady, setBraintreeReady] = useState(false);
   const [existingCustomer, setExistingCustomer] = useState<{ id: string; name: string } | null>(null);
+  const navigate = useNavigate();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -209,7 +210,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       toast.success('Naročilo uspešno oddano!');
       
       clearBasket();
-      onCancel();
+      navigate('/thank-you', { state: { order: newOrder } });
     } catch (error) {
       toast.error('Napaka pri potrditvi naročila');
       console.error(error);
