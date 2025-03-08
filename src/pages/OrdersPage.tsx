@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchOrders, updateOrderStatus, sendOrderEmail, updateOrder, deleteOrder } from '@/services/api';
-import { Order, Product } from '@/types';
+import { fetchOrders, updateOrderStatus, sendOrderEmail, updateOrder, deleteOrder, fetchCustomers, createCustomer } from '@/services/api';
+import { Order, Product, Customer } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -29,7 +30,6 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Search, Eye, Loader2, Edit, Trash2, FilePenLine } from 'lucide-react';
-import { mockCustomers } from '@/data/mockData';
 import OrderEditForm from '@/components/orders/OrderEditForm';
 
 const OrdersPage = () => {
@@ -45,25 +45,63 @@ const OrdersPage = () => {
     queryFn: fetchOrders
   });
   
+  const { data: customers } = useQuery({
+    queryKey: ['customers'],
+    queryFn: fetchCustomers
+  });
+  
+  const createCustomerMutation = useMutation({
+    mutationFn: (customerData: Partial<Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>>) => 
+      createCustomer(customerData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    }
+  });
+  
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Order['status'] }) => 
       updateOrderStatus(id, status),
     onSuccess: async (updatedOrder) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       
-      const customer = mockCustomers.find(c => c.id === updatedOrder.customerId);
-      const email = customer?.email || 'customer@example.com';
+      // Find customer
+      const customer = customers?.find(c => c.id === updatedOrder.customerId);
+      let customerEmail = customer?.email;
+      
+      // If customer doesn't exist, create a new one
+      if (!customer || !customerEmail) {
+        const dummyCustomer = {
+          firstName: "Customer",
+          lastName: `for Order ${updatedOrder.id}`,
+          email: "customer@example.com",
+          phone: "",
+          street: "",
+          city: "",
+          zipCode: ""
+        };
+        
+        try {
+          const newCustomer = await createCustomerMutation.mutateAsync(dummyCustomer);
+          customerEmail = newCustomer.email;
+          
+          // Update the order with the new customer ID
+          await updateOrder(updatedOrder.id, { customerId: newCustomer.id });
+        } catch (error) {
+          console.error('Error creating customer:', error);
+          customerEmail = "customer@example.com";
+        }
+      }
       
       try {
         if (updatedOrder.status === 'in_progress') {
-          const emailResult = await sendOrderEmail('progress', updatedOrder, email);
+          const emailResult = await sendOrderEmail('progress', updatedOrder, customerEmail || "customer@example.com");
           if (emailResult.success) {
             toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o napredku');
           } else {
             toast.error('Status naročila je posodobljen ampak prišlo je do napake pri pošiljanju e-pošte');
           }
         } else if (updatedOrder.status === 'completed') {
-          const emailResult = await sendOrderEmail('completed', updatedOrder, email);
+          const emailResult = await sendOrderEmail('completed', updatedOrder, customerEmail || "customer@example.com");
           if (emailResult.success) {
             toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o zaključku');
           } else {
@@ -134,7 +172,7 @@ const OrdersPage = () => {
   );
   
   const getCustomerName = (customerId: string) => {
-    const customer = mockCustomers.find(c => c.id === customerId);
+    const customer = customers?.find(c => c.id === customerId);
     return customer ? `${customer.firstName} ${customer.lastName}` : 'Neznano';
   };
   

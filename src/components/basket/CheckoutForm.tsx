@@ -195,11 +195,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         status: 'placed',
       });
       
-      const emailResult = await sendOrderEmail('new', newOrder, formValues.email);
-      if (emailResult.success) {
-        console.log('Order emails sent successfully');
-      } else {
-        console.error('Failed to send order emails:', emailResult.message);
+      try {
+        const emailResult = await sendOrderEmail('new', newOrder, formValues.email);
+        if (emailResult.success) {
+          console.log('Order emails sent successfully');
+        } else {
+          console.error('Failed to send order emails:', emailResult.message);
+        }
+      } catch (error) {
+        console.error('Error sending order emails:', error);
       }
       
       toast.success('Naročilo uspešno oddano!');

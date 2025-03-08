@@ -1,3 +1,4 @@
+
 import { Customer, Order, Color, Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,6 +8,7 @@ const STORAGE_KEYS = {
   ORDERS: 'woodboard_orders',
   COLORS: 'woodboard_colors',
   LOGS: 'woodboard_logs',
+  EMAIL_LOGS: 'woodboard_email_logs',
 };
 
 // Log entry interface
@@ -15,6 +17,14 @@ export interface LogEntry {
   level: 'info' | 'warning' | 'error';
   message: string;
   details?: any;
+}
+
+// Email log interface
+export interface EmailLog {
+  timestamp: string;
+  to: string;
+  subject: string;
+  message: string;
 }
 
 // Initialize storage with default data if empty
@@ -75,6 +85,10 @@ export const initializeStorage = () => {
     // Initialize empty customers and orders
     setCustomers([]);
     setOrders([]);
+    
+    // Initialize empty logs and email logs
+    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify([]));
   }
 };
 
@@ -363,14 +377,14 @@ export const simulateSendEmail = async (
   }
   
   // Log the emails
-  const customerEmailLog = {
+  const customerEmailLog: EmailLog = {
     timestamp,
     to: customerEmail,
     subject: customerSubject,
     message: customerMessage
   };
   
-  const adminEmailLog = {
+  const adminEmailLog: EmailLog = {
     timestamp,
     to: adminEmail,
     subject: adminSubject,
@@ -380,9 +394,7 @@ export const simulateSendEmail = async (
   // Store email logs
   const emails = getEmailLogs();
   emails.push(customerEmailLog, adminEmailLog);
-  
-  // Store emails in localStorage
-  localStorage.setItem('emailLogs', JSON.stringify(emails));
+  localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify(emails));
   
   // Log email details
   console.log(`[${timestamp}] EMAIL TO CUSTOMER:`, customerEmailLog);
@@ -398,13 +410,8 @@ export const simulateSendEmail = async (
 };
 
 // Get email logs
-export const getEmailLogs = (): Array<{
-  timestamp: string;
-  to: string;
-  subject: string;
-  message: string;
-}> => {
-  const emailsJson = localStorage.getItem('emailLogs');
+export const getEmailLogs = (): EmailLog[] => {
+  const emailsJson = localStorage.getItem(STORAGE_KEYS.EMAIL_LOGS);
   return emailsJson ? JSON.parse(emailsJson) : [];
 };
 
