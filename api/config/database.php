@@ -1,10 +1,10 @@
 
 <?php
 // Database configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'lcc_aplikacija');
-define('DB_USER', 'lcc_aplikacija');
-define('DB_PASS', 'thisisjustademoapp');
+define('DB_HOST', '35.214.216.147');
+define('DB_NAME', 'dbfvbowjpcotpt');
+define('DB_USER', 'ug3xluzozpqp5');
+define('DB_PASS', '1zzppmgbsiqy');
 
 // Create database connection
 function getConnection() {
