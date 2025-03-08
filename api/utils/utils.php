@@ -6,6 +6,10 @@ function enableCORS() {
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
     
+    // Log CORS headers being set
+    $timestamp = date('Y-m-d H:i:s');
+    error_log("[{$timestamp}] CORS headers set for request: {$_SERVER['REQUEST_URI']}");
+    
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(200);
         exit();
@@ -14,6 +18,9 @@ function enableCORS() {
 
 // Send JSON response
 function sendResponse($data, $status = 200) {
+    $timestamp = date('Y-m-d H:i:s');
+    error_log("[{$timestamp}] Sending response with status {$status} for {$_SERVER['REQUEST_URI']}");
+    
     http_response_code($status);
     header('Content-Type: application/json');
     echo json_encode($data);
@@ -22,6 +29,9 @@ function sendResponse($data, $status = 200) {
 
 // Send error response
 function sendError($message, $status = 400) {
+    $timestamp = date('Y-m-d H:i:s');
+    error_log("[{$timestamp}] ERROR: {$message} (Status: {$status}) for {$_SERVER['REQUEST_URI']}");
+    
     http_response_code($status);
     header('Content-Type: application/json');
     echo json_encode(['error' => $message]);
@@ -30,7 +40,10 @@ function sendError($message, $status = 400) {
 
 // Get JSON data from request
 function getRequestData() {
+    $timestamp = date('Y-m-d H:i:s');
     $json = file_get_contents('php://input');
+    error_log("[{$timestamp}] Request data received for {$_SERVER['REQUEST_URI']}: " . substr($json, 0, 100) . (strlen($json) > 100 ? '...' : ''));
+    
     return json_decode($json, true);
 }
 

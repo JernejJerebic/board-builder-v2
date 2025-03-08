@@ -1,3 +1,4 @@
+
 import { Customer, Order, Color, Product } from '@/types';
 
 // API Base URL - Updated domain from lcc.si to aplikacija.lcc.si
@@ -11,7 +12,8 @@ async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}/${endpoint}`;
   
-  console.log(`Making API request to: ${url}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Making API request to: ${url}`);
   
   const options: RequestInit = {
     method,
@@ -29,12 +31,12 @@ async function apiRequest<T>(
   }
   
   try {
-    console.log(`Sending request to: ${url}`, options);
+    console.log(`[${timestamp}] Sending request to: ${url}`, options);
     const response = await fetch(url, options);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`API error (${response.status}):`, errorText);
+      console.error(`[${timestamp}] API error (${response.status}):`, errorText);
       try {
         const errorData = JSON.parse(errorText);
         throw new Error(errorData.error || `HTTP error ${response.status}`);
@@ -44,16 +46,16 @@ async function apiRequest<T>(
     }
     
     const responseText = await response.text();
-    console.log(`API response:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+    console.log(`[${timestamp}] API response:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
     
     try {
       return JSON.parse(responseText);
     } catch (error) {
-      console.error('Failed to parse JSON response:', error);
+      console.error(`[${timestamp}] Failed to parse JSON response:`, error);
       throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
     }
   } catch (error) {
-    console.error(`API request failed: ${endpoint}`, error);
+    console.error(`[${timestamp}] API request failed: ${endpoint}`, error);
     throw error;
   }
 }
