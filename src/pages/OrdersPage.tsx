@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchOrders, updateOrderStatus, sendOrderEmail } from '@/services/api';
@@ -48,11 +47,9 @@ const OrdersPage = () => {
     onSuccess: async (updatedOrder) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       
-      // Find customer email (this would be from a real API in production)
       const customer = mockCustomers.find(c => c.id === updatedOrder.customerId);
       const email = customer ? 'customer@example.com' : 'unknown@example.com';
       
-      // Send notification email based on status
       if (updatedOrder.status === 'in_progress') {
         await sendOrderEmail('progress', updatedOrder, email);
         toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o napredku');
@@ -104,7 +101,7 @@ const OrdersPage = () => {
       case 'completed':
         return 'Zaključeno';
       default:
-        return status.replace('_', ' ');
+        return status;
     }
   };
   
