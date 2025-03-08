@@ -55,30 +55,57 @@ export const fetchOrders = async (): Promise<Order[]> => {
 };
 
 export const createOrder = async (order: Omit<Order, 'id' | 'orderDate'>): Promise<Order> => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    const newOrder: Order = {
-      ...order,
-      id: `${mockOrders.length + 1}`,
-      orderDate: new Date().toISOString().split('T')[0]
-    };
-    
-    mockOrders.push(newOrder);
-    setTimeout(() => resolve(newOrder), 500);
+  // Simulate API call with proper validation and error handling
+  return new Promise((resolve, reject) => {
+    try {
+      // Validate required fields
+      if (!order.customerId) {
+        reject(new Error('Customer ID is required'));
+        return;
+      }
+      
+      if (!order.products || order.products.length === 0) {
+        reject(new Error('Order must have at least one product'));
+        return;
+      }
+      
+      const newOrder: Order = {
+        ...order,
+        id: `${Date.now()}`, // More unique ID generation
+        orderDate: new Date().toISOString().split('T')[0]
+      };
+      
+      // Insert into mock database
+      mockOrders.unshift(newOrder); // Add to beginning of array for better visibility
+      
+      console.log('Order created successfully:', newOrder);
+      setTimeout(() => resolve(newOrder), 500);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      reject(error);
+    }
   });
 };
 
 export const updateOrderStatus = async (id: string, status: Order['status']): Promise<Order> => {
-  // Simulate API call
+  // Simulate API call with proper validation and error handling
   return new Promise((resolve, reject) => {
-    const orderIndex = mockOrders.findIndex(order => order.id === id);
-    if (orderIndex === -1) {
-      reject(new Error('Naročilo ni najdeno'));
-      return;
+    try {
+      const orderIndex = mockOrders.findIndex(order => order.id === id);
+      if (orderIndex === -1) {
+        reject(new Error('Naročilo ni najdeno'));
+        return;
+      }
+      
+      // Update order status
+      mockOrders[orderIndex].status = status;
+      console.log(`Order ${id} status updated to: ${status}`);
+      
+      setTimeout(() => resolve(mockOrders[orderIndex]), 500);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      reject(error);
     }
-    
-    mockOrders[orderIndex].status = status;
-    setTimeout(() => resolve(mockOrders[orderIndex]), 500);
   });
 };
 
@@ -140,13 +167,47 @@ export const updateColorStatus = async (id: string, active: boolean): Promise<Co
   });
 };
 
-// Email service mock
+// Email service mock with enhanced logging and return values
 export const sendOrderEmail = async (
   type: 'new' | 'progress' | 'completed',
   order: Order,
   customerEmail: string
-): Promise<{ success: boolean }> => {
-  // This would actually send emails in a real implementation
-  console.log(`Email poslan na ${customerEmail} - Naročilo ${order.id} - Tip: ${type}`);
-  return { success: true };
+): Promise<{ success: boolean; message?: string }> => {
+  return new Promise((resolve) => {
+    try {
+      // Enhanced logging for email sending
+      console.log('---- SENDING EMAIL ----');
+      console.log(`To: ${customerEmail}`);
+      console.log(`Subject: Naročilo #${order.id} - ${type === 'new' ? 'Novo naročilo' : type === 'progress' ? 'Naročilo v obdelavi' : 'Naročilo zaključeno'}`);
+      
+      let emailBody = '';
+      
+      // Construct appropriate email body based on type
+      if (type === 'new') {
+        emailBody = `Spoštovani,\n\nZahvaljujemo se vam za vaše naročilo (#${order.id}). V najkrajšem možnem času bomo začeli z obdelavo vašega naročila.\n\nLep pozdrav`;
+      } else if (type === 'progress') {
+        emailBody = `Spoštovani,\n\nVaše naročilo (#${order.id}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.\n\nLep pozdrav`;
+      } else if (type === 'completed') {
+        emailBody = `Spoštovani,\n\nVaše naročilo (#${order.id}) je zaključeno in pripravljeno ${order.shippingMethod === 'pickup' ? 'za prevzem' : 'za dostavo'}.\n\nLep pozdrav`;
+      }
+      
+      console.log('Email body:');
+      console.log(emailBody);
+      console.log('---- END EMAIL ----');
+      
+      // In a real implementation, this would connect to an email service
+      setTimeout(() => {
+        resolve({ 
+          success: true,
+          message: `Email successfully sent to ${customerEmail}`
+        });
+      }, 800);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      resolve({ 
+        success: false,
+        message: `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    }
+  });
 };

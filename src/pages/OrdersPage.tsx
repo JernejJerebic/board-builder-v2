@@ -24,7 +24,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Search, Eye, Loader2 } from 'lucide-react';
@@ -48,19 +47,33 @@ const OrdersPage = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       
       const customer = mockCustomers.find(c => c.id === updatedOrder.customerId);
-      const email = customer ? 'customer@example.com' : 'unknown@example.com';
+      const email = customer?.email || 'customer@example.com';
       
-      if (updatedOrder.status === 'in_progress') {
-        await sendOrderEmail('progress', updatedOrder, email);
-        toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o napredku');
-      } else if (updatedOrder.status === 'completed') {
-        await sendOrderEmail('completed', updatedOrder, email);
-        toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o zaključku');
-      } else {
-        toast.success('Status naročila je posodobljen');
+      try {
+        if (updatedOrder.status === 'in_progress') {
+          const emailResult = await sendOrderEmail('progress', updatedOrder, email);
+          if (emailResult.success) {
+            toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o napredku');
+          } else {
+            toast.error('Status naročila je posodobljen ampak prišlo je do napake pri pošiljanju e-pošte');
+          }
+        } else if (updatedOrder.status === 'completed') {
+          const emailResult = await sendOrderEmail('completed', updatedOrder, email);
+          if (emailResult.success) {
+            toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o zaključku');
+          } else {
+            toast.error('Status naročila je posodobljen ampak prišlo je do napake pri pošiljanju e-pošte');
+          }
+        } else {
+          toast.success('Status naročila je posodobljen');
+        }
+      } catch (error) {
+        console.error('Error sending email:', error);
+        toast.error('Status naročila je posodobljen ampak prišlo je do napake pri pošiljanju e-pošte');
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error updating order status:', error);
       toast.error('Ni bilo mogoče posodobiti statusa naročila');
     }
   });
@@ -116,7 +129,7 @@ const OrdersPage = () => {
       case 'bank_transfer':
         return 'Bančno nakazilo';
       default:
-        return method.replace(/_/g, ' ');
+        return method ? method.replace(/_/g, ' ') : '';
     }
   };
   
@@ -127,7 +140,7 @@ const OrdersPage = () => {
       case 'delivery':
         return 'Dostava';
       default:
-        return method;
+        return method || '';
     }
   };
 
