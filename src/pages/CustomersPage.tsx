@@ -72,10 +72,20 @@ const CustomersPage = () => {
   
   const saveMutation = useMutation({
     mutationFn: (data: CustomerFormValues) => {
+      const customerData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        companyName: data.companyName,
+        vatId: data.vatId,
+        street: data.street,
+        city: data.city,
+        zipCode: data.zipCode
+      };
+      
       if (data.id) {
         return updateCustomer(data.id, data);
       } else {
-        return createCustomer(data);
+        return createCustomer(customerData);
       }
     },
     onSuccess: () => {

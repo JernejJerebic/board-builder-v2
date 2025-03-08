@@ -81,10 +81,19 @@ const ColorsPage = () => {
   
   const saveMutation = useMutation({
     mutationFn: (data: ColorFormValues) => {
+      const colorData = {
+        title: data.title,
+        htmlColor: data.htmlColor,
+        thickness: data.thickness,
+        priceWithoutVat: data.priceWithoutVat,
+        priceWithVat: data.priceWithVat,
+        imageUrl: data.imageUrl
+      };
+      
       if (data.id) {
-        return updateColor(data.id, data);
+        return updateColor(data.id, colorData);
       } else {
-        return createColor(data);
+        return createColor(colorData);
       }
     },
     onSuccess: () => {
