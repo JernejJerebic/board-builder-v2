@@ -1,240 +1,207 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Download, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LogEntry, getLogs, clearLogs } from '@/services/localStorage';
+import { Download, RefreshCw, Trash2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
-interface LogEntry {
-  timestamp: string;
-  type: 'info' | 'error' | 'warn';
-  message: string;
-  details?: string;
-}
-
-const LogsPage: React.FC = () => {
+const LogsPage = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const { toast } = useToast();
 
-  // Function to get console logs from localStorage or memory
-  const fetchLogs = () => {
-    setIsLoading(true);
-    
-    // Get logs from localStorage
-    try {
-      const storedLogs = localStorage.getItem('app_logs');
-      const parsedLogs = storedLogs ? JSON.parse(storedLogs) : [];
-      setLogs(parsedLogs);
-    } catch (error) {
-      console.error('Failed to fetch logs:', error);
-      // Add this error to logs
-      const newError: LogEntry = {
-        timestamp: new Date().toISOString(),
-        type: 'error',
-        message: 'Failed to fetch logs',
-        details: error instanceof Error ? error.message : String(error)
-      };
-      
-      setLogs(prev => [newError, ...prev]);
-    }
-    
-    setIsLoading(false);
+  const loadLogs = () => {
+    const allLogs = getLogs();
+    setLogs(allLogs);
+    applyFilters(allLogs, filter, search);
   };
 
-  // Function to clear logs
-  const clearLogs = () => {
-    localStorage.setItem('app_logs', JSON.stringify([]));
-    setLogs([]);
-  };
-
-  // Function to download logs as JSON file
-  const downloadLogs = () => {
-    const dataStr = JSON.stringify(logs, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `woodboard-logs-${new Date().toISOString()}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  // Filter logs based on search term
-  const filteredLogs = logs.filter(log => 
-    log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (log.details && log.details.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    log.timestamp.includes(searchTerm)
-  );
-
-  // Fetch logs on component mount
   useEffect(() => {
-    fetchLogs();
-    
-    // Set up console log interceptor
-    const originalConsoleLog = console.log;
-    const originalConsoleError = console.error;
-    const originalConsoleWarn = console.warn;
-    
-    console.log = function(message, ...args) {
-      const timestamp = new Date().toISOString();
-      const logEntry: LogEntry = {
-        timestamp,
-        type: 'info',
-        message: typeof message === 'string' ? message : JSON.stringify(message),
-        details: args.length > 0 ? JSON.stringify(args) : undefined
-      };
-      
-      // Store in localStorage
-      const storedLogs = localStorage.getItem('app_logs');
-      const parsedLogs: LogEntry[] = storedLogs ? JSON.parse(storedLogs) : [];
-      parsedLogs.unshift(logEntry);
-      localStorage.setItem('app_logs', JSON.stringify(parsedLogs.slice(0, 500))); // Limit to 500 entries
-      
-      originalConsoleLog.apply(console, [message, ...args]);
-    };
-    
-    console.error = function(message, ...args) {
-      const timestamp = new Date().toISOString();
-      const logEntry: LogEntry = {
-        timestamp,
-        type: 'error',
-        message: typeof message === 'string' ? message : JSON.stringify(message),
-        details: args.length > 0 ? JSON.stringify(args) : undefined
-      };
-      
-      const storedLogs = localStorage.getItem('app_logs');
-      const parsedLogs: LogEntry[] = storedLogs ? JSON.parse(storedLogs) : [];
-      parsedLogs.unshift(logEntry);
-      localStorage.setItem('app_logs', JSON.stringify(parsedLogs.slice(0, 500)));
-      
-      originalConsoleError.apply(console, [message, ...args]);
-    };
-    
-    console.warn = function(message, ...args) {
-      const timestamp = new Date().toISOString();
-      const logEntry: LogEntry = {
-        timestamp,
-        type: 'warn',
-        message: typeof message === 'string' ? message : JSON.stringify(message),
-        details: args.length > 0 ? JSON.stringify(args) : undefined
-      };
-      
-      const storedLogs = localStorage.getItem('app_logs');
-      const parsedLogs: LogEntry[] = storedLogs ? JSON.parse(storedLogs) : [];
-      parsedLogs.unshift(logEntry);
-      localStorage.setItem('app_logs', JSON.stringify(parsedLogs.slice(0, 500)));
-      
-      originalConsoleWarn.apply(console, [message, ...args]);
-    };
-    
-    // Clean up interceptors on component unmount
-    return () => {
-      console.log = originalConsoleLog;
-      console.error = originalConsoleError;
-      console.warn = originalConsoleWarn;
-    };
+    loadLogs();
+    // Refresh logs every 5 seconds
+    const interval = setInterval(loadLogs, 5000);
+    return () => clearInterval(interval);
   }, []);
 
+  const applyFilters = (logList: LogEntry[], levelFilter: string, searchText: string) => {
+    let filtered = logList;
+    
+    // Apply level filter
+    if (levelFilter !== 'all') {
+      filtered = filtered.filter(log => log.level === levelFilter);
+    }
+    
+    // Apply search filter
+    if (searchText) {
+      const lowerSearch = searchText.toLowerCase();
+      filtered = filtered.filter(log => 
+        log.message.toLowerCase().includes(lowerSearch) || 
+        (log.details && JSON.stringify(log.details).toLowerCase().includes(lowerSearch))
+      );
+    }
+    
+    setFilteredLogs(filtered);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+    applyFilters(logs, value, search);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    applyFilters(logs, filter, value);
+  };
+
+  const handleClearLogs = () => {
+    clearLogs();
+    setLogs([]);
+    setFilteredLogs([]);
+    toast({
+      title: "Logs cleared",
+      description: "All log entries have been removed.",
+    });
+  };
+
+  const handleRefreshLogs = () => {
+    loadLogs();
+    toast({
+      title: "Logs refreshed",
+      description: "Log entries have been updated.",
+    });
+  };
+
+  const downloadLogs = () => {
+    const logsJson = JSON.stringify(logs, null, 2);
+    const blob = new Blob([logsJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `woodboard_logs_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Logs downloaded",
+      description: "Log file has been downloaded to your device.",
+    });
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleString();
+    } catch (e) {
+      return timestamp;
+    }
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'error': return 'text-red-500 bg-red-50';
+      case 'warning': return 'text-amber-500 bg-amber-50';
+      case 'info': return 'text-blue-500 bg-blue-50';
+      default: return 'text-gray-500 bg-gray-50';
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Application Logs</h1>
-        <div className="flex gap-2">
-          <Button 
-            onClick={fetchLogs} 
-            disabled={isLoading}
-            variant="outline"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-          </Button>
-          <Button 
-            onClick={clearLogs} 
-            variant="outline"
-          >
-            <Trash2 className="mr-2 h-4 w-4" /> Clear
-          </Button>
-          <Button 
-            onClick={downloadLogs} 
-            variant="outline"
-          >
-            <Download className="mr-2 h-4 w-4" /> Download
-          </Button>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>Application Logs</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefreshLogs}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={downloadLogs}>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleClearLogs}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Logs
+            </Button>
+          </div>
+        </CardTitle>
+        <CardDescription>
+          View and analyze application logs. Total entries: {logs.length}
+        </CardDescription>
+        <div className="flex gap-4 mt-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search logs..."
+              value={search}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <div className="w-40">
+            <Select value={filter} onValueChange={handleFilterChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
-      
-      <div className="relative">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search logs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-8"
-        />
-      </div>
-      
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[180px]">Timestamp</TableHead>
-              <TableHead className="w-[100px]">Type</TableHead>
-              <TableHead>Message</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <div className="bg-muted px-4 py-2 font-medium flex items-center">
+            <div className="w-48">Timestamp</div>
+            <div className="w-24">Level</div>
+            <div className="flex-1">Message</div>
+          </div>
+          <div className="max-h-[600px] overflow-auto">
             {filteredLogs.length > 0 ? (
               filteredLogs.map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-mono text-xs">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      log.type === 'error' ? 'bg-red-100 text-red-800' : 
-                      log.type === 'warn' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {log.type}
+                <div 
+                  key={index} 
+                  className="px-4 py-3 border-t flex items-start hover:bg-muted/50"
+                >
+                  <div className="w-48 text-xs text-muted-foreground">
+                    {formatTimestamp(log.timestamp)}
+                  </div>
+                  <div className="w-24">
+                    <span className={`text-xs rounded-full px-2 py-1 font-medium ${getLevelColor(log.level)}`}>
+                      {log.level}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{log.message}</div>
-                      {log.details && (
-                        <div className="text-sm text-muted-foreground mt-1 font-mono break-all">
-                          {log.details.length > 150
-                            ? `${log.details.substring(0, 150)}...`
-                            : log.details}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                  <div className="flex-1">
+                    <div>{log.message}</div>
+                    {log.details && (
+                      <pre className="mt-1 text-xs bg-muted p-2 rounded whitespace-pre-wrap">
+                        {typeof log.details === 'object' 
+                          ? JSON.stringify(log.details, null, 2) 
+                          : log.details}
+                      </pre>
+                    )}
+                  </div>
+                </div>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  No logs found.
-                </TableCell>
-              </TableRow>
+              <div className="px-4 py-8 text-center text-muted-foreground">
+                No logs found. {search || filter !== 'all' ? 'Try adjusting your filters.' : ''}
+              </div>
             )}
-          </TableBody>
-        </Table>
-      </div>
-      
-      <div className="text-xs text-muted-foreground">
-        Showing {filteredLogs.length} of {logs.length} logs
-      </div>
-    </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
