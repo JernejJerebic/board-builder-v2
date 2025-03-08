@@ -1,7 +1,7 @@
 import { Customer, Order, Color, Product } from '@/types';
 
-// API Base URL - Using a relative URL to avoid CORS issues
-const API_BASE_URL = '/aplikacija/api';
+// API Base URL - Updated domain from lcc.si to aplikacija.lcc.si
+const API_BASE_URL = 'https://aplikacija.lcc.si/api';
 
 // Helper function for API requests
 async function apiRequest<T>(
