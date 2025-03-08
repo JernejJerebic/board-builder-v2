@@ -1,8 +1,8 @@
 
 import { Customer, Order, Color, Product } from '@/types';
 
-// API Base URL - change this to your server URL
-const API_BASE_URL = 'http://localhost/api';
+// API Base URL - Updated for cPanel deployment
+const API_BASE_URL = '/aplikacija/api';
 
 // Helper function for API requests
 async function apiRequest<T>(
