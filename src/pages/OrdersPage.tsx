@@ -365,7 +365,7 @@ const OrdersPage = () => {
       
       {/* Edit Order Dialog */}
       <Dialog open={!!editOrder} onOpenChange={(open) => !open && setEditOrder(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Uredi naročilo #{editOrder?.id}</DialogTitle>
             <DialogDescription>

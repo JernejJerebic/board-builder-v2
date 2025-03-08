@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Order, Product } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { Order, Product, Color } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,10 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockCustomers } from '@/data/mockData';
+import { mockCustomers, mockColors } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Plus, X, Save, Trash2 } from 'lucide-react';
+import { fetchColors } from '@/services/api';
 
 interface OrderEditFormProps {
   order: Order;
@@ -40,6 +41,11 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
       totalCostWithoutVat: order.totalCostWithoutVat,
       totalCostWithVat: order.totalCostWithVat,
     },
+  });
+  
+  const { data: colors, isLoading: isLoadingColors } = useQuery({
+    queryKey: ['colors'],
+    queryFn: fetchColors
   });
   
   const { formState } = form;
@@ -122,6 +128,38 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
     
     form.setValue('totalCostWithoutVat', parseFloat(totalWithoutVat.toFixed(2)));
     form.setValue('totalCostWithVat', parseFloat(totalWithVat.toFixed(2)));
+  };
+  
+  // Helper function to get color information
+  const getColorById = (colorId: string): Color | undefined => {
+    return colors?.find(color => color.id === colorId);
+  };
+  
+  // Add a new product to the order
+  const addNewProduct = () => {
+    const defaultColor = colors?.[0]?.id || '';
+    const products = [...form.getValues('products')];
+    
+    products.push({
+      id: `temp-${Date.now()}`,
+      colorId: defaultColor,
+      length: 1000,
+      width: 600,
+      thickness: colors?.[0]?.thickness || 18,
+      surfaceArea: 0.6,
+      borders: {
+        top: false,
+        right: false,
+        bottom: false,
+        left: false
+      },
+      drilling: false,
+      quantity: 1,
+      pricePerUnit: colors?.[0]?.priceWithVat || 0,
+      totalPrice: colors?.[0]?.priceWithVat || 0
+    });
+    
+    form.setValue('products', products);
   };
   
   return (
@@ -235,8 +273,20 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
           )}
         />
         
-        <div className="space-y-2">
-          <FormLabel>Izdelki</FormLabel>
+        <div className="space-y-2 pt-2">
+          <div className="flex justify-between items-center">
+            <FormLabel className="text-lg">Izdelki</FormLabel>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={addNewProduct}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Dodaj izdelek
+            </Button>
+          </div>
+          
           <div className="border rounded-md divide-y overflow-hidden">
             {form.watch('products').map((product, index) => (
               <div key={index} className="p-3 bg-muted/30">
@@ -251,6 +301,42 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                </div>
+                
+                <div className="mb-3">
+                  <FormLabel className="text-xs">Material in barva</FormLabel>
+                  <Select 
+                    value={product.colorId}
+                    onValueChange={(value) => {
+                      const selectedColor = getColorById(value);
+                      updateProduct(index, { 
+                        colorId: value,
+                        thickness: selectedColor?.thickness || product.thickness,
+                        pricePerUnit: selectedColor?.priceWithVat || product.pricePerUnit
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 mt-1">
+                      <SelectValue placeholder="Izberi material" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingColors ? (
+                        <SelectItem value="loading" disabled>Nalaganje...</SelectItem>
+                      ) : (
+                        colors?.filter(c => c.active).map((color) => (
+                          <SelectItem key={color.id} value={color.id}>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded-full border border-gray-300" 
+                                style={{ backgroundColor: color.htmlColor || '#d2b48c' }}
+                              />
+                              <span>{color.title} ({color.thickness}mm)</span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-3 mb-3">
@@ -282,6 +368,7 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
                       value={product.thickness}
                       onChange={(e) => updateProduct(index, { thickness: parseInt(e.target.value) })}
                       className="h-8"
+                      disabled
                     />
                   </div>
                 </div>
@@ -368,6 +455,18 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
                 <div className="mt-2 text-xs text-muted-foreground">
                   Površina: {product.surfaceArea.toFixed(2)} m²
                 </div>
+                
+                {getColorById(product.colorId) && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div 
+                      className="w-4 h-4 rounded-full border border-gray-300" 
+                      style={{ backgroundColor: getColorById(product.colorId)?.htmlColor || '#d2b48c' }}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {getColorById(product.colorId)?.title}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
