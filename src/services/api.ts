@@ -1,8 +1,7 @@
-
 import { Customer, Order, Color, Product } from '@/types';
 
-// API Base URL - Updated for cPanel deployment
-const API_BASE_URL = '/aplikacija/api';
+// API Base URL - Using full URL to avoid redirection issues
+const API_BASE_URL = 'https://lcc.si/aplikacija/api';
 
 // Helper function for API requests
 async function apiRequest<T>(
@@ -11,6 +10,8 @@ async function apiRequest<T>(
   data?: any
 ): Promise<T> {
   const url = `${API_BASE_URL}/${endpoint}`;
+  
+  console.log(`Making API request to: ${url}`);
   
   const options: RequestInit = {
     method,
@@ -27,11 +28,25 @@ async function apiRequest<T>(
     const response = await fetch(url, options);
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP error ${response.status}`);
+      const errorText = await response.text();
+      console.error(`API error (${response.status}):`, errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.error || `HTTP error ${response.status}`);
+      } catch (parseError) {
+        throw new Error(`HTTP error ${response.status}: ${errorText.substring(0, 100)}...`);
+      }
     }
     
-    return await response.json();
+    const responseText = await response.text();
+    console.log(`API response:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+    
+    try {
+      return JSON.parse(responseText);
+    } catch (error) {
+      console.error('Failed to parse JSON response:', error);
+      throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+    }
   } catch (error) {
     console.error(`API request failed: ${endpoint}`, error);
     throw error;
