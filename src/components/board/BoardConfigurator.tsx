@@ -118,15 +118,15 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2">1. Select Material</h3>
+        <h3 className="text-lg font-medium mb-2">1. Izbira materiala</h3>
         <ColorSelector selectedColor={color} onSelectColor={setColor} />
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">2. Board Dimensions</h3>
+        <h3 className="text-lg font-medium mb-2">2. Dimenzije plošče</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="length">Length (mm)</Label>
+            <Label htmlFor="length">Dolžina (mm)</Label>
             <Input
               id="length"
               type="number"
@@ -137,7 +137,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="width">Width (mm)</Label>
+            <Label htmlFor="width">Širina (mm)</Label>
             <Input
               id="width"
               type="number"
@@ -148,7 +148,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="thickness">Thickness (mm)</Label>
+            <Label htmlFor="thickness">Debelina (mm)</Label>
             <Input
               id="thickness"
               type="number"
@@ -158,12 +158,12 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
           </div>
         </div>
         <div className="mt-2 text-sm text-gray-500">
-          Surface Area: {surfaceArea.toFixed(2)} m²
+          Površina: {surfaceArea.toFixed(2)} m²
         </div>
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">3. ABS Borders</h3>
+        <h3 className="text-lg font-medium mb-2">3. ABS robovi</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center space-x-2">
             <Checkbox 
@@ -171,7 +171,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
               checked={borders.top} 
               onCheckedChange={(checked) => handleBorderChange('top', checked === true)}
             />
-            <Label htmlFor="top-border">Top</Label>
+            <Label htmlFor="top-border">Zgoraj</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
@@ -179,7 +179,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
               checked={borders.right} 
               onCheckedChange={(checked) => handleBorderChange('right', checked === true)}
             />
-            <Label htmlFor="right-border">Right</Label>
+            <Label htmlFor="right-border">Desno</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
@@ -187,7 +187,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
               checked={borders.bottom} 
               onCheckedChange={(checked) => handleBorderChange('bottom', checked === true)}
             />
-            <Label htmlFor="bottom-border">Bottom</Label>
+            <Label htmlFor="bottom-border">Spodaj</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
@@ -195,28 +195,28 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
               checked={borders.left} 
               onCheckedChange={(checked) => handleBorderChange('left', checked === true)}
             />
-            <Label htmlFor="left-border">Left</Label>
+            <Label htmlFor="left-border">Levo</Label>
           </div>
         </div>
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">4. Hole Drilling</h3>
+        <h3 className="text-lg font-medium mb-2">4. Vrtanje lukenj</h3>
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="drilling" 
             checked={drilling} 
             onCheckedChange={(checked) => setDrilling(checked === true)}
           />
-          <Label htmlFor="drilling">Add drilling (100mm from edge)</Label>
+          <Label htmlFor="drilling">Dodaj luknje (100mm od roba)</Label>
         </div>
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">5. Quantity & Price</h3>
+        <h3 className="text-lg font-medium mb-2">5. Količina in cena</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="quantity">Količina</Label>
             <Input
               id="quantity"
               type="number"
@@ -227,7 +227,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="pricePerUnit">Price per unit</Label>
+            <Label htmlFor="pricePerUnit">Cena na enoto</Label>
             <Input
               id="pricePerUnit"
               type="text"
@@ -236,7 +236,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="totalPrice">Total price</Label>
+            <Label htmlFor="totalPrice">Skupna cena</Label>
             <Input
               id="totalPrice"
               type="text"
@@ -252,7 +252,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
         disabled={!color || quantity < 1}
         onClick={handleAddToBasket}
       >
-        Add to Basket
+        Dodaj v košarico
       </Button>
     </div>
   );

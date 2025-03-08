@@ -24,6 +24,24 @@ export const createCustomer = async (customer: Omit<Customer, 'id' | 'lastPurcha
   });
 };
 
+export const updateCustomer = async (id: string, customerData: Partial<Customer>): Promise<Customer> => {
+  // Simulate API call
+  return new Promise((resolve, reject) => {
+    const customerIndex = mockCustomers.findIndex(customer => customer.id === id);
+    if (customerIndex === -1) {
+      reject(new Error('Stranka ni najdena'));
+      return;
+    }
+    
+    mockCustomers[customerIndex] = {
+      ...mockCustomers[customerIndex],
+      ...customerData,
+    };
+    
+    setTimeout(() => resolve(mockCustomers[customerIndex]), 500);
+  });
+};
+
 // Order API
 export const fetchOrders = async (): Promise<Order[]> => {
   // Simulate API call
@@ -51,7 +69,7 @@ export const updateOrderStatus = async (id: string, status: Order['status']): Pr
   return new Promise((resolve, reject) => {
     const orderIndex = mockOrders.findIndex(order => order.id === id);
     if (orderIndex === -1) {
-      reject(new Error('Order not found'));
+      reject(new Error('Naročilo ni najdeno'));
       return;
     }
     
@@ -82,12 +100,30 @@ export const createColor = async (color: Omit<Color, 'id' | 'active'>): Promise<
   });
 };
 
+export const updateColor = async (id: string, colorData: Partial<Color>): Promise<Color> => {
+  // Simulate API call
+  return new Promise((resolve, reject) => {
+    const colorIndex = mockColors.findIndex(color => color.id === id);
+    if (colorIndex === -1) {
+      reject(new Error('Barva ni najdena'));
+      return;
+    }
+    
+    mockColors[colorIndex] = {
+      ...mockColors[colorIndex],
+      ...colorData,
+    };
+    
+    setTimeout(() => resolve(mockColors[colorIndex]), 500);
+  });
+};
+
 export const updateColorStatus = async (id: string, active: boolean): Promise<Color> => {
   // Simulate API call
   return new Promise((resolve, reject) => {
     const colorIndex = mockColors.findIndex(color => color.id === id);
     if (colorIndex === -1) {
-      reject(new Error('Color not found'));
+      reject(new Error('Barva ni najdena'));
       return;
     }
     
@@ -103,6 +139,6 @@ export const sendOrderEmail = async (
   customerEmail: string
 ): Promise<{ success: boolean }> => {
   // This would actually send emails in a real implementation
-  console.log(`Email sent to ${customerEmail} - Order ${order.id} - Type: ${type}`);
+  console.log(`Email poslan na ${customerEmail} - Naročilo ${order.id} - Tip: ${type}`);
   return { success: true };
 };

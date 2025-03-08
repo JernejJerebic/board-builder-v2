@@ -47,14 +47,14 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({ selectedColor, onSelectCo
               <span>{selectedColor.title} ({selectedColor.thickness}mm)</span>
             </div>
           ) : (
-            <span>Select a color</span>
+            <span>Izberite barvo</span>
           )}
           <span className="text-gray-400">▼</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select Material Color</DialogTitle>
+          <DialogTitle>Izberite barvo materiala</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto py-4">
           {isLoading ? (

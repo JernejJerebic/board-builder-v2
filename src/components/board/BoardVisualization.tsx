@@ -45,7 +45,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   if (!color) {
     return (
       <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300">
-        <p className="text-gray-500">Select a color to visualize board</p>
+        <p className="text-gray-500">Izberite barvo za vizualizacijo plošče</p>
       </div>
     );
   }
@@ -82,21 +82,38 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
           )}
 
-          {/* Drilling holes */}
+          {/* Drilling holes - Updated to top and bottom sides */}
           {drilling && (
             <>
+              {/* Top holes */}
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
-                  left: '20px',
-                  top: `${(visualLength / 2) - 5}px`
+                  left: `${visualWidth / 2 - 5}px`,
+                  top: '20px'
                 }}
               ></div>
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
-                  left: '20px',
-                  top: `${(visualLength / 2) + 20}px`
+                  left: `${visualWidth / 2 + 20}px`,
+                  top: '20px'
+                }}
+              ></div>
+              
+              {/* Bottom holes */}
+              <div
+                className="absolute w-3 h-3 rounded-full bg-black"
+                style={{
+                  left: `${visualWidth / 2 - 5}px`,
+                  bottom: '20px'
+                }}
+              ></div>
+              <div
+                className="absolute w-3 h-3 rounded-full bg-black"
+                style={{
+                  left: `${visualWidth / 2 + 20}px`,
+                  bottom: '20px'
                 }}
               ></div>
             </>
