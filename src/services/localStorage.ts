@@ -319,18 +319,97 @@ export const deleteOrder = (id: string): boolean => {
 };
 
 // Email simulation
-export const simulateSendEmail = (
+export const simulateSendEmail = async (
   type: 'new' | 'progress' | 'completed',
   order: Order,
   customerEmail: string
 ): Promise<{ success: boolean; message?: string }> => {
-  return new Promise((resolve) => {
-    // Simulate network delay
-    setTimeout(() => {
-      addLog('info', `Email simulation: Sent ${type} order email to ${customerEmail} for order ${order.id}`);
-      resolve({ success: true, message: `Email sent to ${customerEmail}` });
-    }, 500);
+  const timestamp = new Date().toISOString();
+  const adminEmail = "jernej@modriweb.com";
+  
+  // Determine subject and message based on email type
+  let customerSubject = "";
+  let customerMessage = "";
+  let adminSubject = "";
+  let adminMessage = "";
+  
+  switch (type) {
+    case 'new':
+      customerSubject = `Novo naročilo #${order.id}`;
+      customerMessage = `Spoštovani,\n\nZahvaljujemo se vam za vaše naročilo (#${order.id}). V najkrajšem možnem času bomo začeli z obdelavo vašega naročila.\n\nLep pozdrav`;
+      
+      adminSubject = `Novo naročilo #${order.id}`;
+      adminMessage = `Novo naročilo #${order.id} je bilo oddano.\n\nPodrobnosti naročila:\nSkupna vrednost: ${order.totalCostWithVat}€\nŠtevilo izdelkov: ${order.products.length}\n\nProsimo, preverite administratorsko ploščo za več informacij.`;
+      break;
+      
+    case 'progress':
+      customerSubject = `Naročilo #${order.id} v obdelavi`;
+      customerMessage = `Spoštovani,\n\nVaše naročilo (#${order.id}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.\n\nLep pozdrav`;
+      
+      adminSubject = `Naročilo #${order.id} posodobljeno na status: V obdelavi`;
+      adminMessage = `Naročilo #${order.id} je bilo posodobljeno na status: V obdelavi.\n\nPodrobnosti naročila:\nSkupna vrednost: ${order.totalCostWithVat}€\nŠtevilo izdelkov: ${order.products.length}`;
+      break;
+      
+    case 'completed':
+      customerSubject = `Naročilo #${order.id} zaključeno`;
+      customerMessage = `Spoštovani,\n\nVaše naročilo (#${order.id}) je zaključeno in pripravljeno ${order.shippingMethod === 'pickup' ? 'za prevzem' : 'za dostavo'}.\n\nLep pozdrav`;
+      
+      adminSubject = `Naročilo #${order.id} posodobljeno na status: Zaključeno`;
+      adminMessage = `Naročilo #${order.id} je bilo posodobljeno na status: Zaključeno.\n\nPodrobnosti naročila:\nSkupna vrednost: ${order.totalCostWithVat}€\nŠtevilo izdelkov: ${order.products.length}`;
+      break;
+      
+    default:
+      return { success: false, message: "Invalid email type" };
+  }
+  
+  // Log the emails
+  const customerEmailLog = {
+    timestamp,
+    to: customerEmail,
+    subject: customerSubject,
+    message: customerMessage
+  };
+  
+  const adminEmailLog = {
+    timestamp,
+    to: adminEmail,
+    subject: adminSubject,
+    message: adminMessage
+  };
+  
+  // Store email logs
+  const emails = getEmailLogs();
+  emails.push(customerEmailLog, adminEmailLog);
+  
+  // Store emails in localStorage
+  localStorage.setItem('emailLogs', JSON.stringify(emails));
+  
+  // Log email details
+  console.log(`[${timestamp}] EMAIL TO CUSTOMER:`, customerEmailLog);
+  console.log(`[${timestamp}] EMAIL TO ADMIN:`, adminEmailLog);
+  
+  // Add to application logs
+  addLog({
+    timestamp,
+    level: 'info',
+    message: `Emails sent for order #${order.id} (${type}): To customer ${customerEmail} and admin ${adminEmail}`
   });
+  
+  return { 
+    success: true, 
+    message: `Emails successfully sent to customer (${customerEmail}) and admin (${adminEmail})` 
+  };
+};
+
+// Get email logs
+export const getEmailLogs = (): Array<{
+  timestamp: string;
+  to: string;
+  subject: string;
+  message: string;
+}> => {
+  const emailsJson = localStorage.getItem('emailLogs');
+  return emailsJson ? JSON.parse(emailsJson) : [];
 };
 
 // Initialize storage on import

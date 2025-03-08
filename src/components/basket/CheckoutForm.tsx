@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -90,7 +89,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const paymentMethod = form.watch('paymentMethod');
   const email = form.watch('email');
   
-  // Check for existing customer when email changes
   useEffect(() => {
     const checkExistingCustomer = async () => {
       if (email && email.includes('@') && email.includes('.')) {
@@ -102,7 +100,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
               name: `${customer.firstName} ${customer.lastName}`
             });
             
-            // Optionally pre-fill the form with customer data
             form.setValue('firstName', customer.firstName);
             form.setValue('lastName', customer.lastName);
             form.setValue('companyName', customer.companyName || '');
@@ -122,14 +119,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       }
     };
     
-    // Debounce the check with a timeout
     const timeoutId = setTimeout(checkExistingCustomer, 500);
     
     return () => clearTimeout(timeoutId);
   }, [email, form]);
   
   useEffect(() => {
-    // Simulate Braintree initialization
     const timer = setTimeout(() => {
       setBraintreeReady(true);
       console.log('Braintree client initialized');
@@ -142,7 +137,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     setSubmitting(true);
     
     try {
-      // Show confirmation dialog
       setShowConfirmation(true);
     } catch (error) {
       toast.error('Napaka pri obdelavi naročila');
@@ -161,12 +155,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       
       let customerId: string;
       
-      // If we have an existing customer, use their ID
       if (existingCustomer) {
         customerId = existingCustomer.id;
         console.log(`Using existing customer ID: ${customerId}`);
       } else {
-        // Create a new customer
         const customerData = {
           firstName: formValues.firstName,
           lastName: formValues.lastName,
@@ -184,19 +176,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log(`Created new customer with ID: ${customerId}`);
       }
       
-      // Process payment if credit card is selected
       if (formValues.paymentMethod === 'credit_card') {
-        // In a real implementation, this would send the card data to Braintree
         console.log('Processing payment with Braintree...');
         console.log(`Card number: ${formValues.cardNumber}`);
         console.log(`Expiry date: ${formValues.expiryDate}`);
         console.log(`CVV: ${formValues.cvv}`);
         
-        // Simulate successful payment processing
         console.log('Payment processed successfully');
       }
       
-      // Create order
       const newOrder = await createOrder({
         customerId: customerId,
         products: items,
@@ -207,12 +195,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         status: 'placed',
       });
       
-      // Send confirmation email
-      await sendOrderEmail('new', newOrder, formValues.email);
+      const emailResult = await sendOrderEmail('new', newOrder, formValues.email);
+      if (emailResult.success) {
+        console.log('Order emails sent successfully');
+      } else {
+        console.error('Failed to send order emails:', emailResult.message);
+      }
       
       toast.success('Naročilo uspešno oddano!');
       
-      // Clear basket and close checkout
       clearBasket();
       onCancel();
     } catch (error) {
@@ -429,13 +420,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
                         placeholder="1234 5678 9012 3456" 
                         {...field} 
                         onChange={(e) => {
-                          // Format card number with spaces every 4 digits
                           const value = e.target.value.replace(/\s/g, '');
                           const formattedValue = value
                             .replace(/\D/g, '')
                             .replace(/(\d{4})(?=\d)/g, '$1 ')
                             .trim()
-                            .substring(0, 19); // 16 digits + 3 spaces
+                            .substring(0, 19);
                           field.onChange(formattedValue);
                         }}
                       />
