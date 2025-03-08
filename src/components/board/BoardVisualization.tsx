@@ -1,0 +1,157 @@
+
+import React, { useEffect, useState } from 'react';
+import { Color } from '@/types';
+import { cn } from '@/lib/utils';
+
+interface BoardVisualizationProps {
+  color: Color | null;
+  length: number;
+  width: number;
+  thickness: number;
+  drilling: boolean;
+  borders: {
+    top: boolean;
+    right: boolean;
+    bottom: boolean;
+    left: boolean;
+  };
+}
+
+const BoardVisualization: React.FC<BoardVisualizationProps> = ({
+  color,
+  length,
+  width,
+  thickness,
+  drilling,
+  borders
+}) => {
+  const [ratio, setRatio] = useState(1);
+  const [rotated, setRotated] = useState(false);
+
+  useEffect(() => {
+    if (length && width) {
+      setRotated(length < width);
+      
+      // Calculate ratio to fit in the visualization area
+      const maxDimension = Math.max(length, width);
+      const newRatio = 300 / maxDimension;
+      setRatio(newRatio);
+    }
+  }, [length, width]);
+
+  const visualWidth = width * ratio;
+  const visualLength = length * ratio;
+
+  if (!color) {
+    return (
+      <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300">
+        <p className="text-gray-500">Select a color to visualize board</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 relative overflow-hidden">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className={cn(
+            "transition-all duration-300 ease-out",
+            rotated && "animate-rotate-board"
+          )}
+          style={{
+            width: `${visualWidth}px`,
+            height: `${visualLength}px`,
+            backgroundColor: color.htmlColor || '#d2b48c',
+            position: 'relative',
+            transformStyle: 'preserve-3d',
+            transform: `perspective(800px) rotateX(30deg)`,
+            boxShadow: `0 ${thickness / 2}px ${thickness}px rgba(0,0,0,0.3)`
+          }}
+        >
+          {/* Board borders */}
+          {borders.top && (
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700"></div>
+          )}
+          {borders.right && (
+            <div className="absolute top-0 right-0 bottom-0 w-1 bg-gray-700"></div>
+          )}
+          {borders.bottom && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700"></div>
+          )}
+          {borders.left && (
+            <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
+          )}
+
+          {/* Drilling holes */}
+          {drilling && (
+            <>
+              <div
+                className="absolute w-3 h-3 rounded-full bg-black"
+                style={{
+                  left: '20px',
+                  top: `${(visualLength / 2) - 5}px`
+                }}
+              ></div>
+              <div
+                className="absolute w-3 h-3 rounded-full bg-black"
+                style={{
+                  left: '20px',
+                  top: `${(visualLength / 2) + 20}px`
+                }}
+              ></div>
+            </>
+          )}
+
+          {/* Thickness visualization (front edge) */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: `-${thickness * ratio}px`,
+              left: 0,
+              right: 0,
+              height: `${thickness * ratio}px`,
+              backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -20) : '#b69b7d',
+              transform: 'rotateX(-90deg)',
+              transformOrigin: 'top',
+            }}
+          ></div>
+
+          {/* Thickness visualization (side edge) */}
+          <div
+            style={{
+              position: 'absolute',
+              right: `-${thickness * ratio}px`,
+              top: 0,
+              bottom: 0,
+              width: `${thickness * ratio}px`,
+              backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -40) : '#8c7a63',
+              transform: 'rotateY(90deg)',
+              transformOrigin: 'left',
+            }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Dimension labels */}
+      <div className="absolute bottom-2 left-0 right-0 text-center text-sm text-gray-600">
+        {length} x {width} x {thickness} mm
+      </div>
+    </div>
+  );
+};
+
+// Helper to darken/lighten colors for the 3D effect
+function adjustColorBrightness(color: string, percent: number) {
+  const num = parseInt(color.replace('#', ''), 16);
+  const r = (num >> 16) + percent;
+  const g = ((num >> 8) & 0x00FF) + percent;
+  const b = (num & 0x0000FF) + percent;
+  
+  const newR = r < 0 ? 0 : r > 255 ? 255 : r;
+  const newG = g < 0 ? 0 : g > 255 ? 255 : g;
+  const newB = b < 0 ? 0 : b > 255 ? 255 : b;
+  
+  return '#' + (newB | (newG << 8) | (newR << 16)).toString(16).padStart(6, '0');
+}
+
+export default BoardVisualization;
