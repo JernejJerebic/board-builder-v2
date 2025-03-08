@@ -1,3 +1,4 @@
+
 import { Customer, Order, Color, Product } from '@/types';
 import { mockCustomers, mockOrders, mockColors } from '@/data/mockData';
 
@@ -12,6 +13,24 @@ export const fetchCustomers = async (): Promise<Customer[]> => {
 export const createCustomer = async (customer: Partial<Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>>): Promise<Customer> => {
   // Simulate API call
   return new Promise((resolve) => {
+    // First check if a customer with this email already exists
+    const existingCustomerIndex = mockCustomers.findIndex(c => 
+      c.email && customer.email && c.email.toLowerCase() === customer.email.toLowerCase()
+    );
+    
+    if (existingCustomerIndex >= 0) {
+      // Update existing customer
+      const updatedCustomer = {
+        ...mockCustomers[existingCustomerIndex],
+        ...customer,
+      };
+      
+      mockCustomers[existingCustomerIndex] = updatedCustomer;
+      setTimeout(() => resolve(updatedCustomer), 500);
+      return;
+    }
+    
+    // Create new customer
     const newCustomer: Customer = {
       ...customer as any, // Cast to any to bypass the type check
       id: `${mockCustomers.length + 1}`,

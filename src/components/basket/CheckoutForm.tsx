@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBasket } from '@/context/BasketContext';
-import { createOrder, sendOrderEmail } from '@/services/api';
+import { createOrder, sendOrderEmail, createCustomer } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -41,6 +40,7 @@ const formSchema = z.object({
   city: z.string().min(2, 'Mesto je obvezno'),
   zipCode: z.string(),
   email: z.string().email('Neveljaven e-poštni naslov'),
+  phone: z.string().min(6, 'Telefonska številka je obvezna'),
   paymentMethod: z.enum(['credit_card', 'payment_on_delivery', 'pickup_at_shop', 'bank_transfer']),
   // Credit card fields (only required when payment method is credit_card)
   cardNumber: z.string().optional().refine(val => {
@@ -77,6 +77,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       city: '',
       zipCode: '',
       email: '',
+      phone: '',
       paymentMethod: 'credit_card',
       cardNumber: '',
       expiryDate: '',
@@ -120,6 +121,22 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       const formValues = form.getValues();
       const total = calculateTotal();
       
+      // Create or update customer record with all form data
+      const customerData = {
+        firstName: formValues.firstName,
+        lastName: formValues.lastName,
+        companyName: formValues.companyName,
+        vatId: formValues.vatId,
+        email: formValues.email,
+        phone: formValues.phone,
+        street: formValues.street,
+        city: formValues.city,
+        zipCode: formValues.zipCode,
+      };
+      
+      // In a real app we would create or update the customer here
+      const customer = await createCustomer(customerData);
+      
       // Process payment if credit card is selected
       if (formValues.paymentMethod === 'credit_card') {
         // In a real implementation, this would send the card data to Braintree
@@ -134,7 +151,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       
       // Create order
       const newOrder = await createOrder({
-        customerId: '12345', // This would be a real ID in production
+        customerId: customer.id,
         products: items,
         totalCostWithoutVat: total.withoutVat,
         totalCostWithVat: total.withVat,
@@ -265,19 +282,35 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
             />
           </div>
           
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>E-poštni naslov</FormLabel>
-                <FormControl>
-                  <Input placeholder="janez@example.com" type="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-poštni naslov</FormLabel>
+                  <FormControl>
+                    <Input placeholder="janez@example.com" type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefonska številka</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+386 31 123 456" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           
           <FormField
             control={form.control}

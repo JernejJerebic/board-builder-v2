@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchCustomers, createCustomer, updateCustomer } from '@/services/api';
@@ -35,6 +34,8 @@ const customerSchema = z.object({
   lastName: z.string().min(1, "Priimek je obvezen"),
   companyName: z.string().optional(),
   vatId: z.string().optional(),
+  email: z.string().email("Vnesite veljaven e-poštni naslov").optional(),
+  phone: z.string().optional(),
   street: z.string().min(1, "Ulica je obvezna"),
   city: z.string().min(1, "Mesto je obvezno"),
   zipCode: z.string().min(1, "Poštna številka je obvezna"),
@@ -58,6 +59,8 @@ const CustomersPage = () => {
       lastName: '',
       companyName: '',
       vatId: '',
+      email: '',
+      phone: '',
       street: '',
       city: '',
       zipCode: '',
@@ -77,6 +80,8 @@ const CustomersPage = () => {
         lastName: data.lastName,
         companyName: data.companyName,
         vatId: data.vatId,
+        email: data.email,
+        phone: data.phone,
         street: data.street,
         city: data.city,
         zipCode: data.zipCode
@@ -106,6 +111,8 @@ const CustomersPage = () => {
       lastName: customer.lastName,
       companyName: customer.companyName || '',
       vatId: customer.vatId || '',
+      email: customer.email || '',
+      phone: customer.phone || '',
       street: customer.street,
       city: customer.city,
       zipCode: customer.zipCode,
@@ -122,6 +129,8 @@ const CustomersPage = () => {
       lastName: '',
       companyName: '',
       vatId: '',
+      email: '',
+      phone: '',
       street: '',
       city: '',
       zipCode: '',
@@ -178,6 +187,7 @@ const CustomersPage = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Ime</TableHead>
                 <TableHead>Podjetje</TableHead>
+                <TableHead>Kontakt</TableHead>
                 <TableHead>Lokacija</TableHead>
                 <TableHead>Zadnji nakup</TableHead>
                 <TableHead>Skupni nakupi</TableHead>
@@ -191,6 +201,11 @@ const CustomersPage = () => {
                     <TableCell>{customer.id}</TableCell>
                     <TableCell>{customer.firstName} {customer.lastName}</TableCell>
                     <TableCell>{customer.companyName || '-'}</TableCell>
+                    <TableCell>
+                      {customer.email && <div>{customer.email}</div>}
+                      {customer.phone && <div>{customer.phone}</div>}
+                      {!customer.email && !customer.phone && '-'}
+                    </TableCell>
                     <TableCell>{customer.city}, {customer.zipCode}</TableCell>
                     <TableCell>{customer.lastPurchase || '-'}</TableCell>
                     <TableCell>€{customer.totalPurchases.toFixed(2)}</TableCell>
@@ -212,7 +227,7 @@ const CustomersPage = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">
+                  <TableCell colSpan={8} className="text-center py-4">
                     Ni najdenih strank
                   </TableCell>
                 </TableRow>
@@ -288,18 +303,44 @@ const CustomersPage = () => {
               
               <FormField
                 control={form.control}
-                name="street"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ulica</FormLabel>
+                    <FormLabel>E-poštni naslov</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value || ''} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefonska številka</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ''} />
                     </FormControl>
                   </FormItem>
                 )}
               />
               
               <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ulica</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField
                   control={form.control}
                   name="city"
