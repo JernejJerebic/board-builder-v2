@@ -1,172 +1,33 @@
 
 import { Customer, Order, Color, Product } from '@/types';
+import { fetchCustomers, fetchOrders, fetchColors } from '@/services/api';
 
-export const mockCustomers: Customer[] = [
-  {
-    id: '1',
-    firstName: 'John',
-    lastName: 'Doe',
-    companyName: 'Doe Carpentry',
-    vatId: 'VAT123456789',
-    email: 'john.doe@example.com',
-    phone: '+386 31 123 456',
-    street: '123 Main St',
-    city: 'Woodville',
-    zipCode: '12345',
-    lastPurchase: '2023-05-15',
-    totalPurchases: 1250.50
-  },
-  {
-    id: '2',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane.smith@example.com',
-    phone: '+386 41 234 567',
-    street: '456 Oak Ave',
-    city: 'Timbertown',
-    zipCode: '54321',
-    lastPurchase: '2023-06-20',
-    totalPurchases: 750.25
-  },
-  {
-    id: '3',
-    firstName: 'Robert',
-    lastName: 'Johnson',
-    companyName: 'Johnson Furniture',
-    vatId: 'VAT987654321',
-    email: 'robert.johnson@example.com',
-    phone: '+386 51 345 678',
-    street: '789 Pine Rd',
-    city: 'Forestville',
-    zipCode: '67890',
-    lastPurchase: '2023-07-10',
-    totalPurchases: 3200.75
+// These arrays will be populated from the API when needed
+export let mockCustomers: Customer[] = [];
+export let mockOrders: Order[] = [];
+export let mockColors: Color[] = [];
+
+// Initialize mock data from API
+export const initMockData = async () => {
+  try {
+    mockCustomers = await fetchCustomers();
+    mockOrders = await fetchOrders();
+    mockColors = await fetchColors();
+    console.log('Mock data initialized from API');
+  } catch (error) {
+    console.error('Failed to initialize mock data from API:', error);
+    
+    // Fallback to empty arrays if API fails
+    mockCustomers = [];
+    mockOrders = [];
+    mockColors = [];
   }
-];
+};
 
-export const mockColors: Color[] = [
-  {
-    id: '1',
-    title: 'Oak Natural',
-    htmlColor: '#d2b48c',
-    thickness: 18,
-    priceWithoutVat: 45.00,
-    priceWithVat: 54.90,
-    active: true
-  },
-  {
-    id: '2',
-    title: 'Walnut Dark',
-    htmlColor: '#614126',
-    thickness: 25,
-    priceWithoutVat: 65.00,
-    priceWithVat: 79.30,
-    active: true
-  },
-  {
-    id: '3',
-    title: 'Pine Light',
-    htmlColor: '#e8d0a9',
-    thickness: 18,
-    priceWithoutVat: 35.00,
-    priceWithVat: 42.70,
-    active: true
-  },
-  {
-    id: '4',
-    title: 'Mahogany Red',
-    htmlColor: '#c04000',
-    thickness: 25,
-    priceWithoutVat: 75.00,
-    priceWithVat: 91.50,
-    active: true
-  },
-  {
-    id: '5',
-    title: 'Maple White',
-    htmlColor: '#f5deb3',
-    thickness: 18,
-    priceWithoutVat: 50.00,
-    priceWithVat: 61.00,
-    active: false
-  }
-];
+// Preload the data when this module is imported
+initMockData();
 
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    colorId: '1',
-    length: 1200,
-    width: 800,
-    thickness: 18,
-    surfaceArea: 0.96,
-    borders: {
-      top: true,
-      right: true,
-      bottom: true,
-      left: true
-    },
-    drilling: true,
-    quantity: 2,
-    pricePerUnit: 65.88,
-    totalPrice: 131.76
-  },
-  {
-    id: '2',
-    colorId: '2',
-    length: 1500,
-    width: 600,
-    thickness: 25,
-    surfaceArea: 0.9,
-    borders: {
-      top: true,
-      right: false,
-      bottom: true,
-      left: false
-    },
-    drilling: false,
-    quantity: 1,
-    pricePerUnit: 89.30,
-    totalPrice: 89.30
-  }
-];
-
-export const mockOrders: Order[] = [
-  {
-    id: '1',
-    customerId: '1',
-    orderDate: '2023-05-15',
-    products: [mockProducts[0]],
-    totalCostWithoutVat: 108.00,
-    totalCostWithVat: 131.76,
-    shippingMethod: 'delivery',
-    paymentMethod: 'credit_card',
-    status: 'completed'
-  },
-  {
-    id: '2',
-    customerId: '2',
-    orderDate: '2023-06-20',
-    products: [mockProducts[1]],
-    totalCostWithoutVat: 73.20,
-    totalCostWithVat: 89.30,
-    shippingMethod: 'pickup',
-    paymentMethod: 'pickup_at_shop',
-    status: 'in_progress'
-  },
-  {
-    id: '3',
-    customerId: '3',
-    orderDate: '2023-07-10',
-    products: [mockProducts[0], mockProducts[1]],
-    totalCostWithoutVat: 181.20,
-    totalCostWithVat: 221.06,
-    shippingMethod: 'delivery',
-    paymentMethod: 'bank_transfer',
-    status: 'placed'
-  }
-];
-
+// Helper functions for backwards compatibility
 export const getColorById = (id: string): Color | undefined => {
   return mockColors.find(color => color.id === id);
 };

@@ -1,0 +1,27 @@
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Set the base path (adjust if needed)
+# RewriteBase /api/
+
+# Handle customer requests
+RewriteRule ^customers/?$ customers/index.php [L]
+RewriteRule ^customers/([0-9]+)/?$ customers/customer.php?id=$1 [L]
+RewriteRule ^customers/email/([^/]+)/?$ customers/email.php?email=$1 [L]
+
+# Handle color requests
+RewriteRule ^colors/?$ colors/index.php [L]
+RewriteRule ^colors/([0-9]+)/?$ colors/color.php?id=$1 [L]
+RewriteRule ^colors/([0-9]+)/status/?$ colors/status.php?id=$1 [L]
+
+# Handle order requests
+RewriteRule ^orders/?$ orders/index.php [L]
+RewriteRule ^orders/([0-9]+)/?$ orders/order.php?id=$1 [L]
+RewriteRule ^orders/([0-9]+)/status/?$ orders/status.php?id=$1 [L]
+
+# Handle email requests
+RewriteRule ^email/order/?$ email/order.php [L]
+
+# Handle OPTIONS requests for CORS
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
