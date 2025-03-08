@@ -70,14 +70,14 @@ const ThankYouPage = () => {
               {order.products.map((product, index) => (
                 <div key={index} className="p-4 flex justify-between">
                   <div>
-                    <p className="font-medium">{product.name || 'Lesena deska po meri'}</p>
+                    <p className="font-medium">Lesena deska po meri</p>
                     <p className="text-sm text-gray-500">
-                      {product.width}mm × {product.height}mm × {product.thickness}mm
+                      {product.width}mm × {product.length}mm × {product.thickness}mm
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">€{product.priceWithVat?.toFixed(2) || '0.00'}</p>
-                    <p className="text-sm text-gray-500">Količina: {product.quantity || 1}</p>
+                    <p className="font-medium">€{product.totalPrice.toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">Količina: {product.quantity}</p>
                   </div>
                 </div>
               ))}
