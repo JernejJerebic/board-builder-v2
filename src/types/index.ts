@@ -5,6 +5,7 @@ export interface Customer {
   lastName: string;
   companyName?: string;
   vatId?: string;
+  email?: string;
   street: string;
   city: string;
   zipCode: string;

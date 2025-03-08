@@ -119,6 +119,8 @@ const OrdersPage = () => {
   };
   
   const translatePaymentMethod = (method: string) => {
+    if (!method) return '';
+    
     switch (method) {
       case 'credit_card':
         return 'Kreditna kartica';
