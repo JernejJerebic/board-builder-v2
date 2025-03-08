@@ -20,7 +20,8 @@ import {
 } from '@/components/ui/select';
 import { mockCustomers } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
-import { Loader2, Plus, X, Save } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Plus, X, Save, Trash2 } from 'lucide-react';
 
 interface OrderEditFormProps {
   order: Order;
@@ -62,12 +63,50 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
     });
   };
   
-  // Helper function to update product price
-  const updateProductPrice = (index: number, quantity: number, price: number) => {
-    const products = form.getValues('products');
-    products[index].quantity = quantity;
-    products[index].pricePerUnit = price;
-    products[index].totalPrice = quantity * price;
+  // Helper function to update product details
+  const updateProduct = (index: number, updatedProduct: Partial<Product>) => {
+    const products = [...form.getValues('products')];
+    const product = products[index];
+    
+    // Update all provided fields
+    Object.assign(product, updatedProduct);
+    
+    // Calculate surface area
+    product.surfaceArea = (product.length * product.width) / 1000000; // convert to m²
+    
+    // Recalculate total price
+    product.totalPrice = product.quantity * product.pricePerUnit;
+    
+    form.setValue('products', products);
+    
+    // Recalculate totals
+    const totalWithoutVat = products.reduce(
+      (sum, product) => sum + (product.totalPrice / 1.22), 
+      0
+    );
+    
+    const totalWithVat = products.reduce(
+      (sum, product) => sum + product.totalPrice, 
+      0
+    );
+    
+    form.setValue('totalCostWithoutVat', parseFloat(totalWithoutVat.toFixed(2)));
+    form.setValue('totalCostWithVat', parseFloat(totalWithVat.toFixed(2)));
+  };
+  
+  // Helper function to update border properties
+  const updateBorder = (index: number, side: 'top' | 'right' | 'bottom' | 'left', value: boolean) => {
+    const products = [...form.getValues('products')];
+    products[index].borders = {
+      ...products[index].borders,
+      [side]: value
+    };
+    form.setValue('products', products);
+  };
+  
+  // Remove a product from the order
+  const removeProduct = (index: number) => {
+    const products = form.getValues('products').filter((_, i) => i !== index);
     form.setValue('products', products);
     
     // Recalculate totals
@@ -201,14 +240,60 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
           <div className="border rounded-md divide-y overflow-hidden">
             {form.watch('products').map((product, index) => (
               <div key={index} className="p-3 bg-muted/30">
-                <div className="grid grid-cols-3 gap-3 mb-2">
+                <div className="flex justify-between mb-2">
+                  <h4 className="font-medium">Plošča {index + 1}</h4>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => removeProduct(index)} 
+                    className="h-8 w-8 text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <FormLabel className="text-xs">Dolžina (mm)</FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={product.length}
+                      onChange={(e) => updateProduct(index, { length: parseInt(e.target.value) })}
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <FormLabel className="text-xs">Širina (mm)</FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={product.width}
+                      onChange={(e) => updateProduct(index, { width: parseInt(e.target.value) })}
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <FormLabel className="text-xs">Debelina (mm)</FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={product.thickness}
+                      onChange={(e) => updateProduct(index, { thickness: parseInt(e.target.value) })}
+                      className="h-8"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-3 mb-3">
                   <div>
                     <FormLabel className="text-xs">Količina</FormLabel>
                     <Input
                       type="number"
                       min="1"
                       value={product.quantity}
-                      onChange={(e) => updateProductPrice(index, parseInt(e.target.value), product.pricePerUnit)}
+                      onChange={(e) => updateProduct(index, { quantity: parseInt(e.target.value) })}
                       className="h-8"
                     />
                   </div>
@@ -219,7 +304,7 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
                       min="0"
                       step="0.01"
                       value={product.pricePerUnit}
-                      onChange={(e) => updateProductPrice(index, product.quantity, parseFloat(e.target.value))}
+                      onChange={(e) => updateProduct(index, { pricePerUnit: parseFloat(e.target.value) })}
                       className="h-8"
                     />
                   </div>
@@ -232,8 +317,56 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
                     />
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Dimenzije: {product.length}mm × {product.width}mm × {product.thickness}mm
+                
+                <div className="mb-3">
+                  <FormLabel className="text-xs">Robovi (označi obdelane robove)</FormLabel>
+                  <div className="grid grid-cols-4 gap-2 mt-1">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`top-${index}`} 
+                        checked={product.borders.top}
+                        onCheckedChange={(checked) => updateBorder(index, 'top', checked === true)}
+                      />
+                      <label htmlFor={`top-${index}`} className="text-xs">Zgornji</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`right-${index}`} 
+                        checked={product.borders.right}
+                        onCheckedChange={(checked) => updateBorder(index, 'right', checked === true)}
+                      />
+                      <label htmlFor={`right-${index}`} className="text-xs">Desni</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`bottom-${index}`} 
+                        checked={product.borders.bottom}
+                        onCheckedChange={(checked) => updateBorder(index, 'bottom', checked === true)}
+                      />
+                      <label htmlFor={`bottom-${index}`} className="text-xs">Spodnji</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`left-${index}`} 
+                        checked={product.borders.left}
+                        onCheckedChange={(checked) => updateBorder(index, 'left', checked === true)}
+                      />
+                      <label htmlFor={`left-${index}`} className="text-xs">Levi</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`drilling-${index}`} 
+                    checked={product.drilling}
+                    onCheckedChange={(checked) => updateProduct(index, { drilling: checked === true })}
+                  />
+                  <label htmlFor={`drilling-${index}`} className="text-sm">Vrtanje</label>
+                </div>
+                
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Površina: {product.surfaceArea.toFixed(2)} m²
                 </div>
               </div>
             ))}
@@ -260,6 +393,7 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
             disabled={formState.isSubmitting || !formState.isDirty}
           >
             {formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Save className="mr-2 h-4 w-4" />
             Shrani
           </Button>
         </div>
