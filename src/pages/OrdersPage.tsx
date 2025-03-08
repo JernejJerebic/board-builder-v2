@@ -55,16 +55,16 @@ const OrdersPage = () => {
       // Send notification email based on status
       if (updatedOrder.status === 'in_progress') {
         await sendOrderEmail('progress', updatedOrder, email);
-        toast.success('Order status updated and progress email sent');
+        toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o napredku');
       } else if (updatedOrder.status === 'completed') {
         await sendOrderEmail('completed', updatedOrder, email);
-        toast.success('Order status updated and completion email sent');
+        toast.success('Status naročila je posodobljen in poslano je e-poštno sporočilo o zaključku');
       } else {
-        toast.success('Order status updated');
+        toast.success('Status naročila je posodobljen');
       }
     },
     onError: () => {
-      toast.error('Failed to update order status');
+      toast.error('Ni bilo mogoče posodobiti statusa naročila');
     }
   });
   
@@ -79,7 +79,7 @@ const OrdersPage = () => {
   
   const getCustomerName = (customerId: string) => {
     const customer = mockCustomers.find(c => c.id === customerId);
-    return customer ? `${customer.firstName} ${customer.lastName}` : 'Unknown';
+    return customer ? `${customer.firstName} ${customer.lastName}` : 'Neznano';
   };
   
   const getStatusBadgeColor = (status: Order['status']) => {
@@ -94,17 +94,56 @@ const OrdersPage = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+  
+  const translateStatus = (status: Order['status']) => {
+    switch (status) {
+      case 'placed':
+        return 'Oddano';
+      case 'in_progress':
+        return 'V obdelavi';
+      case 'completed':
+        return 'Zaključeno';
+      default:
+        return status.replace('_', ' ');
+    }
+  };
+  
+  const translatePaymentMethod = (method: string) => {
+    switch (method) {
+      case 'credit_card':
+        return 'Kreditna kartica';
+      case 'payment_on_delivery':
+        return 'Plačilo ob dostavi';
+      case 'pickup_at_shop':
+        return 'Prevzem v trgovini';
+      case 'bank_transfer':
+        return 'Bančno nakazilo';
+      default:
+        return method.replace(/_/g, ' ');
+    }
+  };
+  
+  const translateShippingMethod = (method: string) => {
+    switch (method) {
+      case 'pickup':
+        return 'Prevzem';
+      case 'delivery':
+        return 'Dostava';
+      default:
+        return method;
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Orders</h1>
-        <p className="text-gray-500">Manage all customer orders</p>
+        <h1 className="text-3xl font-bold mb-2">Naročila</h1>
+        <p className="text-gray-500">Upravljajte vsa naročila strank</p>
       </div>
       
       <div className="flex w-full max-w-sm items-center space-x-2">
         <Input
-          placeholder="Search orders..."
+          placeholder="Išči naročila..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full"
@@ -123,13 +162,13 @@ const OrdersPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total (VAT)</TableHead>
+                <TableHead>ID naročila</TableHead>
+                <TableHead>Datum</TableHead>
+                <TableHead>Stranka</TableHead>
+                <TableHead>Izdelki</TableHead>
+                <TableHead>Skupaj (DDV)</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Dejanja</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -139,11 +178,11 @@ const OrdersPage = () => {
                     <TableCell>#{order.id}</TableCell>
                     <TableCell>{order.orderDate}</TableCell>
                     <TableCell>{getCustomerName(order.customerId)}</TableCell>
-                    <TableCell>{order.products.length} items</TableCell>
-                    <TableCell>€{order.totalCostWithVat.toFixed(2)}</TableCell>
+                    <TableCell>{order.products.length} izdelkov</TableCell>
+                    <TableCell>{order.totalCostWithVat.toFixed(2)}€</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(order.status)}`}>
-                        {order.status.replace('_', ' ')}
+                        {translateStatus(order.status)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -163,9 +202,9 @@ const OrdersPage = () => {
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="placed">Placed</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="placed">Oddano</SelectItem>
+                            <SelectItem value="in_progress">V obdelavi</SelectItem>
+                            <SelectItem value="completed">Zaključeno</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -175,7 +214,7 @@ const OrdersPage = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-4">
-                    No orders found
+                    Ni najdenih naročil
                   </TableCell>
                 </TableRow>
               )}
@@ -187,44 +226,44 @@ const OrdersPage = () => {
       <Dialog open={!!viewOrder} onOpenChange={(open) => !open && setViewOrder(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Order Details #{viewOrder?.id}</DialogTitle>
+            <DialogTitle>Podrobnosti naročila #{viewOrder?.id}</DialogTitle>
           </DialogHeader>
           {viewOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Customer</h4>
+                  <h4 className="text-sm font-medium text-gray-500">Stranka</h4>
                   <p>{getCustomerName(viewOrder.customerId)}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Date</h4>
+                  <h4 className="text-sm font-medium text-gray-500">Datum</h4>
                   <p>{viewOrder.orderDate}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Payment Method</h4>
-                  <p>{viewOrder.paymentMethod.replace(/_/g, ' ')}</p>
+                  <h4 className="text-sm font-medium text-gray-500">Način plačila</h4>
+                  <p>{translatePaymentMethod(viewOrder.paymentMethod)}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Shipping Method</h4>
-                  <p>{viewOrder.shippingMethod}</p>
+                  <h4 className="text-sm font-medium text-gray-500">Način dostave</h4>
+                  <p>{translateShippingMethod(viewOrder.shippingMethod)}</p>
                 </div>
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2">Products</h4>
+                <h4 className="text-sm font-medium text-gray-500 mb-2">Izdelki</h4>
                 <div className="border rounded-md divide-y">
                   {viewOrder.products.map((product, index) => (
                     <div key={index} className="p-3">
                       <div className="flex justify-between">
                         <div>
-                          <p className="font-medium">Board {index + 1}</p>
+                          <p className="font-medium">Plošča {index + 1}</p>
                           <p className="text-sm text-gray-500">
                             {product.length} x {product.width} x {product.thickness}mm
                           </p>
                         </div>
                         <div>
-                          <p className="font-medium text-right">€{product.totalPrice.toFixed(2)}</p>
-                          <p className="text-sm text-gray-500">Qty: {product.quantity}</p>
+                          <p className="font-medium text-right">{product.totalPrice.toFixed(2)}€</p>
+                          <p className="text-sm text-gray-500">Kol: {product.quantity}</p>
                         </div>
                       </div>
                     </div>
@@ -234,12 +273,12 @@ const OrdersPage = () => {
               
               <div className="border-t pt-4">
                 <div className="flex justify-between">
-                  <span>Subtotal (without VAT):</span>
-                  <span>€{viewOrder.totalCostWithoutVat.toFixed(2)}</span>
+                  <span>Vmesna vsota (brez DDV):</span>
+                  <span>{viewOrder.totalCostWithoutVat.toFixed(2)}€</span>
                 </div>
                 <div className="flex justify-between font-bold mt-1">
-                  <span>Total (with VAT):</span>
-                  <span>€{viewOrder.totalCostWithVat.toFixed(2)}</span>
+                  <span>Skupaj (z DDV):</span>
+                  <span>{viewOrder.totalCostWithVat.toFixed(2)}€</span>
                 </div>
               </div>
             </div>

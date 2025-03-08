@@ -21,7 +21,7 @@ export const BasketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const addItem = useCallback((product: Omit<Product, 'id'>) => {
     const color = getColorById(product.colorId);
     if (!color) {
-      toast.error('Color not found');
+      toast.error('Barva ni najdena');
       return;
     }
 
@@ -33,17 +33,17 @@ export const BasketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     setItems(prev => [...prev, newItem]);
-    toast.success('Product added to basket');
+    toast.success('Izdelek dodan v košarico');
   }, []);
 
   const removeItem = useCallback((basketId: string) => {
     setItems(prev => prev.filter(item => item.basketId !== basketId));
-    toast.info('Product removed from basket');
+    toast.info('Izdelek odstranjen iz košarice');
   }, []);
 
   const clearBasket = useCallback(() => {
     setItems([]);
-    toast.info('Basket cleared');
+    toast.info('Košarica izpraznjena');
   }, []);
 
   const calculateTotal = useCallback(() => {
@@ -68,7 +68,7 @@ export const BasketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 export const useBasket = () => {
   const context = useContext(BasketContext);
   if (context === undefined) {
-    throw new Error('useBasket must be used within a BasketProvider');
+    throw new Error('useBasket mora biti uporabljen znotraj BasketProvider');
   }
   return context;
 };

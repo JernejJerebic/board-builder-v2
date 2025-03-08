@@ -15,15 +15,15 @@ const Basket: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-8">
-        <h2 className="text-xl font-semibold mb-4">Shopping Basket</h2>
-        <p className="text-gray-500">Your basket is empty</p>
+        <h2 className="text-xl font-semibold mb-4">Košarica</h2>
+        <p className="text-gray-500">Vaša košarica je prazna</p>
       </div>
     );
   }
   
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-8">
-      <h2 className="text-xl font-semibold mb-4">Shopping Basket</h2>
+      <h2 className="text-xl font-semibold mb-4">Košarica</h2>
       
       <div className="space-y-4">
         {items.map((item) => (
@@ -39,18 +39,26 @@ const Basket: React.FC = () => {
               <p className="text-sm text-gray-600 mt-1">
                 {item.length} x {item.width} x {item.thickness}mm
                 {Object.values(item.borders).some(Boolean) && (
-                  <>, Borders: {Object.entries(item.borders)
+                  <>, Robovi: {Object.entries(item.borders)
                     .filter(([_, value]) => value)
-                    .map(([key]) => key)
+                    .map(([key]) => {
+                      switch(key) {
+                        case 'top': return 'zgornji';
+                        case 'right': return 'desni';
+                        case 'bottom': return 'spodnji';
+                        case 'left': return 'levi';
+                        default: return key;
+                      }
+                    })
                     .join(', ')}</>
                 )}
-                {item.drilling && <>, With drilling</>}
+                {item.drilling && <>, Z vrtanjem</>}
               </p>
-              <p className="text-sm mt-1">Quantity: {item.quantity}</p>
+              <p className="text-sm mt-1">Količina: {item.quantity}</p>
             </div>
             
             <div className="flex justify-between items-center mt-2 md:mt-0">
-              <span className="font-medium">€{item.totalPrice.toFixed(2)}</span>
+              <span className="font-medium">{item.totalPrice.toFixed(2)}€</span>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -66,12 +74,12 @@ const Basket: React.FC = () => {
       
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex justify-between text-sm">
-          <span>Subtotal (without VAT):</span>
-          <span>€{total.withoutVat.toFixed(2)}</span>
+          <span>Vmesna vsota (brez DDV):</span>
+          <span>{total.withoutVat.toFixed(2)}€</span>
         </div>
         <div className="flex justify-between font-semibold text-lg mt-2">
-          <span>Total (with VAT):</span>
-          <span>€{total.withVat.toFixed(2)}</span>
+          <span>Skupaj (z DDV):</span>
+          <span>{total.withVat.toFixed(2)}€</span>
         </div>
       </div>
       
@@ -84,7 +92,7 @@ const Basket: React.FC = () => {
           className="w-full mt-4" 
           onClick={() => setCheckoutOpen(true)}
         >
-          Proceed to Checkout
+          Nadaljuj na blagajno
         </Button>
       )}
     </div>
