@@ -1,4 +1,3 @@
-
 import { Customer, Order, Color, Product } from '@/types';
 import { mockCustomers, mockOrders, mockColors } from '@/data/mockData';
 
@@ -13,29 +12,15 @@ export const fetchCustomers = async (): Promise<Customer[]> => {
 export const createCustomer = async (customer: Partial<Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>>): Promise<Customer> => {
   // Simulate API call
   return new Promise((resolve) => {
-    // First check if a customer with this email already exists
-    const existingCustomerIndex = mockCustomers.findIndex(c => 
-      c.email && customer.email && c.email.toLowerCase() === customer.email.toLowerCase()
-    );
-    
-    if (existingCustomerIndex >= 0) {
-      // Update existing customer
-      const updatedCustomer = {
-        ...mockCustomers[existingCustomerIndex],
-        ...customer,
-      };
-      
-      mockCustomers[existingCustomerIndex] = updatedCustomer;
-      setTimeout(() => resolve(updatedCustomer), 500);
-      return;
-    }
-    
     // Create new customer
     const newCustomer: Customer = {
-      ...customer as any, // Cast to any to bypass the type check
       id: `${mockCustomers.length + 1}`,
       firstName: customer.firstName || '',
       lastName: customer.lastName || '',
+      companyName: customer.companyName,
+      vatId: customer.vatId,
+      email: customer.email,
+      phone: customer.phone,
       street: customer.street || '',
       city: customer.city || '',
       zipCode: customer.zipCode || '',
@@ -62,6 +47,19 @@ export const updateCustomer = async (id: string, customerData: Partial<Customer>
     };
     
     setTimeout(() => resolve(mockCustomers[customerIndex]), 500);
+  });
+};
+
+export const deleteCustomer = async (id: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const customerIndex = mockCustomers.findIndex(customer => customer.id === id);
+    if (customerIndex === -1) {
+      reject(new Error('Stranka ni najdena'));
+      return;
+    }
+    
+    mockCustomers.splice(customerIndex, 1);
+    setTimeout(() => resolve(), 500);
   });
 };
 
@@ -140,12 +138,13 @@ export const createColor = async (color: Partial<Omit<Color, 'id' | 'active'>>):
   // Simulate API call
   return new Promise((resolve) => {
     const newColor: Color = {
-      ...color as any, // Cast to any to bypass the type check
       id: `${mockColors.length + 1}`,
       title: color.title || '',
+      htmlColor: color.htmlColor || '#d2b48c',
       thickness: color.thickness || 18,
       priceWithoutVat: color.priceWithoutVat || 0,
       priceWithVat: color.priceWithVat || 0,
+      imageUrl: color.imageUrl,
       active: true
     };
     
@@ -183,6 +182,19 @@ export const updateColorStatus = async (id: string, active: boolean): Promise<Co
     
     mockColors[colorIndex].active = active;
     setTimeout(() => resolve(mockColors[colorIndex]), 500);
+  });
+};
+
+export const deleteColor = async (id: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const colorIndex = mockColors.findIndex(color => color.id === id);
+    if (colorIndex === -1) {
+      reject(new Error('Barva ni najdena'));
+      return;
+    }
+    
+    mockColors.splice(colorIndex, 1);
+    setTimeout(() => resolve(), 500);
   });
 };
 

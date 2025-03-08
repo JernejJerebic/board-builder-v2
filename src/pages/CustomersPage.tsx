@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchCustomers, createCustomer, updateCustomer } from '@/services/api';
+import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer } from '@/services/api';
 import { Customer } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,12 +18,20 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Search, Plus, Edit, Trash, Loader2, Save, UserPlus } from 'lucide-react';
+import { Search, Edit, Trash, Loader2, Save, UserPlus } from 'lucide-react';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -34,8 +43,8 @@ const customerSchema = z.object({
   lastName: z.string().min(1, "Priimek je obvezen"),
   companyName: z.string().optional(),
   vatId: z.string().optional(),
-  email: z.string().email("Vnesite veljaven e-poštni naslov").optional(),
-  phone: z.string().optional(),
+  email: z.string().email("Vnesite veljaven e-poštni naslov").optional().nullable(),
+  phone: z.string().optional().nullable(),
   street: z.string().min(1, "Ulica je obvezna"),
   city: z.string().min(1, "Mesto je obvezno"),
   zipCode: z.string().min(1, "Poštna številka je obvezna"),
@@ -49,6 +58,8 @@ const CustomersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const queryClient = useQueryClient();
   
@@ -75,22 +86,10 @@ const CustomersPage = () => {
   
   const saveMutation = useMutation({
     mutationFn: (data: CustomerFormValues) => {
-      const customerData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        companyName: data.companyName,
-        vatId: data.vatId,
-        email: data.email,
-        phone: data.phone,
-        street: data.street,
-        city: data.city,
-        zipCode: data.zipCode
-      };
-      
       if (data.id) {
         return updateCustomer(data.id, data);
       } else {
-        return createCustomer(customerData);
+        return createCustomer(data);
       }
     },
     onSuccess: () => {
@@ -98,8 +97,21 @@ const CustomersPage = () => {
       setIsEditDialogOpen(false);
       toast.success(currentCustomer ? 'Stranka posodobljena' : 'Stranka dodana');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error saving customer:', error);
       toast.error('Napaka pri shranjevanju stranke');
+    }
+  });
+  
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteCustomer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      setIsDeleteDialogOpen(false);
+      toast.success('Stranka je bila izbrisana');
+    },
+    onError: () => {
+      toast.error('Napaka pri brisanju stranke');
     }
   });
   
@@ -137,6 +149,17 @@ const CustomersPage = () => {
       totalPurchases: 0,
     });
     setIsEditDialogOpen(true);
+  };
+  
+  const handleDeleteClick = (customer: Customer) => {
+    setCustomerToDelete(customer);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (customerToDelete) {
+      deleteMutation.mutate(customerToDelete.id);
+    }
   };
   
   const onSubmit = (data: CustomerFormValues) => {
@@ -218,7 +241,12 @@ const CustomersPage = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-red-500">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500"
+                          onClick={() => handleDeleteClick(customer)}
+                        >
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>
@@ -241,21 +269,46 @@ const CustomersPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{currentCustomer ? 'Uredi stranko' : 'Dodaj novo stranko'}</DialogTitle>
-            <DialogDescription>
-              {currentCustomer ? 'Spremenite podatke stranke' : 'Vnesite podatke nove stranke'}
-            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ime</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priimek</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
                 <FormField
                   control={form.control}
-                  name="firstName"
+                  name="companyName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ime</FormLabel>
+                      <FormLabel>Ime podjetja (neobvezno)</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value || ''} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -263,121 +316,119 @@ const CustomersPage = () => {
                 
                 <FormField
                   control={form.control}
-                  name="lastName"
+                  name="vatId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priimek</FormLabel>
+                      <FormLabel>ID za DDV (neobvezno)</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value || ''} />
                       </FormControl>
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-poštni naslov</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefonska številka</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="street"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ulica</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mesto</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="zipCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Poštna številka</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              
-              <FormField
-                control={form.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ime podjetja (neobvezno)</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="vatId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID za DDV (neobvezno)</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-poštni naslov</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefonska številka</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="street"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ulica</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mesto</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Poštna številka</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" />
-                Shrani
-              </Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="submit" disabled={saveMutation.isPending}>
+                  {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" />
+                  Shrani
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ali ste prepričani?</AlertDialogTitle>
+            <AlertDialogDescription>
+              To dejanje bo trajno izbrisalo stranko "{customerToDelete?.firstName} {customerToDelete?.lastName}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Prekliči</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleteMutation.isPending ? 
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                <Trash className="mr-2 h-4 w-4" />
+              }
+              Izbriši
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

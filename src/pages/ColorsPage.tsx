@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchColors, updateColorStatus, createColor, updateColor } from '@/services/api';
+import { fetchColors, updateColorStatus, createColor, updateColor, deleteColor } from '@/services/api';
 import { Color } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,13 +18,20 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Search, Plus, Edit, Trash, Power, Loader2, Save } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -47,6 +54,8 @@ const ColorsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentColor, setCurrentColor] = useState<Color | null>(null);
+  const [colorToDelete, setColorToDelete] = useState<Color | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const queryClient = useQueryClient();
   
@@ -81,19 +90,29 @@ const ColorsPage = () => {
   
   const saveMutation = useMutation({
     mutationFn: (data: ColorFormValues) => {
-      const colorData = {
-        title: data.title,
-        htmlColor: data.htmlColor,
-        thickness: data.thickness,
-        priceWithoutVat: data.priceWithoutVat,
-        priceWithVat: data.priceWithVat,
-        imageUrl: data.imageUrl
-      };
-      
+      // Calculate VAT price if not provided
+      if (data.priceWithoutVat && !data.priceWithVat) {
+        data.priceWithVat = data.priceWithoutVat * 1.22;
+      }
+
       if (data.id) {
-        return updateColor(data.id, colorData);
+        return updateColor(data.id, {
+          title: data.title,
+          htmlColor: data.htmlColor,
+          thickness: data.thickness,
+          priceWithoutVat: data.priceWithoutVat,
+          priceWithVat: data.priceWithVat,
+          imageUrl: data.imageUrl
+        });
       } else {
-        return createColor(colorData);
+        return createColor({
+          title: data.title,
+          htmlColor: data.htmlColor,
+          thickness: data.thickness,
+          priceWithoutVat: data.priceWithoutVat,
+          priceWithVat: data.priceWithVat,
+          imageUrl: data.imageUrl
+        });
       }
     },
     onSuccess: () => {
@@ -101,8 +120,21 @@ const ColorsPage = () => {
       setIsEditDialogOpen(false);
       toast.success(currentColor ? 'Barva posodobljena' : 'Barva dodana');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error saving color:', error);
       toast.error('Napaka pri shranjevanju barve');
+    }
+  });
+  
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteColor(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['colors'] });
+      setIsDeleteDialogOpen(false);
+      toast.success('Barva je bila izbrisana');
+    },
+    onError: () => {
+      toast.error('Napaka pri brisanju barve');
     }
   });
   
@@ -120,7 +152,7 @@ const ColorsPage = () => {
       priceWithoutVat: color.priceWithoutVat,
       priceWithVat: color.priceWithVat,
       active: color.active,
-      imageUrl: color.imageUrl,
+      imageUrl: color.imageUrl || '',
     });
     setIsEditDialogOpen(true);
   };
@@ -134,15 +166,23 @@ const ColorsPage = () => {
       priceWithoutVat: 0,
       priceWithVat: 0,
       active: true,
+      imageUrl: '',
     });
     setIsEditDialogOpen(true);
   };
   
-  const onSubmit = (data: ColorFormValues) => {
-    // Calculate VAT price if not provided
-    if (data.priceWithoutVat && !data.priceWithVat) {
-      data.priceWithVat = data.priceWithoutVat * 1.22;
+  const handleDeleteClick = (color: Color) => {
+    setColorToDelete(color);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (colorToDelete) {
+      deleteMutation.mutate(colorToDelete.id);
     }
+  };
+  
+  const onSubmit = (data: ColorFormValues) => {
     saveMutation.mutate(data);
   };
   
@@ -236,7 +276,12 @@ const ColorsPage = () => {
                         >
                           <Power className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-red-500">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500"
+                          onClick={() => handleDeleteClick(color)}
+                        >
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>
@@ -259,80 +304,18 @@ const ColorsPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{currentColor ? 'Uredi barvo' : 'Dodaj novo barvo'}</DialogTitle>
-            <DialogDescription>
-              {currentColor ? 'Spremenite lastnosti barve' : 'Vnesite podatke za novo barvo'}
-            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="space-y-4 py-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ime barve</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="htmlColor"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-1.5">
-                    <FormLabel>Barva</FormLabel>
-                    <div className="flex items-center gap-3">
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <div
-                        className="w-10 h-10 rounded border border-gray-300"
-                        style={{ backgroundColor: field.value || '#d2b48c' }}
-                      />
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="thickness"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Debelina (mm)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="space-y-4 py-4">
                 <FormField
                   control={form.control}
-                  name="priceWithoutVat"
+                  name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cena brez DDV (€)</FormLabel>
+                      <FormLabel>Ime barve</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01"
-                          {...field} 
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            field.onChange(value);
-                            // Update price with VAT
-                            form.setValue('priceWithVat', Number((value * 1.22).toFixed(2)));
-                          }}
-                        />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -340,51 +323,136 @@ const ColorsPage = () => {
                 
                 <FormField
                   control={form.control}
-                  name="priceWithVat"
+                  name="htmlColor"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1.5">
+                      <FormLabel>Barva</FormLabel>
+                      <div className="flex items-center gap-3">
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <div
+                          className="w-10 h-10 rounded border border-gray-300"
+                          style={{ backgroundColor: field.value || '#d2b48c' }}
+                        />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="thickness"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cena z DDV (€)</FormLabel>
+                      <FormLabel>Debelina (mm)</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
-                          step="0.01"
                           {...field} 
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            field.onChange(value);
-                            // Update price without VAT
-                            form.setValue('priceWithoutVat', Number((value / 1.22).toFixed(2)));
-                          }}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                     </FormItem>
                   )}
                 />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="priceWithoutVat"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cena brez DDV (€)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field} 
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              field.onChange(value);
+                              // Update price with VAT
+                              form.setValue('priceWithVat', Number((value * 1.22).toFixed(2)));
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="priceWithVat"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cena z DDV (€)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field} 
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              field.onChange(value);
+                              // Update price without VAT
+                              form.setValue('priceWithoutVat', Number((value / 1.22).toFixed(2)));
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL slike (neobvezno)</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
-              
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL slike (neobvezno)</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" />
-                Shrani
-              </Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="submit" disabled={saveMutation.isPending}>
+                  {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" />
+                  Shrani
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ali ste prepričani?</AlertDialogTitle>
+            <AlertDialogDescription>
+              To dejanje bo trajno izbrisalo barvo "{colorToDelete?.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Prekliči</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleteMutation.isPending ? 
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                <Trash className="mr-2 h-4 w-4" />
+              }
+              Izbriši
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
