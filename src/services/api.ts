@@ -71,6 +71,14 @@ export const fetchOrders = async (): Promise<Order[]> => {
   });
 };
 
+export const fetchOrderById = async (id: string): Promise<Order | null> => {
+  // Simulate API call
+  return new Promise((resolve) => {
+    const order = mockOrders.find(order => order.id === id);
+    setTimeout(() => resolve(order || null), 500);
+  });
+};
+
 export const createOrder = async (order: Omit<Order, 'id' | 'orderDate'>): Promise<Order> => {
   // Simulate API call with proper validation and error handling
   return new Promise((resolve, reject) => {
@@ -123,6 +131,58 @@ export const updateOrderStatus = async (id: string, status: Order['status']): Pr
       console.error('Error updating order status:', error);
       reject(error);
     }
+  });
+};
+
+export const updateOrder = async (id: string, orderData: Partial<Order>): Promise<Order> => {
+  // Simulate API call with proper validation and error handling
+  return new Promise((resolve, reject) => {
+    try {
+      const orderIndex = mockOrders.findIndex(order => order.id === id);
+      if (orderIndex === -1) {
+        reject(new Error('Naročilo ni najdeno'));
+        return;
+      }
+      
+      // Update order
+      mockOrders[orderIndex] = {
+        ...mockOrders[orderIndex],
+        ...orderData,
+      };
+      
+      console.log(`Order ${id} updated successfully`);
+      setTimeout(() => resolve(mockOrders[orderIndex]), 500);
+    } catch (error) {
+      console.error('Error updating order:', error);
+      reject(error);
+    }
+  });
+};
+
+export const deleteOrder = async (id: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const orderIndex = mockOrders.findIndex(order => order.id === id);
+      if (orderIndex === -1) {
+        reject(new Error('Naročilo ni najdeno'));
+        return;
+      }
+      
+      mockOrders.splice(orderIndex, 1);
+      console.log(`Order ${id} deleted successfully`);
+      setTimeout(() => resolve(), 500);
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      reject(error);
+    }
+  });
+};
+
+// Find customer by email
+export const findCustomerByEmail = async (email: string): Promise<Customer | null> => {
+  return new Promise((resolve) => {
+    const customer = mockCustomers.find(c => c.email && c.email.toLowerCase() === email.toLowerCase());
+    setTimeout(() => resolve(customer || null), 300);
   });
 };
 
@@ -198,7 +258,7 @@ export const deleteColor = async (id: string): Promise<void> => {
   });
 };
 
-// Email service mock with enhanced logging and return values
+// Email service mock
 export const sendOrderEmail = async (
   type: 'new' | 'progress' | 'completed',
   order: Order,

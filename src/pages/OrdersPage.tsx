@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchOrders, updateOrderStatus, sendOrderEmail } from '@/services/api';
-import { Order } from '@/types';
+import { fetchOrders, updateOrderStatus, sendOrderEmail, updateOrder, deleteOrder } from '@/services/api';
+import { Order, Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,16 +23,21 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Search, Eye, Loader2 } from 'lucide-react';
+import { Search, Eye, Loader2, Edit, Trash2, FilePenLine } from 'lucide-react';
 import { mockCustomers } from '@/data/mockData';
+import OrderEditForm from '@/components/orders/OrderEditForm';
 
 const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
+  const [editOrder, setEditOrder] = useState<Order | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   
   const queryClient = useQueryClient();
   
@@ -78,8 +84,49 @@ const OrdersPage = () => {
     }
   });
   
+  const updateOrderMutation = useMutation({
+    mutationFn: (orderData: { id: string, data: Partial<Order> }) => 
+      updateOrder(orderData.id, orderData.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Naročilo je uspešno posodobljeno');
+      setEditOrder(null);
+    },
+    onError: (error) => {
+      console.error('Error updating order:', error);
+      toast.error('Ni bilo mogoče posodobiti naročila');
+    }
+  });
+  
+  const deleteOrderMutation = useMutation({
+    mutationFn: (id: string) => deleteOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Naročilo je uspešno izbrisano');
+      setOrderToDelete(null);
+    },
+    onError: (error) => {
+      console.error('Error deleting order:', error);
+      toast.error('Ni bilo mogoče izbrisati naročila');
+    }
+  });
+  
   const handleStatusChange = (orderId: string, status: Order['status']) => {
     updateStatusMutation.mutate({ id: orderId, status });
+  };
+  
+  const handleUpdateOrder = (updatedOrder: Partial<Order>) => {
+    if (!editOrder) return;
+    
+    updateOrderMutation.mutate({
+      id: editOrder.id,
+      data: updatedOrder
+    });
+  };
+  
+  const handleDeleteOrder = () => {
+    if (!orderToDelete) return;
+    deleteOrderMutation.mutate(orderToDelete.id);
   };
   
   const filteredOrders = orders?.filter(order =>
@@ -203,8 +250,25 @@ const OrdersPage = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setViewOrder(order)}
+                          title="Pogled"
                         >
                           <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditOrder(order)}
+                          title="Urejanje"
+                        >
+                          <FilePenLine className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setOrderToDelete(order)}
+                          title="Izbriši"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                         <Select
                           value={order.status}
@@ -235,6 +299,7 @@ const OrdersPage = () => {
         )}
       </div>
       
+      {/* View Order Dialog */}
       <Dialog open={!!viewOrder} onOpenChange={(open) => !open && setViewOrder(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -295,6 +360,46 @@ const OrdersPage = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Order Dialog */}
+      <Dialog open={!!editOrder} onOpenChange={(open) => !open && setEditOrder(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Uredi naročilo #{editOrder?.id}</DialogTitle>
+            <DialogDescription>
+              Spremenite podrobnosti naročila
+            </DialogDescription>
+          </DialogHeader>
+          {editOrder && (
+            <OrderEditForm 
+              order={editOrder} 
+              onSubmit={handleUpdateOrder} 
+              onCancel={() => setEditOrder(null)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Order Confirmation Dialog */}
+      <Dialog open={!!orderToDelete} onOpenChange={(open) => !open && setOrderToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Izbriši naročilo</DialogTitle>
+            <DialogDescription>
+              Ali ste prepričani, da želite izbrisati naročilo #{orderToDelete?.id}?
+              Tega dejanja ni mogoče razveljaviti.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOrderToDelete(null)}>
+              Prekliči
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteOrder}>
+              Izbriši naročilo
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

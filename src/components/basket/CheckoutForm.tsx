@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBasket } from '@/context/BasketContext';
-import { createOrder, sendOrderEmail, createCustomer } from '@/services/api';
+import { createOrder, sendOrderEmail, createCustomer, findCustomerByEmail } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -65,6 +66,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const [confirmationLoading, setConfirmationLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [braintreeReady, setBraintreeReady] = useState(false);
+  const [existingCustomer, setExistingCustomer] = useState<{ id: string; name: string } | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -86,6 +88,45 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   });
   
   const paymentMethod = form.watch('paymentMethod');
+  const email = form.watch('email');
+  
+  // Check for existing customer when email changes
+  useEffect(() => {
+    const checkExistingCustomer = async () => {
+      if (email && email.includes('@') && email.includes('.')) {
+        try {
+          const customer = await findCustomerByEmail(email);
+          if (customer) {
+            setExistingCustomer({
+              id: customer.id,
+              name: `${customer.firstName} ${customer.lastName}`
+            });
+            
+            // Optionally pre-fill the form with customer data
+            form.setValue('firstName', customer.firstName);
+            form.setValue('lastName', customer.lastName);
+            form.setValue('companyName', customer.companyName || '');
+            form.setValue('vatId', customer.vatId || '');
+            form.setValue('street', customer.street);
+            form.setValue('city', customer.city);
+            form.setValue('zipCode', customer.zipCode);
+            form.setValue('phone', customer.phone || '');
+            
+            toast.info(`Najdena obstoječa stranka: ${customer.firstName} ${customer.lastName}`);
+          } else {
+            setExistingCustomer(null);
+          }
+        } catch (error) {
+          console.error('Error checking for existing customer:', error);
+        }
+      }
+    };
+    
+    // Debounce the check with a timeout
+    const timeoutId = setTimeout(checkExistingCustomer, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [email, form]);
   
   useEffect(() => {
     // Simulate Braintree initialization
@@ -101,9 +142,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     setSubmitting(true);
     
     try {
-      // Simulate checking customer in database
-      const customerId = '12345'; // This would be a real ID in production
-      
       // Show confirmation dialog
       setShowConfirmation(true);
     } catch (error) {
@@ -121,21 +159,30 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       const formValues = form.getValues();
       const total = calculateTotal();
       
-      // Create or update customer record with all form data
-      const customerData = {
-        firstName: formValues.firstName,
-        lastName: formValues.lastName,
-        companyName: formValues.companyName,
-        vatId: formValues.vatId,
-        email: formValues.email,
-        phone: formValues.phone,
-        street: formValues.street,
-        city: formValues.city,
-        zipCode: formValues.zipCode,
-      };
+      let customerId: string;
       
-      // In a real app we would create or update the customer here
-      const customer = await createCustomer(customerData);
+      // If we have an existing customer, use their ID
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+        console.log(`Using existing customer ID: ${customerId}`);
+      } else {
+        // Create a new customer
+        const customerData = {
+          firstName: formValues.firstName,
+          lastName: formValues.lastName,
+          companyName: formValues.companyName,
+          vatId: formValues.vatId,
+          email: formValues.email,
+          phone: formValues.phone,
+          street: formValues.street,
+          city: formValues.city,
+          zipCode: formValues.zipCode,
+        };
+        
+        const newCustomer = await createCustomer(customerData);
+        customerId = newCustomer.id;
+        console.log(`Created new customer with ID: ${customerId}`);
+      }
       
       // Process payment if credit card is selected
       if (formValues.paymentMethod === 'credit_card') {
@@ -151,7 +198,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       
       // Create order
       const newOrder = await createOrder({
-        customerId: customer.id,
+        customerId: customerId,
         products: items,
         totalCostWithoutVat: total.withoutVat,
         totalCostWithVat: total.withVat,
