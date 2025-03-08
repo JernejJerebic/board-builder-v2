@@ -389,11 +389,7 @@ export const simulateSendEmail = async (
   console.log(`[${timestamp}] EMAIL TO ADMIN:`, adminEmailLog);
   
   // Add to application logs
-  addLog({
-    timestamp,
-    level: 'info',
-    message: `Emails sent for order #${order.id} (${type}): To customer ${customerEmail} and admin ${adminEmail}`
-  });
+  addLog('info', `Emails sent for order #${order.id} (${type}): To customer ${customerEmail} and admin ${adminEmail}`);
   
   return { 
     success: true, 
