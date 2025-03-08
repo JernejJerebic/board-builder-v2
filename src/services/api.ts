@@ -1,7 +1,7 @@
 import { Customer, Order, Color, Product } from '@/types';
 
-// API Base URL - Using full URL to avoid redirection issues
-const API_BASE_URL = 'https://lcc.si/aplikacija/api';
+// API Base URL - Using a relative URL to avoid CORS issues
+const API_BASE_URL = '/aplikacija/api';
 
 // Helper function for API requests
 async function apiRequest<T>(
@@ -18,6 +18,10 @@ async function apiRequest<T>(
     headers: {
       'Content-Type': 'application/json',
     },
+    // Add credentials to include cookies
+    credentials: 'include',
+    // Add mode to handle CORS
+    mode: 'cors',
   };
   
   if (data) {
@@ -25,6 +29,7 @@ async function apiRequest<T>(
   }
   
   try {
+    console.log(`Sending request to: ${url}`, options);
     const response = await fetch(url, options);
     
     if (!response.ok) {
