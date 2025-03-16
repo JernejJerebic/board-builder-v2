@@ -31,6 +31,24 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({ selectedColor, onSelectCo
     setOpen(false);
   };
 
+  const renderColorPreview = (color: Color) => {
+    if (color.imageUrl) {
+      return (
+        <div 
+          className="w-8 h-8 rounded border border-gray-300 bg-cover bg-center" 
+          style={{ backgroundImage: `url(${color.imageUrl})` }}
+        />
+      );
+    } else {
+      return (
+        <div 
+          className="w-8 h-8 rounded border border-gray-300" 
+          style={{ backgroundColor: color.htmlColor || '#d2b48c' }}
+        />
+      );
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -40,10 +58,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({ selectedColor, onSelectCo
         >
           {selectedColor ? (
             <div className="flex items-center gap-2">
-              <div 
-                className="w-8 h-8 rounded border border-gray-300" 
-                style={{ backgroundColor: selectedColor.htmlColor || '#d2b48c' }}
-              />
+              {renderColorPreview(selectedColor)}
               <span>{selectedColor.title} ({selectedColor.thickness}mm)</span>
             </div>
           ) : (
@@ -76,10 +91,17 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({ selectedColor, onSelectCo
                 onClick={() => handleColorSelect(color)}
               >
                 <div className="flex items-center gap-2 w-full">
-                  <div 
-                    className="w-10 h-10 rounded border border-gray-300" 
-                    style={{ backgroundColor: color.htmlColor || '#d2b48c' }}
-                  />
+                  {color.imageUrl ? (
+                    <div 
+                      className="w-10 h-10 rounded border border-gray-300 bg-cover bg-center" 
+                      style={{ backgroundImage: `url(${color.imageUrl})` }}
+                    />
+                  ) : (
+                    <div 
+                      className="w-10 h-10 rounded border border-gray-300" 
+                      style={{ backgroundColor: color.htmlColor || '#d2b48c' }}
+                    />
+                  )}
                   <div className="text-left">
                     <p className="font-medium">{color.title}</p>
                     <p className="text-sm text-gray-500">{color.thickness}mm - €{color.priceWithVat.toFixed(2)}</p>

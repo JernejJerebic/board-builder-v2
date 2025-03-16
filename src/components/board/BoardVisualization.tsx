@@ -61,13 +61,23 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           style={{
             width: `${visualWidth}px`,
             height: `${visualLength}px`,
-            backgroundColor: color.htmlColor || '#d2b48c',
             position: 'relative',
             transformStyle: 'preserve-3d',
             transform: `perspective(800px) rotateX(30deg)`,
             boxShadow: `0 ${thickness / 2}px ${thickness}px rgba(0,0,0,0.3)`
           }}
         >
+          {/* Board background - using image if available, otherwise color */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              backgroundColor: color.imageUrl ? 'transparent' : (color.htmlColor || '#d2b48c'),
+              backgroundImage: color.imageUrl ? `url(${color.imageUrl})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          />
+          
           {/* Board borders */}
           {borders.top && (
             <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700"></div>
@@ -82,10 +92,10 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
           )}
 
-          {/* Drilling holes - Updated to top and bottom sides */}
+          {/* Drilling holes - Only on top side */}
           {drilling && (
             <>
-              {/* Top holes */}
+              {/* Top holes only */}
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
@@ -98,22 +108,6 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                 style={{
                   left: `${visualWidth / 2 + 20}px`,
                   top: '20px'
-                }}
-              ></div>
-              
-              {/* Bottom holes */}
-              <div
-                className="absolute w-3 h-3 rounded-full bg-black"
-                style={{
-                  left: `${visualWidth / 2 - 5}px`,
-                  bottom: '20px'
-                }}
-              ></div>
-              <div
-                className="absolute w-3 h-3 rounded-full bg-black"
-                style={{
-                  left: `${visualWidth / 2 + 20}px`,
-                  bottom: '20px'
                 }}
               ></div>
             </>
