@@ -38,7 +38,7 @@ const Index = () => {
   
   return (
     <div className="space-y-8">
-      <div>
+      <div className="text-left">
         <h1 className="text-3xl font-bold mb-2">Naročilo razreza</h1>
         <p className="text-gray-500">Oblikujte svojo leseno ploščo po meri z izbiro materiala, dimenzij in dodatnih možnosti</p>
       </div>

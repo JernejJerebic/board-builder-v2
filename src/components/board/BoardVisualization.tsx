@@ -50,6 +50,10 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     );
   }
 
+  // Calculate the position of holes (100mm from adjacent sides)
+  const holeSize = 3; // Size of hole in pixels
+  const holeDistanceFromEdge = 100 * ratio; // 100mm from the edge, scaled by ratio
+  
   return (
     <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 relative overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center">
@@ -64,7 +68,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             position: 'relative',
             transformStyle: 'preserve-3d',
             transform: `perspective(800px) rotateX(30deg)`,
-            boxShadow: `0 ${thickness / 2}px ${thickness}px rgba(0,0,0,0.3)`
+            // Removed box shadow
           }}
         >
           {/* Board background - using image if available, otherwise color */}
@@ -92,49 +96,52 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
           )}
 
-          {/* Drilling holes - Only on top side */}
+          {/* Drilling holes - 100mm from adjacent sides, always on top */}
           {drilling && (
             <>
-              {/* Top holes only */}
+              {/* Left hole - 100mm from left edge */}
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
-                  left: `${visualWidth / 2 - 5}px`,
-                  top: '20px'
+                  left: `${holeDistanceFromEdge - holeSize/2}px`,
+                  top: '20px',
+                  zIndex: 10 // Ensure holes are always on top
                 }}
               ></div>
+              {/* Right hole - 100mm from right edge */}
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
-                  left: `${visualWidth / 2 + 20}px`,
-                  top: '20px'
+                  right: `${holeDistanceFromEdge - holeSize/2}px`,
+                  top: '20px',
+                  zIndex: 10 // Ensure holes are always on top
                 }}
               ></div>
             </>
           )}
 
-          {/* Thickness visualization (front edge) */}
+          {/* Thickness visualization (front edge) - increased thickness */}
           <div
             style={{
               position: 'absolute',
-              bottom: `-${thickness * ratio}px`,
+              bottom: `-${thickness * ratio * 1.2}px`, // Increased thickness by 20%
               left: 0,
               right: 0,
-              height: `${thickness * ratio}px`,
+              height: `${thickness * ratio * 1.2}px`, // Increased thickness by 20%
               backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -20) : '#b69b7d',
               transform: 'rotateX(-90deg)',
               transformOrigin: 'top',
             }}
           ></div>
 
-          {/* Thickness visualization (side edge) */}
+          {/* Thickness visualization (side edge) - increased thickness */}
           <div
             style={{
               position: 'absolute',
-              right: `-${thickness * ratio}px`,
+              right: `-${thickness * ratio * 1.2}px`, // Increased thickness by 20%
               top: 0,
               bottom: 0,
-              width: `${thickness * ratio}px`,
+              width: `${thickness * ratio * 1.2}px`, // Increased thickness by 20%
               backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -40) : '#8c7a63',
               transform: 'rotateY(90deg)',
               transformOrigin: 'left',

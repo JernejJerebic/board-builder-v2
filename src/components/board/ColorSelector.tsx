@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -70,6 +71,9 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({ selectedColor, onSelectCo
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Izberite barvo materiala</DialogTitle>
+          <DialogDescription>
+            Izberite material in barvo plošče za vaše naročilo.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto py-4">
           {isLoading ? (
