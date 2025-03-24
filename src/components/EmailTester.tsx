@@ -46,13 +46,32 @@ const EmailTester = () => {
     setLogs([`[${new Date().toISOString()}] Pošiljanje testne e-pošte na ${email}...`]);
     
     try {
+      // Current timestamp for the test
+      const currentTime = new Date().toLocaleTimeString();
+      const currentDateTime = new Date().toLocaleString();
+      
+      // Create HTML test message
+      const htmlMessage = `
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px;">
+          <h2 style="color: #1D6EC1;">Test Email</h2>
+          <p>To je testna e-pošta poslana ob ${currentDateTime}.</p>
+          <ul style="list-style-type: circle; padding-left: 20px;">
+            <li>To sporočilo je v HTML formatu</li>
+            <li>Preverjamo, če se pravilno prikaže</li>
+            <li>Vsebuje <strong>poudarjen tekst</strong> in <em>ležeč tekst</em></li>
+          </ul>
+          <p><a href="https://lcc.si" style="color: #1D6EC1;">Povezava do spletne strani</a></p>
+        </div>
+      `;
+      
       // Prepare template parameters
       const templateParams = {
         to_email: email,
-        subject: `Test Email ${new Date().toLocaleTimeString()}`,
-        message: `To je testna e-pošta poslana ob ${new Date().toLocaleString()}.`,
+        subject: `Test Email ${currentTime}`,
+        message: htmlMessage,
         from_name: 'LCC Naročilo razreza',
-        reply_to: 'info@lcc.si'
+        reply_to: 'info@lcc.si',
+        html_content: true // Add a flag to indicate HTML content
       };
       
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Vzpostavljanje povezave z EmailJS...`]);
@@ -73,14 +92,15 @@ const EmailTester = () => {
         `[${new Date().toISOString()}] Odgovor strežnika: ${result.text}`,
         `[${new Date().toISOString()}] Status: ${result.status}`,
         `[${new Date().toISOString()}] Zadeva: ${templateParams.subject}`,
-        `[${new Date().toISOString()}] Vsebina: ${templateParams.message}`
+        `[${new Date().toISOString()}] Vsebina poslana kot HTML format`
       ]);
       
       addLog('info', 'Test email sent', {
         recipient: email,
         emailId: emailId,
         status: result.status,
-        response: result.text
+        response: result.text,
+        isHtml: true
       });
       
       toast.success("E-pošta poslana", {

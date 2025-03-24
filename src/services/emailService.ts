@@ -47,7 +47,8 @@ const sendEmail = async (
       subject: subject,
       message: body,
       from_name: 'LCC Naročilo razreza',
-      reply_to: 'info@lcc.si'
+      reply_to: 'info@lcc.si',
+      html_content: isHtml // Add a flag to indicate HTML content
     };
     
     // Send email
@@ -218,7 +219,8 @@ export const sendOrderEmail = async (
     const customerResult = await sendEmail(
       customerEmail,
       customerEmailContent.subject,
-      customerEmailContent.body
+      customerEmailContent.body,
+      true // Always send as HTML
     );
     
     // Create and send admin email
@@ -230,7 +232,8 @@ export const sendOrderEmail = async (
     const adminResult = await sendEmail(
       adminEmail,
       adminEmailContent.subject,
-      adminEmailContent.body
+      adminEmailContent.body,
+      true // Always send as HTML
     );
     
     // Log detailed results
