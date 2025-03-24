@@ -1,4 +1,3 @@
-
 <?php
 // PHPMailer classes
 use PHPMailer\PHPMailer\PHPMailer;
@@ -6,7 +5,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 // Load Composer's autoloader
-require 'vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 /**
  * Send an email using PHPMailer
@@ -19,27 +18,25 @@ require 'vendor/autoload.php';
  * @param bool $isHtml Whether the message is HTML
  * @return array Status and message
  */
-function sendMail($to, $subject, $message, $fromName = 'LCC Naročilo razreza', $fromEmail = 'info@lcc-razrez.si', $isHtml = false) {
+function sendMail($to, $subject, $message, $fromName = 'LCC Naročilo razreza', $fromEmail = 'info@lcc.si', $isHtml = false) {
     try {
         // Create a new PHPMailer instance
         $mail = new PHPMailer(true);
         
         // Server settings
-        $mail->isSMTP();                                      // Send using SMTP
-        $mail->Host       = 'smtp.example.com';               // SMTP server
-        $mail->SMTPAuth   = true;                             // Enable SMTP authentication
-        $mail->Username   = 'your-smtp-username';             // SMTP username
-        $mail->Password   = 'your-smtp-password';             // SMTP password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;   // Enable TLS encryption
-        $mail->Port       = 587;                              // TCP port to connect to
-        $mail->CharSet    = 'UTF-8';                          // Set character encoding
+        $mail->CharSet = "UTF-8";
+        $mail->isMail();              // Use PHP mail() function
+        $mail->Host = 'lcc.si';       // SMTP server
+        $mail->SMTPAuth = false;      // No SMTP authentication needed as per your config
+        $mail->SMTPSecure = 'tls';    // Enable TLS encryption
+        $mail->Port = 465;            // TCP port to connect to
         
         // Recipients
         $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($to);                               // Add a recipient
+        $mail->addAddress($to);       // Add a recipient
         
         // Content
-        $mail->isHTML($isHtml);                               // Set email format to HTML or plain text
+        $mail->isHTML($isHtml);       // Set email format to HTML or plain text
         $mail->Subject = $subject;
         $mail->Body    = $message;
         
@@ -82,7 +79,7 @@ function sendMail($to, $subject, $message, $fromName = 'LCC Naročilo razreza', 
  * @param string $fromEmail Sender email
  * @return array Status and message
  */
-function sendHtmlMail($to, $subject, $htmlContent, $fromName = 'LCC Naročilo razreza', $fromEmail = 'info@lcc-razrez.si') {
+function sendHtmlMail($to, $subject, $htmlContent, $fromName = 'LCC Naročilo razreza', $fromEmail = 'info@lcc.si') {
     // Standard email template with logo and styling
     $emailTemplate = '
     <!DOCTYPE html>
@@ -161,8 +158,8 @@ function sendHtmlMail($to, $subject, $htmlContent, $fromName = 'LCC Naročilo ra
                 ' . $htmlContent . '
             </div>
             <div class="footer">
-                <p>&copy; ' . date('Y') . ' LCC Naročilo razreza. Vse pravice pridržane.</p>
-                <p>Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc-razrez.si">info@lcc-razrez.si</a> ali po telefonu na 040 123 456.</p>
+                <p>&copy; ' . date('Y') . ' LCC Naro��ilo razreza. Vse pravice pridržane.</p>
+                <p>Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a> ali po telefonu na 040 123 456.</p>
             </div>
         </div>
     </body>
