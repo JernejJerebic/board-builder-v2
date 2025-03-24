@@ -9,7 +9,7 @@ interface EmailNoticeProps {
 
 const EmailNotice: React.FC<EmailNoticeProps> = ({ className = '' }) => {
   return (
-    <Alert variant="info" className={className}>
+    <Alert className={className}>
       <Info className="h-4 w-4" />
       <AlertTitle>Pomembno obvestilo</AlertTitle>
       <AlertDescription>

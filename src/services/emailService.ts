@@ -1,11 +1,15 @@
-import axios from 'axios';
-import { toast } from 'sonner';
 import { Order } from '@/types';
 import { addLog } from '@/services/localStorage';
+import { toast } from 'sonner';
+import emailjs from 'emailjs-com';
+
+// EmailJS configuration
+const EMAILJS_SERVICE_ID = 'service_email_id';
+const EMAILJS_TEMPLATE_ID = 'template_email_id';
+const EMAILJS_USER_ID = 'user_id';
 
 /**
- * Client-side email simulation service
- * This implementation logs email attempts but doesn't actually send emails as PHP endpoints are not available
+ * Sends an email using EmailJS
  */
 const sendEmail = async (
   to: string,
@@ -26,59 +30,78 @@ const sendEmail = async (
       { 
         requestId,
         subject, 
-        method: 'client-side-simulation',
+        method: 'emailjs',
         timestamp: new Date().toISOString(),
         contentType: isHtml ? 'HTML' : 'Text'
       }
     );
     
-    // In a live environment, we would send an actual email here
-    // But since the PHP endpoints are not accessible, we'll just simulate success
+    // Check if EmailJS is configured
+    if (EMAILJS_USER_ID === 'user_id' || 
+        EMAILJS_SERVICE_ID === 'service_email_id' || 
+        EMAILJS_TEMPLATE_ID === 'template_email_id') {
+      throw new Error('EmailJS is not properly configured');
+    }
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Prepare template parameters
+    const templateParams = {
+      to_email: to,
+      subject: subject,
+      message: body,
+      from_name: 'LCC Naročilo razreza',
+      reply_to: 'info@lcc.si'
+    };
     
-    const simulatedLogId = `log_${Date.now()}`;
+    // Send email
+    const result = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      templateParams,
+      EMAILJS_USER_ID
+    );
     
-    // Log successful simulation
-    console.log(`[${requestId}] SUCCESS: Email simulated for ${to}`);
-    console.log(`[${requestId}] SIMULATION ID: ${simulatedLogId}`);
+    const emailId = `email_${Date.now()}`;
+    
+    // Log successful sending
+    console.log(`[${requestId}] SUCCESS: Email sent to ${to}`);
+    console.log(`[${requestId}] EMAIL ID: ${emailId}`);
+    console.log(`[${requestId}] SERVER RESPONSE: ${result.text}`);
     
     // Add detailed success log
     addLog(
       'info',
-      `E-pošta simulirana za naslov: ${to}`,
+      `E-pošta poslana na naslov: ${to}`,
       { 
         requestId,
-        simulationId: simulatedLogId,
+        emailId: emailId,
         subject,
-        service: 'client-side-simulation',
+        service: 'emailjs',
         timestamp: new Date().toISOString(),
-        responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`
+        responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`,
+        serverResponse: result.text,
+        serverStatus: result.status
       }
     );
     
     return {
       success: true,
-      message: `Email simulated for ${to}`,
-      logId: simulatedLogId
+      message: `Email sent to ${to}`,
+      logId: emailId
     };
   } catch (error) {
     // Detailed error logging
-    console.error(`[${requestId}] ERROR: Failed to simulate email for ${to}`, error);
+    console.error(`[${requestId}] ERROR: Failed to send email to ${to}`, error);
     
-    const errorMessage = axios.isAxiosError(error)
-      ? `${error.message}: ${JSON.stringify(error.response?.data || {})}`
-      : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     
     // Log error
     addLog(
       'error',
-      `Napaka pri simulaciji e-pošte za naslov: ${to}`,
+      `Napaka pri pošiljanju e-pošte na naslov: ${to}`,
       { 
         requestId,
         error: errorMessage,
-        method: 'client-side-simulation',
+        method: 'emailjs',
         timestamp: new Date().toISOString(),
         responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`
       }
@@ -155,8 +178,7 @@ const createEmailContent = (
 };
 
 /**
- * Main function to simulate sending order-related emails to both customer and admin
- * Since we can't actually send emails through PHP on this environment, we'll just log them
+ * Main function to send order-related emails to both customer and admin
  */
 export const sendOrderEmail = async (
   type: 'new' | 'progress' | 'completed',
@@ -166,7 +188,7 @@ export const sendOrderEmail = async (
   const timestamp = new Date().toISOString();
   const requestId = `order_email_${Date.now()}`;
   
-  console.log(`[${requestId}] START: Simulating ${type} order email for order ${order.id}`);
+  console.log(`[${requestId}] START: Sending ${type} order email for order ${order.id}`);
   console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: jerebic.jernej@gmail.com`);
   
   // Log the start of email sending process with more details
@@ -185,11 +207,18 @@ export const sendOrderEmail = async (
   );
   
   try {
+    // Check if EmailJS is configured
+    if (EMAILJS_USER_ID === 'user_id' || 
+        EMAILJS_SERVICE_ID === 'service_email_id' || 
+        EMAILJS_TEMPLATE_ID === 'template_email_id') {
+      throw new Error('EmailJS is not properly configured');
+    }
+    
     // Create and send customer email
     console.log(`[${requestId}] CUSTOMER: Creating email content for ${customerEmail}`);
     const customerEmailContent = createEmailContent(type, order, false);
     
-    console.log(`[${requestId}] CUSTOMER: Simulating email to ${customerEmail}`);
+    console.log(`[${requestId}] CUSTOMER: Sending email to ${customerEmail}`);
     const customerResult = await sendEmail(
       customerEmail,
       customerEmailContent.subject,
@@ -201,7 +230,7 @@ export const sendOrderEmail = async (
     console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
     const adminEmailContent = createEmailContent(type, order, true);
     
-    console.log(`[${requestId}] ADMIN: Simulating email to ${adminEmail}`);
+    console.log(`[${requestId}] ADMIN: Sending email to ${adminEmail}`);
     const adminResult = await sendEmail(
       adminEmail,
       adminEmailContent.subject,
@@ -210,24 +239,24 @@ export const sendOrderEmail = async (
     
     // Log detailed results
     if (customerResult.success) {
-      console.log(`[${requestId}] CUSTOMER SUCCESS: Email simulated for ${customerEmail}, SimulationID: ${customerResult.logId || 'N/A'}`);
+      console.log(`[${requestId}] CUSTOMER SUCCESS: Email sent to ${customerEmail}, EmailID: ${customerResult.logId || 'N/A'}`);
     } else {
-      console.error(`[${requestId}] CUSTOMER ERROR: Failed to simulate email for ${customerEmail}: ${customerResult.message}`);
+      console.error(`[${requestId}] CUSTOMER ERROR: Failed to send email to ${customerEmail}: ${customerResult.message}`);
     }
     
     if (adminResult.success) {
-      console.log(`[${requestId}] ADMIN SUCCESS: Email simulated for ${adminEmail}, SimulationID: ${adminResult.logId || 'N/A'}`);
+      console.log(`[${requestId}] ADMIN SUCCESS: Email sent to ${adminEmail}, EmailID: ${adminResult.logId || 'N/A'}`);
     } else {
-      console.error(`[${requestId}] ADMIN ERROR: Failed to simulate email for ${adminEmail}: ${adminResult.message}`);
+      console.error(`[${requestId}] ADMIN ERROR: Failed to send email to ${adminEmail}: ${adminResult.message}`);
     }
     
     // Determine overall success and show appropriate notification
     if (customerResult.success && adminResult.success) {
-      console.log(`[${requestId}] COMPLETE: All emails simulated successfully`);
+      console.log(`[${requestId}] COMPLETE: All emails sent successfully`);
       
       addLog(
         'info',
-        `E-poštna sporočila simulirana za naročilo #${order.id}`,
+        `E-poštna sporočila poslana za naročilo #${order.id}`,
         {
           requestId,
           customerLogId: customerResult.logId,
@@ -237,21 +266,21 @@ export const sendOrderEmail = async (
         }
       );
       
-      toast.success("E-poštna sporočila simulirana", {
-        description: "V produkcijskem okolju bi bila e-pošta poslana na vaš e-poštni naslov in administratorja."
+      toast.success("E-poštna sporočila poslana", {
+        description: "E-pošta je bila poslana na vaš e-poštni naslov in administratorja."
       });
       
       return { 
         success: true, 
-        message: 'Email simulation completed successfully' 
+        message: 'Emails sent successfully' 
       };
     } else {
       // Partial or complete failure
-      console.error(`[${requestId}] PARTIAL FAILURE: Email simulation had issues`);
+      console.error(`[${requestId}] PARTIAL FAILURE: Email sending had issues`);
       
       addLog(
         'warning',
-        `Delno uspešna simulacija e-pošte za naročilo #${order.id}`,
+        `Delno uspešno pošiljanje e-pošte za naročilo #${order.id}`,
         {
           requestId,
           customerSuccess: customerResult.success,
@@ -261,22 +290,22 @@ export const sendOrderEmail = async (
         }
       );
       
-      toast.warning("Naročilo ustvarjeno, vendar e-poštna obvestila se ne morejo poslati", {
-        description: "E-poštne funkcije niso na voljo v tem okolju."
+      toast.warning("Naročilo ustvarjeno, vendar e-poštna obvestila se niso v celoti poslala", {
+        description: "Preverite dnevnik za podrobnosti."
       });
       
       return {
         success: true,
-        message: 'Order created but emails could not be sent in this environment'
+        message: 'Order created but some emails could not be sent'
       };
     }
   } catch (error) {
-    console.error(`[${requestId}] CRITICAL ERROR: Unexpected error during email simulation:`, error);
+    console.error(`[${requestId}] CRITICAL ERROR: Unexpected error during email sending:`, error);
     
     // Create a detailed error log
     addLog(
       'error',
-      `Nepričakovana napaka pri simulaciji e-pošte za naročilo #${order.id}`,
+      `Nepričakovana napaka pri pošiljanju e-pošte za naročilo #${order.id}`,
       { 
         requestId,
         error: error instanceof Error ? error.message : String(error),
@@ -289,8 +318,8 @@ export const sendOrderEmail = async (
     );
     
     // Show error notification
-    toast.error("Naročilo ustvarjeno, vendar ni e-poštnih obvestil", {
-      description: "E-poštne funkcije niso na voljo v tem okolju."
+    toast.error("Naročilo ustvarjeno, vendar e-poštna obvestila se niso poslala", {
+      description: "Preverite dnevnik za podrobnosti."
     });
     
     return { 
