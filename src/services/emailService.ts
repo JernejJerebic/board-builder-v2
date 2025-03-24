@@ -4,14 +4,7 @@ import { toast } from 'sonner';
 import { Order } from '@/types';
 import { addLog } from '@/services/localStorage';
 
-interface EmailRequest {
-  type: 'new' | 'progress' | 'completed';
-  orderId: string;
-  email: string;
-  adminEmail?: string;
-}
-
-// Function to send emails directly via an email service API
+// Function to send emails directly via EmailJS API
 const sendDirectEmail = async (
   to: string,
   subject: string,
@@ -19,7 +12,7 @@ const sendDirectEmail = async (
   isHtml = false
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Using EmailJS - this is a public key for demo purposes and will work without requiring your own account
+    // Using EmailJS - these are public keys for demo purposes
     const serviceId = 'service_w24mpbf';
     const templateId = 'template_wdlqh9s';
     const userId = 'gUeWLBl48n7LfyS2r';
@@ -38,7 +31,6 @@ const sendDirectEmail = async (
       { subject, method: 'emailjs' }
     );
     
-    // Direct API call to EmailJS service
     const response = await axios.post('https://api.emailjs.com/api/v1.0/email/send', {
       service_id: serviceId,
       template_id: templateId,
@@ -207,7 +199,7 @@ export const sendOrderEmail = async (
       console.log('Using PHP backend for email sending');
       
       // Send email to customer
-      const customerEmailRequest: EmailRequest = {
+      const customerEmailRequest = {
         type,
         orderId: order.id,
         email: customerEmail
@@ -232,7 +224,7 @@ export const sendOrderEmail = async (
       );
       
       // Send email to admin
-      const adminEmailRequest: EmailRequest = {
+      const adminEmailRequest = {
         type,
         orderId: order.id,
         email: 'jerebic.jernej@gmail.com',
