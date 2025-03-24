@@ -44,7 +44,7 @@ const sendEmail = async (
     // Prepare template parameters
     const templateParams = {
       to_email: to,
-      subject: subject,
+      title: subject,
       message: body,
       from_name: 'LCC Naročilo razreza',
       reply_to: 'info@lcc.si',
