@@ -108,9 +108,16 @@ function addLog($level, $message, $details = []) {
         'details' => $details
     ];
     
+    // Log directory - admin folder if called from admin, root otherwise
+    $logDir = strpos($_SERVER['SCRIPT_FILENAME'], '/admin/') !== false ? __DIR__ . '/../admin/' : __DIR__ . '/../';
+    $logFile = $logDir . 'logs.json';
+    
     // Get existing logs
-    $logsJson = file_exists('logs.json') ? file_get_contents('logs.json') : '[]';
-    $logs = json_decode($logsJson, true);
+    $logs = [];
+    if (file_exists($logFile)) {
+        $logsJson = file_get_contents($logFile);
+        $logs = json_decode($logsJson, true) ?: [];
+    }
     
     // Add new log
     array_unshift($logs, $logEntry);
@@ -121,10 +128,107 @@ function addLog($level, $message, $details = []) {
     }
     
     // Save logs
-    file_put_contents('logs.json', json_encode($logs, JSON_PRETTY_PRINT));
+    file_put_contents($logFile, json_encode($logs, JSON_PRETTY_PRINT));
     
     // Also log to error_log for server logs
     error_log("[{$logEntry['timestamp']}] [{$level}] {$message}");
+}
+
+// Function to send order status email notification
+function sendOrderStatusEmail($type, $orderId, $customerEmail) {
+    global $conn;
+    
+    try {
+        // Get order info
+        $orderStmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+        $orderStmt->bind_param("s", $orderId);
+        $orderStmt->execute();
+        $orderResult = $orderStmt->get_result();
+        
+        if ($orderResult->num_rows === 0) {
+            addLog('error', "Order not found for email notification", ['orderId' => $orderId]);
+            return false;
+        }
+        
+        $order = $orderResult->fetch_assoc();
+        
+        // Get customer info
+        $customerStmt = $conn->prepare("SELECT firstName, lastName FROM customers WHERE id = ?");
+        $customerStmt->bind_param("i", $order['customerId']);
+        $customerStmt->execute();
+        $customerResult = $customerStmt->get_result();
+        $customer = $customerResult->fetch_assoc();
+        
+        // Set up email data based on type
+        $subject = "";
+        $message = "";
+        
+        switch ($type) {
+            case 'progress':
+                $subject = "LCC Naročilo razreza - Naročilo #{$orderId} v obdelavi";
+                $message = "Spoštovani {$customer['firstName']} {$customer['lastName']},\n\n";
+                $message .= "Vaše naročilo (#{$orderId}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.\n\n";
+                $message .= "Podrobnosti naročila:\n";
+                $message .= "Skupni znesek: €" . number_format($order['totalCostWithVat'], 2) . "\n";
+                $message .= "Način dostave: " . ($order['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava') . "\n\n";
+                $message .= "Lep pozdrav,\nEkipa LCC Naročilo razreza";
+                break;
+                
+            case 'completed':
+                $subject = "LCC Naročilo razreza - Naročilo #{$orderId} zaključeno";
+                $message = "Spoštovani {$customer['firstName']} {$customer['lastName']},\n\n";
+                $message .= "Vaše naročilo (#{$orderId}) je zaključeno in pripravljeno " . ($order['shippingMethod'] === 'pickup' ? 'za prevzem' : 'za dostavo') . ".\n\n";
+                $message .= "Podrobnosti naročila:\n";
+                $message .= "Skupni znesek: €" . number_format($order['totalCostWithVat'], 2) . "\n";
+                $message .= "Način dostave: " . ($order['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava') . "\n\n";
+                $message .= "V primeru vprašanj nas kontaktirajte na info@lcc-razrez.si\n\n";
+                $message .= "Lep pozdrav,\nEkipa LCC Naročilo razreza";
+                break;
+                
+            default:
+                addLog('error', "Invalid email type", ['type' => $type, 'orderId' => $orderId]);
+                return false;
+        }
+        
+        // Set up email headers
+        $headers = 'From: LCC Naročilo razreza <info@lcc-razrez.si>' . "\r\n";
+        $headers .= 'Reply-To: info@lcc-razrez.si' . "\r\n";
+        $headers .= 'MIME-Version: 1.0' . "\r\n";
+        $headers .= 'Content-type: text/plain; charset=UTF-8' . "\r\n";
+        
+        // Log the email information
+        error_log("Attempting to send status email: Type={$type}, OrderID={$orderId}, To={$customerEmail}");
+        error_log("Subject: {$subject}");
+        error_log("Message: {$message}");
+        
+        // Send the email
+        $mailSent = mail($customerEmail, $subject, $message, $headers);
+        
+        if ($mailSent) {
+            addLog('info', "Status email sent successfully", [
+                'type' => $type,
+                'orderId' => $orderId,
+                'recipient' => $customerEmail
+            ]);
+            return true;
+        } else {
+            $error = error_get_last();
+            addLog('error', "Failed to send status email", [
+                'type' => $type,
+                'orderId' => $orderId,
+                'recipient' => $customerEmail,
+                'error' => $error ? $error['message'] : 'Unknown error'
+            ]);
+            return false;
+        }
+    } catch (Exception $e) {
+        addLog('error', "Exception while sending status email", [
+            'type' => $type,
+            'orderId' => $orderId,
+            'error' => $e->getMessage()
+        ]);
+        return false;
+    }
 }
 
 // Handle email sending
