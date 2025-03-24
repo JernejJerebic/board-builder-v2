@@ -13,8 +13,9 @@ const EmailNotice: React.FC<EmailNoticeProps> = ({ className = '' }) => {
       <Info className="h-4 w-4" />
       <AlertTitle>Pomembno obvestilo</AlertTitle>
       <AlertDescription>
-        Za pravilno delovanje pošiljanja e-pošte mora biti konfiguriran EmailJS z ustreznimi ID-ji.
-        Trenutno je nastavljen Service ID: service_iqv96th, potrebujemo še pravilna Template ID in User ID.
+        EmailJS je zdaj konfiguriran z naslednjimi ID-ji:
+        Service ID: service_iqv96th, Template ID: template_2pd5z1i, User ID: QSWNF6DxGrTMaC3CI.
+        Elektronska pošta se bo poslala preko EmailJS storitve.
       </AlertDescription>
     </Alert>
   );

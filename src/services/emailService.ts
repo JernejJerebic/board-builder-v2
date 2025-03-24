@@ -1,4 +1,3 @@
-
 import { Order } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -6,8 +5,8 @@ import emailjs from 'emailjs-com';
 
 // EmailJS configuration
 const EMAILJS_SERVICE_ID = 'service_iqv96th';
-const EMAILJS_TEMPLATE_ID = 'template_email_id';
-const EMAILJS_USER_ID = 'user_id';
+const EMAILJS_TEMPLATE_ID = 'template_2pd5z1i';
+const EMAILJS_USER_ID = 'QSWNF6DxGrTMaC3CI';
 
 /**
  * Sends an email using EmailJS
@@ -39,7 +38,7 @@ const sendEmail = async (
     
     // Check if EmailJS is configured
     if (EMAILJS_USER_ID === 'user_id' || 
-        EMAILJS_SERVICE_ID === 'service_email_id' || 
+        EMAILJS_SERVICE_ID === 'service_iqv96th' || 
         EMAILJS_TEMPLATE_ID === 'template_email_id') {
       throw new Error('EmailJS is not properly configured');
     }
@@ -210,7 +209,7 @@ export const sendOrderEmail = async (
   try {
     // Check if EmailJS is configured
     if (EMAILJS_USER_ID === 'user_id' || 
-        EMAILJS_SERVICE_ID === 'service_email_id' || 
+        EMAILJS_SERVICE_ID === 'service_iqv96th' || 
         EMAILJS_TEMPLATE_ID === 'template_email_id') {
       throw new Error('EmailJS is not properly configured');
     }

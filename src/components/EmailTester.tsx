@@ -16,8 +16,8 @@ const EmailTester = () => {
   
   // EmailJS configuration
   const EMAILJS_SERVICE_ID = 'service_iqv96th';
-  const EMAILJS_TEMPLATE_ID = 'template_email_id';
-  const EMAILJS_USER_ID = 'user_id';
+  const EMAILJS_TEMPLATE_ID = 'template_2pd5z1i';
+  const EMAILJS_USER_ID = 'QSWNF6DxGrTMaC3CI';
   
   useEffect(() => {
     // Check if EmailJS is configured
