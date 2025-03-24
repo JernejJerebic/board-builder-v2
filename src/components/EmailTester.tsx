@@ -53,6 +53,9 @@ const EmailTester = () => {
       // Create HTML test message
       const htmlMessage = `
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" style="max-width: 200px; height: auto;">
+          </div>
           <h2 style="color: #1D6EC1;">Test Email</h2>
           <p>To je testna e-pošta poslana ob ${currentDateTime}.</p>
           <ul style="list-style-type: circle; padding-left: 20px;">
@@ -61,17 +64,19 @@ const EmailTester = () => {
             <li>Vsebuje <strong>poudarjen tekst</strong> in <em>ležeč tekst</em></li>
           </ul>
           <p><a href="https://lcc.si" style="color: #1D6EC1;">Povezava do spletne strani</a></p>
+          <p style="font-size: 14px; color: #666; margin-top: 20px;">Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si" style="color: #1D6EC1;">info@lcc.si</a> ali po telefonu na +386 7 393 07 00.</p>
         </div>
       `;
       
       // Prepare template parameters
       const templateParams = {
         to_email: email,
-        subject: `Test Email ${currentTime}`,
+        title: `Test Email ${currentTime}`,
         message: htmlMessage,
         from_name: 'LCC Naročilo razreza',
         reply_to: 'info@lcc.si',
-        html_content: true // Add a flag to indicate HTML content
+        html_content: true, // Add a flag to indicate HTML content
+        hideFooter: true // Add parameter to hide EmailJS footer
       };
       
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Vzpostavljanje povezave z EmailJS...`]);
@@ -91,7 +96,7 @@ const EmailTester = () => {
         `[${new Date().toISOString()}] E-pošta uspešno poslana (ID: ${emailId})`,
         `[${new Date().toISOString()}] Odgovor strežnika: ${result.text}`,
         `[${new Date().toISOString()}] Status: ${result.status}`,
-        `[${new Date().toISOString()}] Zadeva: ${templateParams.subject}`,
+        `[${new Date().toISOString()}] Zadeva: ${templateParams.title}`,
         `[${new Date().toISOString()}] Vsebina poslana kot HTML format`
       ]);
       

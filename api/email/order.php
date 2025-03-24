@@ -60,21 +60,21 @@ $message = "";
 
 if ($isAdmin) {
     // Admin notification
-    $subject = "Novo naročilo #{$orderId}";
+    $subject = "Novo naročilo";
     $message = createAdminEmailContent($orderId, $order, $customer);
 } else {
     // Customer email
     switch ($type) {
         case 'new':
-            $subject = "LCC Naročilo razreza - Novo naročilo #{$orderId}";
+            $subject = "LCC Naročilo razreza - Novo naročilo";
             $message = createCustomerOrderConfirmation($orderId, $order, $customer);
             break;
         case 'progress':
-            $subject = "LCC Naročilo razreza - Naročilo #{$orderId} v obdelavi";
+            $subject = "LCC Naročilo razreza - Naročilo v obdelavi";
             $message = createOrderStatusEmail('progress', $orderId, $order, $customer);
             break;
         case 'completed':
-            $subject = "LCC Naročilo razreza - Naročilo #{$orderId} zaključeno";
+            $subject = "LCC Naročilo razreza - Naročilo zaključeno";
             $message = createOrderStatusEmail('completed', $orderId, $order, $customer);
             break;
         default:
@@ -112,33 +112,46 @@ $conn->close();
 function createCustomerOrderConfirmation($orderId, $orderDetails, $customer) {
     $paymentMethod = getPaymentMethodName($orderDetails['paymentMethod']);
     $shippingMethod = $orderDetails['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava';
+    $customerName = htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']);
     
     return '
     <!DOCTYPE html>
     <html lang="sl">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; }
-            .container { max-width: 600px; margin: 0 auto; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eee; }
+            .logo { max-width: 200px; height: auto; }
             .content { padding: 20px 0; }
             h1 { color: #1D6EC1; }
-            table { width: 100%; border-collapse: collapse; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             table th, table td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+            .footer { text-align: center; padding: 20px 0; color: #888; font-size: 14px; border-top: 1px solid #eee; }
+            @media (max-width: 600px) {
+                .container { width: 100%; padding: 10px; }
+                table { font-size: 14px; }
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>Potrditev naročila #' . htmlspecialchars($orderId) . '</h1>
+                <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" class="logo">
+                <h1>Potrditev naročila</h1>
             </div>
             <div class="content">
-                <p>Spoštovani ' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . ',</p>
+                <p>Spoštovani ' . $customerName . ',</p>
                 <p>Zahvaljujemo se vam za vaše naročilo. V najkrajšem možnem času bomo začeli z obdelavo.</p>
                 
                 <h2>Podrobnosti naročila</h2>
                 <table>
+                    <tr>
+                        <th>Številka naročila:</th>
+                        <td>#' . htmlspecialchars($orderId) . '</td>
+                    </tr>
                     <tr>
                         <th>Skupni znesek:</th>
                         <td>€' . number_format($orderDetails['totalCostWithVat'], 2) . '</td>
@@ -156,6 +169,9 @@ function createCustomerOrderConfirmation($orderId, $orderDetails, $customer) {
                 <p>Za vsa vprašanja smo vam na voljo.</p>
                 <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
             </div>
+            <div class="footer">
+                <p>Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a> ali po telefonu na +386 7 393 07 00.</p>
+            </div>
         </div>
     </body>
     </html>';
@@ -167,13 +183,14 @@ function createCustomerOrderConfirmation($orderId, $orderDetails, $customer) {
 function createOrderStatusEmail($type, $orderId, $orderDetails, $customer) {
     $statusMessage = '';
     $title = '';
+    $customerName = htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']);
     
     if ($type === 'progress') {
         $title = 'Naročilo v obdelavi';
-        $statusMessage = "Vaše naročilo (#{$orderId}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.";
+        $statusMessage = "Vaše naročilo je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.";
     } else {
         $title = 'Naročilo zaključeno';
-        $statusMessage = "Vaše naročilo (#{$orderId}) je zaključeno in pripravljeno " . 
+        $statusMessage = "Vaše naročilo je zaključeno in pripravljeno " . 
             ($orderDetails['shippingMethod'] === 'pickup' ? 'za prevzem' : 'za dostavo') . ".";
     }
     
@@ -182,23 +199,31 @@ function createOrderStatusEmail($type, $orderId, $orderDetails, $customer) {
     <html lang="sl">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; }
-            .container { max-width: 600px; margin: 0 auto; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eee; }
+            .logo { max-width: 200px; height: auto; }
             .content { padding: 20px 0; }
             h1 { color: #1D6EC1; }
-            table { width: 100%; border-collapse: collapse; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             table th, table td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+            .footer { text-align: center; padding: 20px 0; color: #888; font-size: 14px; border-top: 1px solid #eee; }
+            @media (max-width: 600px) {
+                .container { width: 100%; padding: 10px; }
+                table { font-size: 14px; }
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>' . $title . ' #' . htmlspecialchars($orderId) . '</h1>
+                <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" class="logo">
+                <h1>' . $title . '</h1>
             </div>
             <div class="content">
-                <p>Spoštovani ' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . ',</p>
+                <p>Spoštovani ' . $customerName . ',</p>
                 <p>' . $statusMessage . '</p>
                 
                 <h2>Podrobnosti naročila</h2>
@@ -217,8 +242,11 @@ function createOrderStatusEmail($type, $orderId, $orderDetails, $customer) {
                     </tr>
                 </table>
                 
-                <p>V primeru vprašanj nas kontaktirajte na <a href="mailto:info@lcc-razrez.si">info@lcc-razrez.si</a>.</p>
+                <p>V primeru vprašanj nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a>.</p>
                 <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
+            </div>
+            <div class="footer">
+                <p>Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a> ali po telefonu na +386 7 393 07 00.</p>
             </div>
         </div>
     </body>
@@ -234,21 +262,29 @@ function createAdminEmailContent($orderId, $orderDetails, $customer) {
     <html lang="sl">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; }
-            .container { max-width: 600px; margin: 0 auto; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eee; }
+            .logo { max-width: 200px; height: auto; }
             .content { padding: 20px 0; }
             h1 { color: #1D6EC1; }
-            table { width: 100%; border-collapse: collapse; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             table th, table td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
             .button { display: inline-block; padding: 10px 20px; background-color: #1D6EC1; color: #ffffff; text-decoration: none; border-radius: 4px; }
+            .footer { text-align: center; padding: 20px 0; color: #888; font-size: 14px; border-top: 1px solid #eee; }
+            @media (max-width: 600px) {
+                .container { width: 100%; padding: 10px; }
+                table { font-size: 14px; }
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>Novo naročilo #' . htmlspecialchars($orderId) . '</h1>
+                <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" class="logo">
+                <h1>Novo naročilo</h1>
             </div>
             <div class="content">
                 <p>Prejeli ste novo naročilo <strong>#' . htmlspecialchars($orderId) . '</strong>.</p>
@@ -286,6 +322,9 @@ function createAdminEmailContent($orderId, $orderDetails, $customer) {
                 </table>
                 
                 <p><a href="https://your-domain.com/admin/order-detail.php?id=' . htmlspecialchars($orderId) . '" class="button">Oglejte si naročilo</a></p>
+            </div>
+            <div class="footer">
+                <p>Za dodatne informacije pokličite na +386 7 393 07 00.</p>
             </div>
         </div>
     </body>

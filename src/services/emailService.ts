@@ -1,3 +1,4 @@
+
 import { Order, Product } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -214,6 +215,9 @@ const createEmailContent = (
   // Base HTML structure for all emails
   const baseHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+      <div style="text-align: center; padding: 20px 0; border-bottom: 1px solid #eee;">
+        <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" style="max-width: 200px; height: auto;">
+      </div>
       <h2 style="color: #1D6EC1;">{TITLE}</h2>
       <p>Spoštovani ${recipient},</p>
       <p>{MESSAGE}</p>
