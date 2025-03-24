@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Order } from '@/types';
@@ -5,20 +6,31 @@ import { addLog } from '@/services/localStorage';
 
 /**
  * Simple, reliable email sending service that uses our PHP backend
- * This implementation relies on the server's mail() function for maximum compatibility
+ * This implementation includes advanced logging and error handling
  */
 const sendEmail = async (
   to: string,
   subject: string,
   body: string,
   isHtml = true
-): Promise<{ success: boolean; message: string }> => {
+): Promise<{ success: boolean; message: string; logId?: string }> => {
+  const requestId = `req_${Date.now()}`;
   try {
-    // Log the attempt
+    // Log the attempt with detailed information
+    console.log(`[${requestId}] ATTEMPT: Sending email to ${to}`);
+    console.log(`[${requestId}] SUBJECT: ${subject}`);
+    console.log(`[${requestId}] CONTENT TYPE: ${isHtml ? 'HTML' : 'Plain text'}`);
+    
     addLog(
       'info',
       `Pošiljanje e-pošte na naslov: ${to}`,
-      { subject, method: 'php-mail', timestamp: new Date().toISOString() }
+      { 
+        requestId,
+        subject, 
+        method: 'php-mail',
+        timestamp: new Date().toISOString(),
+        contentType: isHtml ? 'HTML' : 'Text'
+      }
     );
     
     // Send email using our PHP mail endpoint
@@ -29,42 +41,60 @@ const sendEmail = async (
       is_html: isHtml
     }, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Request-ID': requestId
       }
     });
 
-    console.log('Email sent via PHP mail():', response.data);
+    // Log successful response
+    console.log(`[${requestId}] SUCCESS: Email sent via PHP mail():`, response.data);
+    console.log(`[${requestId}] SERVER LOG ID: ${response.data.logId || 'Not provided'}`);
     
-    // Log success
+    // Add detailed success log
     addLog(
       'info',
       `E-pošta uspešno poslana na naslov: ${to}`,
       { 
+        requestId,
+        serverLogId: response.data.logId,
         subject,
         service: 'PHP-mail',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`
       }
     );
     
     return {
       success: true,
-      message: `Email sent to ${to} successfully`
+      message: `Email sent to ${to} successfully`,
+      logId: response.data.logId
     };
   } catch (error) {
-    console.error('Error sending email:', error);
+    // Detailed error logging
+    console.error(`[${requestId}] ERROR: Failed to send email to ${to}`, error);
     
+    // Extract as much information as possible from the error
     const errorMessage = axios.isAxiosError(error)
       ? `${error.message}: ${JSON.stringify(error.response?.data || {})}`
       : String(error);
+    
+    // Log server response if available
+    if (axios.isAxiosError(error) && error.response) {
+      console.error(`[${requestId}] SERVER RESPONSE:`, error.response.status, error.response.statusText);
+      console.error(`[${requestId}] SERVER DATA:`, error.response.data);
+    }
     
     // Log error
     addLog(
       'error',
       `Napaka pri pošiljanju e-pošte na naslov: ${to}`,
       { 
+        requestId,
         error: errorMessage,
         method: 'php-mail',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`,
+        serverData: axios.isAxiosError(error) ? error.response?.data : null
       }
     );
     
@@ -140,6 +170,7 @@ const createEmailContent = (
 
 /**
  * Main function to send order-related emails to both customer and admin
+ * Now with enhanced logging and error handling
  */
 export const sendOrderEmail = async (
   type: 'new' | 'progress' | 'completed',
@@ -147,18 +178,32 @@ export const sendOrderEmail = async (
   customerEmail: string
 ): Promise<{ success: boolean; message?: string }> => {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] Sending ${type} order email to ${customerEmail} for order ${order.id}`);
+  const requestId = `order_email_${Date.now()}`;
   
-  // Log the start of email sending process
+  console.log(`[${requestId}] START: Sending ${type} order email for order ${order.id}`);
+  console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: jerebic.jernej@gmail.com`);
+  
+  // Log the start of email sending process with more details
   addLog(
     'info',
     `Začetek pošiljanja e-pošte za naročilo #${order.id}`,
-    { type, customerEmail, orderId: order.id, timestamp }
+    { 
+      requestId,
+      type, 
+      customerEmail, 
+      orderId: order.id, 
+      timestamp,
+      orderTotal: order.totalCostWithVat,
+      productCount: order.products.length
+    }
   );
   
   try {
     // Create and send customer email
+    console.log(`[${requestId}] CUSTOMER: Creating email content for ${customerEmail}`);
     const customerEmailContent = createEmailContent(type, order, false);
+    
+    console.log(`[${requestId}] CUSTOMER: Sending email to ${customerEmail}`);
     const customerResult = await sendEmail(
       customerEmail,
       customerEmailContent.subject,
@@ -166,30 +211,46 @@ export const sendOrderEmail = async (
     );
     
     // Create and send admin email
-    // Using the provided email for admin
     const adminEmail = 'jerebic.jernej@gmail.com';
+    console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
     const adminEmailContent = createEmailContent(type, order, true);
+    
+    console.log(`[${requestId}] ADMIN: Sending email to ${adminEmail}`);
     const adminResult = await sendEmail(
       adminEmail,
       adminEmailContent.subject,
       adminEmailContent.body
     );
     
-    // Log results
+    // Log detailed results
     if (customerResult.success) {
-      console.log(`Email sent to customer: ${customerEmail}`);
+      console.log(`[${requestId}] CUSTOMER SUCCESS: Email sent to ${customerEmail}, LogID: ${customerResult.logId || 'N/A'}`);
     } else {
-      console.error(`Failed to send email to customer: ${customerResult.message}`);
+      console.error(`[${requestId}] CUSTOMER ERROR: Failed to send email to ${customerEmail}: ${customerResult.message}`);
     }
     
     if (adminResult.success) {
-      console.log(`Email sent to admin: ${adminEmail}`);
+      console.log(`[${requestId}] ADMIN SUCCESS: Email sent to ${adminEmail}, LogID: ${adminResult.logId || 'N/A'}`);
     } else {
-      console.error(`Failed to send email to admin: ${adminResult.message}`);
+      console.error(`[${requestId}] ADMIN ERROR: Failed to send email to ${adminEmail}: ${adminResult.message}`);
     }
     
     // Determine overall success and show appropriate notification
     if (customerResult.success && adminResult.success) {
+      console.log(`[${requestId}] COMPLETE: All emails sent successfully`);
+      
+      addLog(
+        'info',
+        `E-poštna sporočila uspešno poslana za naročilo #${order.id}`,
+        {
+          requestId,
+          customerLogId: customerResult.logId,
+          adminLogId: adminResult.logId,
+          type,
+          orderId: order.id
+        }
+      );
+      
       toast.success("E-poštna sporočila uspešno poslana", {
         description: "Potrditev naročila poslana na vaš e-poštni naslov in administratorja."
       });
@@ -200,6 +261,22 @@ export const sendOrderEmail = async (
       };
     } else if (customerResult.success || adminResult.success) {
       // At least one email sent successfully
+      console.log(`[${requestId}] PARTIAL: At least one email sent successfully`);
+      
+      addLog(
+        'warning',
+        `Delno uspešno pošiljanje e-pošte za naročilo #${order.id}`,
+        {
+          requestId,
+          customerSuccess: customerResult.success,
+          adminSuccess: adminResult.success,
+          type,
+          orderId: order.id,
+          customerError: !customerResult.success ? customerResult.message : null,
+          adminError: !adminResult.success ? adminResult.message : null
+        }
+      );
+      
       toast.warning("Delna napaka pri pošiljanju e-pošte", {
         description: "Vsaj eno e-poštno sporočilo je bilo uspešno poslano."
       });
@@ -210,6 +287,20 @@ export const sendOrderEmail = async (
       };
     } else {
       // Both emails failed
+      console.error(`[${requestId}] FAILURE: All emails failed to send`);
+      
+      addLog(
+        'error',
+        `Neuspešno pošiljanje e-pošte za naročilo #${order.id}`,
+        {
+          requestId,
+          customerError: customerResult.message,
+          adminError: adminResult.message,
+          type,
+          orderId: order.id
+        }
+      );
+      
       toast.error("Napaka pri pošiljanju e-pošte", {
         description: "Naročilo je bilo zabeleženo, vendar e-poštna sporočila niso bila poslana."
       });
@@ -220,14 +311,16 @@ export const sendOrderEmail = async (
       };
     }
   } catch (error) {
-    console.error(`[${timestamp}] Unexpected error during email sending:`, error);
+    console.error(`[${requestId}] CRITICAL ERROR: Unexpected error during email sending:`, error);
     
     // Create a detailed error log
     addLog(
       'error',
       `Nepričakovana napaka pri pošiljanju e-pošte za naročilo #${order.id}`,
       { 
+        requestId,
         error: error instanceof Error ? error.message : String(error),
+        stackTrace: error instanceof Error ? error.stack : undefined,
         customerEmail,
         adminEmail: 'jerebic.jernej@gmail.com',
         orderId: order.id,
@@ -246,4 +339,3 @@ export const sendOrderEmail = async (
     };
   }
 };
-
