@@ -8,9 +8,7 @@ import { Color } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const {
-    items
-  } = useBasket();
+  const { items } = useBasket();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   

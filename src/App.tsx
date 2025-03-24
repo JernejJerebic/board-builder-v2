@@ -8,7 +8,19 @@ import AppRoutes from "./AppRoutes";
 import { BasketProvider } from "./context/BasketContext";
 import { useEffect } from "react";
 
-const queryClient = new QueryClient();
+// Create a new query client with better error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 const App = () => {
   // Set global font size
@@ -30,7 +42,7 @@ const App = () => {
       <TooltipProvider>
         <BasketProvider>
           <Toaster />
-          <Sonner />
+          <Sonner position="top-right" expand={true} closeButton richColors />
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>

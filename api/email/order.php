@@ -3,10 +3,11 @@
 require_once '../config/database.php';
 require_once '../utils/utils.php';
 
-// Enable CORS - moved to the top to ensure it works for all responses
+// Enable CORS for all origins
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Max-Age: 86400"); // Cache preflight for 24 hours
 
 // Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -14,17 +15,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Now proceed with the regular request handling
-$method = $_SERVER['REQUEST_METHOD'];
-
-if ($method !== 'POST') {
-    sendError("Method not supported", 405);
+// Only proceed with POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not supported",
+        "method" => $_SERVER['REQUEST_METHOD']
+    ]);
+    exit;
 }
 
-$data = getRequestData();
+// Get the request content
+$rawData = file_get_contents('php://input');
+if (!$rawData) {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "No data provided in request"
+    ]);
+    exit;
+}
 
+// Parse JSON data
+$data = json_decode($rawData, true);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Invalid JSON data: " . json_last_error_msg(),
+        "raw" => $rawData
+    ]);
+    exit;
+}
+
+// Validate required fields
 if (!isset($data['type']) || !isset($data['orderId']) || !isset($data['email'])) {
-    sendError("Type, orderId, and email are required");
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Type, orderId, and email are required",
+        "data" => $data
+    ]);
+    exit;
 }
 
 $type = $data['type'];
@@ -40,7 +73,13 @@ $orderStmt->execute();
 $orderResult = $orderStmt->get_result();
 
 if ($orderResult->num_rows === 0) {
-    sendError("Order not found", 404);
+    http_response_code(404);
+    echo json_encode([
+        "success" => false,
+        "message" => "Order not found",
+        "orderId" => $orderId
+    ]);
+    exit;
 }
 
 $order = $orderResult->fetch_assoc();
@@ -74,7 +113,13 @@ if ($isAdminEmail) {
             $message = "Naročilo #{$orderId} je bilo označeno kot 'zaključeno'.\n\nPodrobnosti naročila:\nStranka: {$customer['firstName']} {$customer['lastName']}\nEmail: {$customer['email']}\nZnesek: €{$order['totalCostWithVat']}";
             break;
         default:
-            sendError("Invalid email type");
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Invalid email type",
+                "type" => $type
+            ]);
+            exit;
     }
 } else {
     // Customer email
@@ -92,7 +137,13 @@ if ($isAdminEmail) {
             $message = "Spoštovani {$customer['firstName']} {$customer['lastName']},\n\nVaše naročilo (#{$orderId}) je zaključeno in pripravljeno " . ($order['shippingMethod'] === 'pickup' ? 'za prevzem' : 'za dostavo') . ".\n\nPodrobnosti naročila:\nSkupni znesek: €{$order['totalCostWithVat']}\nNačin dostave: " . ($order['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava') . "\n\nV primeru vprašanj nas kontaktirajte na info@lcc-razrez.si\n\nLep pozdrav,\nEkipa LCC Naročilo razreza";
             break;
         default:
-            sendError("Invalid email type");
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Invalid email type",
+                "type" => $type
+            ]);
+            exit;
     }
 }
 
@@ -115,7 +166,8 @@ error_log("Headers: {$headers}");
 error_log("---- END EMAIL ----");
 
 // Return success response (simulating email sent)
-sendResponse([
+http_response_code(200);
+echo json_encode([
     "success" => true,
     "message" => "Email successfully sent to {$email}",
     "details" => [

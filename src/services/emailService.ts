@@ -35,8 +35,8 @@ export const sendOrderEmail = async (
     };
     
     // Adding timeout and better error handling for the API call
-    const customerResponse = await axios.post('/api/email/order.php', customerEmailRequest, {
-      timeout: 10000,
+    const customerResponse = await axios.post('./api/email/order.php', customerEmailRequest, {
+      timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -61,8 +61,8 @@ export const sendOrderEmail = async (
     };
     
     // Adding timeout and better error handling for the API call
-    const adminResponse = await axios.post('/api/email/order.php', adminEmailRequest, {
-      timeout: 10000,
+    const adminResponse = await axios.post('./api/email/order.php', adminEmailRequest, {
+      timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -121,7 +121,7 @@ export const sendOrderEmail = async (
     
     // Show toast notification of failure but with more details
     toast.error("Napaka pri pošiljanju e-pošte", {
-      description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju (${errorMessage}). Administrator bo obveščen o vašem naročilu.`
+      description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju. Administrator bo obveščen o vašem naročilu.`
     });
     
     // Create a fallback notification in logs that will be visible to admin
