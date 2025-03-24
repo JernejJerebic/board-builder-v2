@@ -1,4 +1,4 @@
-import { Order } from '@/types';
+import { Order, Product } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
 import emailjs from 'emailjs-com';
@@ -114,6 +114,64 @@ const sendEmail = async (
 };
 
 /**
+ * Creates an HTML table of product details
+ */
+const createProductsTable = (products: Product[]): string => {
+  let tableRows = '';
+  
+  products.forEach((product, index) => {
+    const borderInfo = [];
+    if (product.borders.top) borderInfo.push('zgoraj');
+    if (product.borders.right) borderInfo.push('desno');
+    if (product.borders.bottom) borderInfo.push('spodaj');
+    if (product.borders.left) borderInfo.push('levo');
+    
+    const borderText = borderInfo.length > 0 
+      ? borderInfo.join(', ') 
+      : 'brez';
+    
+    tableRows += `
+      <tr style="background-color: ${index % 2 === 0 ? '#f9f9f9' : '#ffffff'}">
+        <td style="padding: 8px; border: 1px solid #ddd;">${index + 1}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${product.color?.title || 'Barva ni na voljo'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${product.length} × ${product.width} × ${product.thickness} mm</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${product.surfaceArea} m²</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${borderText}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${product.drilling ? 'Da' : 'Ne'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${product.quantity}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">€${product.totalPrice.toFixed(2)}</td>
+      </tr>
+    `;
+  });
+  
+  return `
+    <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px;">
+      <thead>
+        <tr style="background-color: #f2f2f2;">
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">#</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Barva</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Dimenzije</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Površina</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Obrobe</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Vrtanje</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Količina</th>
+          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Cena</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+      <tfoot>
+        <tr style="background-color: #f2f2f2; font-weight: bold;">
+          <td colspan="7" style="padding: 8px; border: 1px solid #ddd; text-align: right;">Skupaj:</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">€${products.reduce((sum, product) => sum + product.totalPrice, 0).toFixed(2)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+};
+
+/**
  * Creates an email with appropriate content based on order status
  */
 const createEmailContent = (
@@ -123,17 +181,47 @@ const createEmailContent = (
 ): { subject: string; body: string } => {
   const recipient = isAdmin ? 'Administrator' : 'Stranka';
   
+  // Payment method text
+  const getPaymentMethodText = (method: string): string => {
+    switch (method) {
+      case 'credit_card': return 'Kreditna kartica';
+      case 'payment_on_delivery': return 'Plačilo ob dostavi';
+      case 'pickup_at_shop': return 'Prevzem v trgovini';
+      case 'bank_transfer': return 'Bančno nakazilo';
+      default: return method;
+    }
+  };
+  
+  // Shipping method text
+  const getShippingMethodText = (method: string): string => {
+    return method === 'pickup' ? 'Prevzem v trgovini' : 'Dostava';
+  };
+  
+  // Products table
+  const productsTable = createProductsTable(order.products);
+  
   // Base HTML structure for all emails
   const baseHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
       <h2 style="color: #1D6EC1;">{TITLE}</h2>
       <p>Spoštovani ${recipient},</p>
       <p>{MESSAGE}</p>
       <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
         <p style="margin: 5px 0;"><strong>Številka naročila:</strong> #${order.id}</p>
-        <p style="margin: 5px 0;"><strong>Skupni znesek:</strong> €${order.totalCostWithVat.toFixed(2)}</p>
+        <p style="margin: 5px 0;"><strong>Datum naročila:</strong> ${new Date(order.orderDate).toLocaleDateString('sl-SI')}</p>
+        <p style="margin: 5px 0;"><strong>Način plačila:</strong> ${getPaymentMethodText(order.paymentMethod)}</p>
+        <p style="margin: 5px 0;"><strong>Način dostave:</strong> ${getShippingMethodText(order.shippingMethod)}</p>
         <p style="margin: 5px 0;"><strong>Status:</strong> {STATUS}</p>
       </div>
+      
+      <h3 style="margin-top: 20px; margin-bottom: 10px;">Naročeni izdelki</h3>
+      ${productsTable}
+      
+      <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0; text-align: right;">
+        <p style="margin: 5px 0; font-size: 16px;"><strong>Skupni znesek brez DDV:</strong> €${order.totalCostWithoutVat.toFixed(2)}</p>
+        <p style="margin: 5px 0; font-size: 18px;"><strong>Skupni znesek z DDV:</strong> €${order.totalCostWithVat.toFixed(2)}</p>
+      </div>
+      
       <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
     </div>
   `;
