@@ -25,14 +25,14 @@ export const generateClientToken = async (): Promise<string> => {
   // For demo purposes, we'll simulate this and provide detailed logging
   console.log('Generating Braintree client token with:', BRAINTREE_CONFIG.merchantId);
   
-  addLog({
-    level: 'info',
-    message: 'Začetek generiranja Braintree žetona',
-    details: { 
+  addLog(
+    'info',
+    'Začetek generiranja Braintree žetona',
+    { 
       merchantId: BRAINTREE_CONFIG.merchantId,
       timestamp: new Date().toISOString()
     }
-  });
+  );
   
   // Simulate token generation
   const timestamp = new Date().getTime();
@@ -41,14 +41,14 @@ export const generateClientToken = async (): Promise<string> => {
   // Wait for 500ms to simulate network request
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  addLog({
-    level: 'info',
-    message: 'Braintree žeton uspešno generiran',
-    details: { 
+  addLog(
+    'info',
+    'Braintree žeton uspešno generiran',
+    { 
       tokenPreview: `${simulatedToken.substring(0, 10)}...`,
       timestamp: new Date().toISOString()
     }
-  });
+  );
   
   return simulatedToken;
 };
@@ -64,16 +64,16 @@ export const processBraintreePayment = async (
   
   const timestamp = new Date().toISOString();
   
-  addLog({
-    level: 'info',
-    message: `Začetek obdelave plačila za naročilo #${orderId}`,
-    details: { 
+  addLog(
+    'info',
+    `Začetek obdelave plačila za naročilo #${orderId}`,
+    { 
       amount,
       orderId,
       paymentMethodNonce: `${paymentMethodNonce.substring(0, 10)}...`,
       timestamp
     }
-  });
+  );
   
   // Simulate payment processing
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -82,16 +82,16 @@ export const processBraintreePayment = async (
   const transactionId = `bt-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
   
   // Log the successful transaction
-  addLog({
-    level: 'info',
-    message: `Plačilo uspešno obdelano za naročilo #${orderId}`,
-    details: { 
+  addLog(
+    'info',
+    `Plačilo uspešno obdelano za naročilo #${orderId}`,
+    { 
       transactionId,
       amount,
       orderId,
       timestamp: new Date().toISOString()
     }
-  });
+  );
   
   // Simulate a webhook call to your backend (in a real app, Braintree would call your webhook)
   simulateWebhookNotification(transactionId, amount, orderId);
@@ -127,11 +127,11 @@ const simulateWebhookNotification = async (
   };
   
   // Log the webhook notification
-  addLog({
-    level: 'info',
-    message: 'Prejeto Braintree webhook obvestilo',
-    details: webhookPayload
-  });
+  addLog(
+    'info',
+    'Prejeto Braintree webhook obvestilo',
+    webhookPayload
+  );
   
   console.log('Braintree webhook notification payload:', webhookPayload);
   

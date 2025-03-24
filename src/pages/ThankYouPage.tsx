@@ -25,15 +25,15 @@ const ThankYouPage = () => {
       navigate('/', { replace: true });
     } else {
       // Log that the thank you page was viewed for this order
-      addLog({
-        level: 'info',
-        message: `Ogled strani za zahvalo za naročilo #${order.id}`,
-        details: { 
+      addLog(
+        'info',
+        `Ogled strani za zahvalo za naročilo #${order.id}`,
+        { 
           orderId: order.id,
           paymentMethod: order.paymentMethod,
           timestamp: new Date().toISOString()
         }
-      });
+      );
     }
   }, [order, navigate]);
   

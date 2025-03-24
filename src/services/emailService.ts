@@ -20,11 +20,11 @@ export const sendOrderEmail = async (
   console.log(`[${timestamp}] Sending ${type} order email to ${customerEmail} for order ${order.id}`);
   
   // Log the start of email sending process
-  addLog({
-    level: 'info',
-    message: `Začetek pošiljanja e-pošte za naročilo #${order.id}`,
-    details: { type, customerEmail, orderId: order.id, timestamp }
-  });
+  addLog(
+    'info',
+    `Začetek pošiljanja e-pošte za naročilo #${order.id}`,
+    { type, customerEmail, orderId: order.id, timestamp }
+  );
   
   try {
     // Send email to customer
@@ -36,14 +36,14 @@ export const sendOrderEmail = async (
     
     const customerResponse = await axios.post('/api/email/order.php', customerEmailRequest);
     
-    addLog({
-      level: 'info',
-      message: `E-pošta uspešno poslana stranki: ${customerEmail}`,
-      details: { 
+    addLog(
+      'info',
+      `E-pošta uspešno poslana stranki: ${customerEmail}`,
+      { 
         response: customerResponse.data,
         orderId: order.id
       }
-    });
+    );
     
     // Send email to admin
     const adminEmailRequest: EmailRequest = {
@@ -55,14 +55,14 @@ export const sendOrderEmail = async (
     
     const adminResponse = await axios.post('/api/email/order.php', adminEmailRequest);
     
-    addLog({
-      level: 'info',
-      message: `E-pošta uspešno poslana administratorju: jerebic.jernej@gmail.com`,
-      details: { 
+    addLog(
+      'info',
+      `E-pošta uspešno poslana administratorju: jerebic.jernej@gmail.com`,
+      { 
         response: adminResponse.data,
         orderId: order.id
       }
-    });
+    );
     
     console.log(`[${timestamp}] Email sent to customer:`, customerResponse.data);
     console.log(`[${timestamp}] Email sent to admin:`, adminResponse.data);
@@ -79,16 +79,16 @@ export const sendOrderEmail = async (
   } catch (error) {
     console.error(`[${timestamp}] Error sending email:`, error);
     
-    addLog({
-      level: 'error',
-      message: `Napaka pri pošiljanju e-pošte za naročilo #${order.id}`,
-      details: { 
+    addLog(
+      'error',
+      `Napaka pri pošiljanju e-pošte za naročilo #${order.id}`,
+      { 
         error: error instanceof Error ? error.message : String(error),
         customerEmail,
         adminEmail: 'jerebic.jernej@gmail.com',
         orderId: order.id
       }
-    });
+    );
     
     // Show toast notification of failure
     toast.error("Napaka pri pošiljanju e-pošte", {

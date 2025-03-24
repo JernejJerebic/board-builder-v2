@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -150,6 +151,17 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     setSubmitting(true);
     
     try {
+      // Add log for form submission
+      addLog(
+        'info',
+        'Začetek oddaje naročila',
+        {
+          email: values.email,
+          paymentMethod: values.paymentMethod,
+          timestamp: new Date().toISOString()
+        }
+      );
+      
       setShowConfirmation(true);
     } catch (error) {
       toast.error('Napaka pri obdelavi naročila');
@@ -165,6 +177,18 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     try {
       const formValues = form.getValues();
       const total = calculateTotal();
+      
+      // Add log for order confirmation
+      addLog(
+        'info',
+        'Potrditev naročila',
+        {
+          email: formValues.email,
+          totalAmount: total.withVat,
+          itemCount: items.length,
+          timestamp: new Date().toISOString()
+        }
+      );
       
       let customerId: string;
       
@@ -234,25 +258,25 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log('Order emails sent successfully');
       } catch (error) {
         console.error('Error sending order emails:', error);
-        addLog({
-          level: 'error',
-          message: 'Napaka pri pošiljanju e-pošte za naročilo',
-          details: { 
+        addLog(
+          'error',
+          'Napaka pri pošiljanju e-pošte za naročilo',
+          { 
             error: error instanceof Error ? error.message : String(error),
             orderId: newOrder.id
           }
-        });
+        );
       }
       
       clearBasket();
       navigate('/thank-you', { state: { order: newOrder } });
     } catch (error) {
       console.error('Error during checkout:', error);
-      addLog({
-        level: 'error',
-        message: 'Napaka pri potrditvi naročila',
-        details: { error: error instanceof Error ? error.message : String(error) }
-      });
+      addLog(
+        'error',
+        'Napaka pri potrditvi naročila',
+        { error: error instanceof Error ? error.message : String(error) }
+      );
       toast.error('Napaka pri potrditvi naročila');
     } finally {
       setConfirmationLoading(false);
