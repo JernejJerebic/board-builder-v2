@@ -1,10 +1,11 @@
+
 import { Order } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
 import emailjs from 'emailjs-com';
 
 // EmailJS configuration
-const EMAILJS_SERVICE_ID = 'service_email_id';
+const EMAILJS_SERVICE_ID = 'service_iqv96th';
 const EMAILJS_TEMPLATE_ID = 'template_email_id';
 const EMAILJS_USER_ID = 'user_id';
 

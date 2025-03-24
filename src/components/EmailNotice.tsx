@@ -13,8 +13,8 @@ const EmailNotice: React.FC<EmailNoticeProps> = ({ className = '' }) => {
       <Info className="h-4 w-4" />
       <AlertTitle>Pomembno obvestilo</AlertTitle>
       <AlertDescription>
-        V tem razvojnem okolju bo naročilo zabeleženo, vendar e-poštna obvestila ne bodo dejansko poslana. 
-        V produkcijskem okolju bi se e-poštna sporočila poslala na vaš e-poštni naslov in administratorja.
+        Za pravilno delovanje pošiljanja e-pošte mora biti konfiguriran EmailJS z ustreznimi ID-ji.
+        Trenutno je nastavljen Service ID: service_iqv96th, potrebujemo še pravilna Template ID in User ID.
       </AlertDescription>
     </Alert>
   );

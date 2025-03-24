@@ -15,14 +15,14 @@ const EmailTester = () => {
   const [isConfigured, setIsConfigured] = useState(false);
   
   // EmailJS configuration
-  const EMAILJS_SERVICE_ID = 'service_email_id';
+  const EMAILJS_SERVICE_ID = 'service_iqv96th';
   const EMAILJS_TEMPLATE_ID = 'template_email_id';
   const EMAILJS_USER_ID = 'user_id';
   
   useEffect(() => {
     // Check if EmailJS is configured
     if (EMAILJS_USER_ID !== 'user_id' && 
-        EMAILJS_SERVICE_ID !== 'service_email_id' && 
+        EMAILJS_SERVICE_ID !== 'service_iqv96th' && 
         EMAILJS_TEMPLATE_ID !== 'template_email_id') {
       setIsConfigured(true);
     }
