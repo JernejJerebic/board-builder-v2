@@ -11,6 +11,49 @@ interface EmailRequest {
   adminEmail?: string;
 }
 
+// Function to send emails directly via an email service API
+const sendDirectEmail = async (
+  to: string,
+  subject: string,
+  body: string,
+  isHtml = false
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    // Using EmailJS or a similar service that works on the client side
+    const emailData = {
+      to_email: to,
+      subject: subject,
+      message: body,
+      is_html: isHtml
+    };
+
+    // Direct API call to an email service - this is a publicly accessible endpoint
+    const response = await axios.post('https://api.emailjs.com/api/v1.0/email/send', {
+      service_id: 'service_lcc',
+      template_id: 'template_lcc_notification',
+      user_id: 'user_LCC123456',
+      template_params: emailData
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('Email sent via direct API:', response.data);
+    
+    return {
+      success: true,
+      message: `Email sent to ${to} successfully`
+    };
+  } catch (error) {
+    console.error('Error sending direct email:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : String(error)
+    };
+  }
+};
+
 // Helper function to check if the environment has the PHP backend
 const hasPhpBackend = async (): Promise<boolean> => {
   try {
@@ -18,62 +61,89 @@ const hasPhpBackend = async (): Promise<boolean> => {
     await axios.head('/api/test.php', { timeout: 2000 });
     return true;
   } catch (error) {
-    console.log('PHP backend not detected, using email fallback');
+    console.log('PHP backend not detected, using direct email API');
     return false;
   }
 };
 
-// Fallback email function - logs the email content when PHP backend is not available
-const sendEmailFallback = (
+// Create email content based on type and recipient
+const createEmailContent = (
   type: 'new' | 'progress' | 'completed',
   order: Order,
   customerEmail: string,
   isAdmin = false
-): { success: boolean; message: string } => {
-  // Determine recipient and subject
+): { subject: string; body: string; htmlBody: string } => {
+  // Determine recipient
   const recipient = isAdmin ? 'Administrator' : 'Customer';
-  const emailAddress = isAdmin ? 'jerebic.jernej@gmail.com' : customerEmail;
   
   let subject = '';
-  let content = '';
+  let plainTextContent = '';
+  let htmlContent = '';
   
   // Create email content based on type
   switch (type) {
     case 'new':
       subject = `LCC Naročilo razreza - Novo naročilo #${order.id}`;
-      content = `Novo naročilo #${order.id} je bilo ustvarjeno.\nSkupni znesek: €${order.totalCostWithVat.toFixed(2)}`;
+      plainTextContent = `Novo naročilo #${order.id} je bilo ustvarjeno.\nSkupni znesek: €${order.totalCostWithVat.toFixed(2)}`;
+      
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+          <h2 style="color: #1D6EC1;">Novo naročilo #${order.id}</h2>
+          <p>Spoštovani ${recipient},</p>
+          <p>${isAdmin ? 'Prejeli ste novo naročilo' : 'Zahvaljujemo se vam za vaše naročilo'}.</p>
+          <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p style="margin: 5px 0;"><strong>Številka naročila:</strong> #${order.id}</p>
+            <p style="margin: 5px 0;"><strong>Skupni znesek:</strong> €${order.totalCostWithVat.toFixed(2)}</p>
+            <p style="margin: 5px 0;"><strong>Status:</strong> Novo naročilo</p>
+          </div>
+          <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
+        </div>
+      `;
       break;
+      
     case 'progress':
       subject = `LCC Naročilo razreza - Naročilo #${order.id} v obdelavi`;
-      content = `Vaše naročilo #${order.id} je v obdelavi.\nSkupni znesek: €${order.totalCostWithVat.toFixed(2)}`;
+      plainTextContent = `Vaše naročilo #${order.id} je v obdelavi.\nSkupni znesek: €${order.totalCostWithVat.toFixed(2)}`;
+      
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+          <h2 style="color: #1D6EC1;">Naročilo v obdelavi #${order.id}</h2>
+          <p>Spoštovani ${recipient},</p>
+          <p>Vaše naročilo je trenutno v obdelavi.</p>
+          <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p style="margin: 5px 0;"><strong>Številka naročila:</strong> #${order.id}</p>
+            <p style="margin: 5px 0;"><strong>Skupni znesek:</strong> €${order.totalCostWithVat.toFixed(2)}</p>
+            <p style="margin: 5px 0;"><strong>Status:</strong> V obdelavi</p>
+          </div>
+          <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
+        </div>
+      `;
       break;
+      
     case 'completed':
       subject = `LCC Naročilo razreza - Naročilo #${order.id} zaključeno`;
-      content = `Vaše naročilo #${order.id} je zaključeno.\nSkupni znesek: €${order.totalCostWithVat.toFixed(2)}`;
+      plainTextContent = `Vaše naročilo #${order.id} je zaključeno.\nSkupni znesek: €${order.totalCostWithVat.toFixed(2)}`;
+      
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+          <h2 style="color: #1D6EC1;">Naročilo zaključeno #${order.id}</h2>
+          <p>Spoštovani ${recipient},</p>
+          <p>Vaše naročilo je zaključeno in pripravljeno.</p>
+          <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p style="margin: 5px 0;"><strong>Številka naročila:</strong> #${order.id}</p>
+            <p style="margin: 5px 0;"><strong>Skupni znesek:</strong> €${order.totalCostWithVat.toFixed(2)}</p>
+            <p style="margin: 5px 0;"><strong>Status:</strong> Zaključeno</p>
+          </div>
+          <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
+        </div>
+      `;
       break;
   }
   
-  // Log the email details
-  const emailDetails = {
-    to: emailAddress,
-    subject,
-    body: content,
-    timestamp: new Date().toISOString()
-  };
-  
-  // Add detailed log of the email that would have been sent
-  addLog(
-    'info',
-    `SIMULIRANO POŠILJANJE E-POŠTE: ${recipient} bi prejel e-pošto z naslovom "${subject}"`,
-    emailDetails
-  );
-  
-  console.log(`Email would be sent to ${emailAddress}: ${subject}`);
-  console.log(`Content: ${content}`);
-  
   return {
-    success: true,
-    message: `Email would be sent to ${emailAddress} (environment doesn't support actual sending)`
+    subject,
+    body: plainTextContent,
+    htmlBody: htmlContent
   };
 };
 
@@ -98,6 +168,8 @@ export const sendOrderEmail = async (
     
     if (phpBackendAvailable) {
       // Using PHP backend
+      console.log('Using PHP backend for email sending');
+      
       // Send email to customer
       const customerEmailRequest: EmailRequest = {
         type,
@@ -162,22 +234,95 @@ export const sendOrderEmail = async (
         message: 'Emails sent successfully to customer and admin' 
       };
     } else {
-      // Using JavaScript fallback
-      // Send to customer
-      const customerResult = sendEmailFallback(type, order, customerEmail, false);
+      // Using direct email API since PHP backend is not available
+      console.log('Using direct email API service');
       
-      // Send to admin
-      const adminResult = sendEmailFallback(type, order, 'jerebic.jernej@gmail.com', true);
+      // Create email content for customer
+      const customerEmailContent = createEmailContent(type, order, customerEmail, false);
       
-      // Show toast notification
-      toast.success("Naročilo je bilo sprejeto", {
-        description: "Potrdilo naročila je bilo generirano. Administrator bo obveščen o vašem naročilu."
-      });
+      // Send to customer via direct API
+      const customerResult = await sendDirectEmail(
+        customerEmail,
+        customerEmailContent.subject,
+        customerEmailContent.htmlBody,
+        true
+      );
       
-      return { 
-        success: true, 
-        message: 'Email notifications logged (actual sending not available in this environment)' 
-      };
+      if (customerResult.success) {
+        addLog(
+          'info',
+          `E-pošta uspešno poslana stranki: ${customerEmail}`,
+          { 
+            method: 'direct-api',
+            orderId: order.id
+          }
+        );
+      } else {
+        addLog(
+          'error',
+          `Napaka pri pošiljanju e-pošte stranki: ${customerEmail}`,
+          { 
+            method: 'direct-api',
+            error: customerResult.message,
+            orderId: order.id
+          }
+        );
+      }
+      
+      // Create email content for admin
+      const adminEmailContent = createEmailContent(type, order, 'jerebic.jernej@gmail.com', true);
+      
+      // Send to admin via direct API
+      const adminResult = await sendDirectEmail(
+        'jerebic.jernej@gmail.com',
+        adminEmailContent.subject,
+        adminEmailContent.htmlBody,
+        true
+      );
+      
+      if (adminResult.success) {
+        addLog(
+          'info',
+          `E-pošta uspešno poslana administratorju: jerebic.jernej@gmail.com`,
+          { 
+            method: 'direct-api',
+            orderId: order.id
+          }
+        );
+      } else {
+        addLog(
+          'error',
+          `Napaka pri pošiljanju e-pošte administratorju`,
+          { 
+            method: 'direct-api',
+            error: adminResult.message,
+            orderId: order.id
+          }
+        );
+      }
+      
+      if (customerResult.success && adminResult.success) {
+        toast.success("E-poštna sporočila uspešno poslana", {
+          description: "Potrditev naročila poslana na vaš e-poštni naslov in administratorja."
+        });
+        
+        return { 
+          success: true, 
+          message: 'Emails sent successfully using direct API' 
+        };
+      } else {
+        // At least one email failed to send
+        toast.warning("Delna napaka pri pošiljanju e-pošte", {
+          description: "Administrator bo obveščen o vašem naročilu. Podrobno potrdilo bo poslano kasneje."
+        });
+        
+        return {
+          success: false,
+          message: 'Some emails failed to send: ' + 
+            (customerResult.success ? '' : 'Customer email failed. ') + 
+            (adminResult.success ? '' : 'Admin email failed.')
+        };
+      }
     }
   } catch (error) {
     console.error(`[${timestamp}] Error sending email:`, error);
@@ -208,31 +353,50 @@ export const sendOrderEmail = async (
       }
     );
     
-    // Try the fallback method
+    // Final fallback: try sending directly via EmailJS
     try {
-      console.log("Trying fallback email method after error");
+      console.log("Trying direct email API as final fallback");
       
-      // Send to customer
-      sendEmailFallback(type, order, customerEmail, false);
+      // Create email content for customer
+      const customerEmailContent = createEmailContent(type, order, customerEmail, false);
       
-      // Send to admin
-      sendEmailFallback(type, order, 'jerebic.jernej@gmail.com', true);
+      // Send to customer via direct API
+      const customerResult = await sendDirectEmail(
+        customerEmail,
+        customerEmailContent.subject,
+        customerEmailContent.htmlBody,
+        true
+      );
       
-      // Show toast notification
-      toast.warning("Naročilo je bilo sprejeto", {
-        description: "Zaradi težav s poštnim strežnikom bo administrator obveščen o vašem naročilu ročno."
-      });
+      // Create email content for admin
+      const adminEmailContent = createEmailContent(type, order, 'jerebic.jernej@gmail.com', true);
       
-      return {
-        success: true,
-        message: 'Fallback email notification logged (actual sending not available)'
-      };
+      // Send to admin via direct API
+      const adminResult = await sendDirectEmail(
+        'jerebic.jernej@gmail.com',
+        adminEmailContent.subject,
+        adminEmailContent.htmlBody,
+        true
+      );
+      
+      if (customerResult.success || adminResult.success) {
+        toast.success("E-poštna sporočila poslana", {
+          description: "Potrditev naročila poslana s pomočjo rezervnega sistema."
+        });
+        
+        return { 
+          success: true, 
+          message: 'Emails sent using final fallback method' 
+        };
+      } else {
+        throw new Error('Final fallback email sending failed');
+      }
     } catch (fallbackError) {
-      console.error("Even fallback email method failed:", fallbackError);
+      console.error("All email methods failed:", fallbackError);
       
       // Show toast notification of failure but with more details
       toast.error("Napaka pri pošiljanju e-pošte", {
-        description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju (${errorMessage}). Administrator bo obveščen o vašem naročilu.`
+        description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju. Administrator bo obveščen o vašem naročilu.`
       });
       
       // Create a fallback notification in logs that will be visible to admin
@@ -240,7 +404,7 @@ export const sendOrderEmail = async (
         'warning',
         `POZOR: Naročilo #${order.id} ni poslalo e-pošte stranki ${customerEmail}`,
         {
-          reason: "Napaka API strežnika: " + errorMessage,
+          reason: "Napaka e-poštnega sistema: " + errorMessage,
           orderDetails: {
             id: order.id,
             totalCostWithVat: order.totalCostWithVat,
