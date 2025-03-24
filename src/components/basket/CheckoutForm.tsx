@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { CreditCard, Truck, Store, Building, Loader2 } from 'lucide-react';
+import EmailNotice from '@/components/EmailNotice';
 
 interface CheckoutFormProps {
   onCancel: () => void;
@@ -151,7 +151,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     setSubmitting(true);
     
     try {
-      // Add log for form submission
       addLog(
         'info',
         'Začetek oddaje naročila',
@@ -178,7 +177,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       const formValues = form.getValues();
       const total = calculateTotal();
       
-      // Add log for order confirmation
       addLog(
         'info',
         'Potrditev naročila',
@@ -286,6 +284,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
 
   return (
     <>
+      <EmailNotice className="mb-6" />
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -595,6 +595,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
             <AlertDialogDescription>
               Naročate {items.length} izdelkov v skupni vrednosti {calculateTotal().withVat.toFixed(2)}€. 
               Želite nadaljevati z naročilom?
+              
+              <EmailNotice className="mt-4" />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

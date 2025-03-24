@@ -1,12 +1,11 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Order } from '@/types';
 import { addLog } from '@/services/localStorage';
 
 /**
- * Simple, reliable email sending service that uses our PHP backend
- * This implementation includes advanced logging and error handling
+ * Client-side email simulation service
+ * This implementation logs email attempts but doesn't actually send emails as PHP endpoints are not available
  */
 const sendEmail = async (
   to: string,
@@ -27,38 +26,33 @@ const sendEmail = async (
       { 
         requestId,
         subject, 
-        method: 'php-mail',
+        method: 'client-side-simulation',
         timestamp: new Date().toISOString(),
         contentType: isHtml ? 'HTML' : 'Text'
       }
     );
     
-    // Send email using our PHP mail endpoint
-    const response = await axios.post('/api/email/send.php', {
-      to_email: to,
-      subject: subject,
-      message: body,
-      is_html: isHtml
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Request-ID': requestId
-      }
-    });
-
-    // Log successful response
-    console.log(`[${requestId}] SUCCESS: Email sent via PHP mail():`, response.data);
-    console.log(`[${requestId}] SERVER LOG ID: ${response.data.logId || 'Not provided'}`);
+    // In a live environment, we would send an actual email here
+    // But since the PHP endpoints are not accessible, we'll just simulate success
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const simulatedLogId = `log_${Date.now()}`;
+    
+    // Log successful simulation
+    console.log(`[${requestId}] SUCCESS: Email simulated for ${to}`);
+    console.log(`[${requestId}] SIMULATION ID: ${simulatedLogId}`);
     
     // Add detailed success log
     addLog(
       'info',
-      `E-pošta uspešno poslana na naslov: ${to}`,
+      `E-pošta simulirana za naslov: ${to}`,
       { 
         requestId,
-        serverLogId: response.data.logId,
+        simulationId: simulatedLogId,
         subject,
-        service: 'PHP-mail',
+        service: 'client-side-simulation',
         timestamp: new Date().toISOString(),
         responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`
       }
@@ -66,35 +60,27 @@ const sendEmail = async (
     
     return {
       success: true,
-      message: `Email sent to ${to} successfully`,
-      logId: response.data.logId
+      message: `Email simulated for ${to}`,
+      logId: simulatedLogId
     };
   } catch (error) {
     // Detailed error logging
-    console.error(`[${requestId}] ERROR: Failed to send email to ${to}`, error);
+    console.error(`[${requestId}] ERROR: Failed to simulate email for ${to}`, error);
     
-    // Extract as much information as possible from the error
     const errorMessage = axios.isAxiosError(error)
       ? `${error.message}: ${JSON.stringify(error.response?.data || {})}`
       : String(error);
     
-    // Log server response if available
-    if (axios.isAxiosError(error) && error.response) {
-      console.error(`[${requestId}] SERVER RESPONSE:`, error.response.status, error.response.statusText);
-      console.error(`[${requestId}] SERVER DATA:`, error.response.data);
-    }
-    
     // Log error
     addLog(
       'error',
-      `Napaka pri pošiljanju e-pošte na naslov: ${to}`,
+      `Napaka pri simulaciji e-pošte za naslov: ${to}`,
       { 
         requestId,
         error: errorMessage,
-        method: 'php-mail',
+        method: 'client-side-simulation',
         timestamp: new Date().toISOString(),
-        responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`,
-        serverData: axios.isAxiosError(error) ? error.response?.data : null
+        responseTime: `${Date.now() - parseInt(requestId.split('_')[1])}ms`
       }
     );
     
@@ -169,8 +155,8 @@ const createEmailContent = (
 };
 
 /**
- * Main function to send order-related emails to both customer and admin
- * Now with enhanced logging and error handling
+ * Main function to simulate sending order-related emails to both customer and admin
+ * Since we can't actually send emails through PHP on this environment, we'll just log them
  */
 export const sendOrderEmail = async (
   type: 'new' | 'progress' | 'completed',
@@ -180,7 +166,7 @@ export const sendOrderEmail = async (
   const timestamp = new Date().toISOString();
   const requestId = `order_email_${Date.now()}`;
   
-  console.log(`[${requestId}] START: Sending ${type} order email for order ${order.id}`);
+  console.log(`[${requestId}] START: Simulating ${type} order email for order ${order.id}`);
   console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: jerebic.jernej@gmail.com`);
   
   // Log the start of email sending process with more details
@@ -203,7 +189,7 @@ export const sendOrderEmail = async (
     console.log(`[${requestId}] CUSTOMER: Creating email content for ${customerEmail}`);
     const customerEmailContent = createEmailContent(type, order, false);
     
-    console.log(`[${requestId}] CUSTOMER: Sending email to ${customerEmail}`);
+    console.log(`[${requestId}] CUSTOMER: Simulating email to ${customerEmail}`);
     const customerResult = await sendEmail(
       customerEmail,
       customerEmailContent.subject,
@@ -215,7 +201,7 @@ export const sendOrderEmail = async (
     console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
     const adminEmailContent = createEmailContent(type, order, true);
     
-    console.log(`[${requestId}] ADMIN: Sending email to ${adminEmail}`);
+    console.log(`[${requestId}] ADMIN: Simulating email to ${adminEmail}`);
     const adminResult = await sendEmail(
       adminEmail,
       adminEmailContent.subject,
@@ -224,24 +210,24 @@ export const sendOrderEmail = async (
     
     // Log detailed results
     if (customerResult.success) {
-      console.log(`[${requestId}] CUSTOMER SUCCESS: Email sent to ${customerEmail}, LogID: ${customerResult.logId || 'N/A'}`);
+      console.log(`[${requestId}] CUSTOMER SUCCESS: Email simulated for ${customerEmail}, SimulationID: ${customerResult.logId || 'N/A'}`);
     } else {
-      console.error(`[${requestId}] CUSTOMER ERROR: Failed to send email to ${customerEmail}: ${customerResult.message}`);
+      console.error(`[${requestId}] CUSTOMER ERROR: Failed to simulate email for ${customerEmail}: ${customerResult.message}`);
     }
     
     if (adminResult.success) {
-      console.log(`[${requestId}] ADMIN SUCCESS: Email sent to ${adminEmail}, LogID: ${adminResult.logId || 'N/A'}`);
+      console.log(`[${requestId}] ADMIN SUCCESS: Email simulated for ${adminEmail}, SimulationID: ${adminResult.logId || 'N/A'}`);
     } else {
-      console.error(`[${requestId}] ADMIN ERROR: Failed to send email to ${adminEmail}: ${adminResult.message}`);
+      console.error(`[${requestId}] ADMIN ERROR: Failed to simulate email for ${adminEmail}: ${adminResult.message}`);
     }
     
     // Determine overall success and show appropriate notification
     if (customerResult.success && adminResult.success) {
-      console.log(`[${requestId}] COMPLETE: All emails sent successfully`);
+      console.log(`[${requestId}] COMPLETE: All emails simulated successfully`);
       
       addLog(
         'info',
-        `E-poštna sporočila uspešno poslana za naročilo #${order.id}`,
+        `E-poštna sporočila simulirana za naročilo #${order.id}`,
         {
           requestId,
           customerLogId: customerResult.logId,
@@ -251,72 +237,46 @@ export const sendOrderEmail = async (
         }
       );
       
-      toast.success("E-poštna sporočila uspešno poslana", {
-        description: "Potrditev naročila poslana na vaš e-poštni naslov in administratorja."
+      toast.success("E-poštna sporočila simulirana", {
+        description: "V produkcijskem okolju bi bila e-pošta poslana na vaš e-poštni naslov in administratorja."
       });
       
       return { 
         success: true, 
-        message: 'Emails sent successfully to customer and admin' 
+        message: 'Email simulation completed successfully' 
       };
-    } else if (customerResult.success || adminResult.success) {
-      // At least one email sent successfully
-      console.log(`[${requestId}] PARTIAL: At least one email sent successfully`);
+    } else {
+      // Partial or complete failure
+      console.error(`[${requestId}] PARTIAL FAILURE: Email simulation had issues`);
       
       addLog(
         'warning',
-        `Delno uspešno pošiljanje e-pošte za naročilo #${order.id}`,
+        `Delno uspešna simulacija e-pošte za naročilo #${order.id}`,
         {
           requestId,
           customerSuccess: customerResult.success,
           adminSuccess: adminResult.success,
           type,
-          orderId: order.id,
-          customerError: !customerResult.success ? customerResult.message : null,
-          adminError: !adminResult.success ? adminResult.message : null
-        }
-      );
-      
-      toast.warning("Delna napaka pri pošiljanju e-pošte", {
-        description: "Vsaj eno e-poštno sporočilo je bilo uspešno poslano."
-      });
-      
-      return {
-        success: true,
-        message: 'At least one email was sent successfully'
-      };
-    } else {
-      // Both emails failed
-      console.error(`[${requestId}] FAILURE: All emails failed to send`);
-      
-      addLog(
-        'error',
-        `Neuspešno pošiljanje e-pošte za naročilo #${order.id}`,
-        {
-          requestId,
-          customerError: customerResult.message,
-          adminError: adminResult.message,
-          type,
           orderId: order.id
         }
       );
       
-      toast.error("Napaka pri pošiljanju e-pošte", {
-        description: "Naročilo je bilo zabeleženo, vendar e-poštna sporočila niso bila poslana."
+      toast.warning("Naročilo ustvarjeno, vendar e-poštna obvestila se ne morejo poslati", {
+        description: "E-poštne funkcije niso na voljo v tem okolju."
       });
       
       return {
-        success: false,
-        message: 'Failed to send all emails'
+        success: true,
+        message: 'Order created but emails could not be sent in this environment'
       };
     }
   } catch (error) {
-    console.error(`[${requestId}] CRITICAL ERROR: Unexpected error during email sending:`, error);
+    console.error(`[${requestId}] CRITICAL ERROR: Unexpected error during email simulation:`, error);
     
     // Create a detailed error log
     addLog(
       'error',
-      `Nepričakovana napaka pri pošiljanju e-pošte za naročilo #${order.id}`,
+      `Nepričakovana napaka pri simulaciji e-pošte za naročilo #${order.id}`,
       { 
         requestId,
         error: error instanceof Error ? error.message : String(error),
@@ -329,8 +289,8 @@ export const sendOrderEmail = async (
     );
     
     // Show error notification
-    toast.error("Napaka pri pošiljanju e-pošte", {
-      description: "Naročilo je bilo zabeleženo, vendar je prišlo do napake pri pošiljanju potrditve."
+    toast.error("Naročilo ustvarjeno, vendar ni e-poštnih obvestil", {
+      description: "E-poštne funkcije niso na voljo v tem okolju."
     });
     
     return { 
