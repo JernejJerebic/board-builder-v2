@@ -1,7 +1,7 @@
 
 <?php
 // Database configuration
-define('DB_HOST', '35.214.216.147');
+define('DB_HOST', '34.214.216.147');
 define('DB_NAME', 'dbfvbowjpcotpt');
 define('DB_USER', 'ug3xluzozpqp5');
 define('DB_PASS', '1zzppmgbsiqy');

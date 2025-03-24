@@ -168,6 +168,17 @@ function sendHtmlMail($to, $subject, $htmlContent, $fromName = 'LCC Naročilo ra
             table th {
                 background-color: #f1f1f1;
             }
+            @media (max-width: 768px) {
+                .container {
+                    padding: 10px;
+                }
+                table {
+                    font-size: 14px;
+                }
+                .logo {
+                    max-width: 150px;
+                }
+            }
         </style>
     </head>
     <body>
@@ -179,8 +190,8 @@ function sendHtmlMail($to, $subject, $htmlContent, $fromName = 'LCC Naročilo ra
                 ' . $htmlContent . '
             </div>
             <div class="footer">
-                <p>&copy; ' . date('Y') . ' LCC Naro��ilo razreza. Vse pravice pridržane.</p>
-                <p>Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a> ali po telefonu na 040 123 456.</p>
+                <p>&copy; ' . date('Y') . ' LCC Naročilo razreza. Vse pravice pridržane.</p>
+                <p>Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a> ali po telefonu na +386 7 393 07 00.</p>
             </div>
         </div>
     </body>
@@ -213,16 +224,20 @@ function textToHtml($plainText) {
  * @return array Status and message
  */
 function sendOrderConfirmationEmail($orderId, $customerEmail, $orderDetails, $customer) {
-    $subject = "LCC Naročilo razreza - Novo naročilo #{$orderId}";
+    $subject = "LCC Naročilo razreza - Novo naročilo";
     
     // Create HTML content
     $content = '
         <h1>Potrditev naročila</h1>
         <p>Spoštovani ' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . ',</p>
-        <p>Zahvaljujemo se vam za vaše naročilo (#{' . htmlspecialchars($orderId) . '}). V najkrajšem možnem času bomo začeli z obdelavo.</p>
+        <p>Zahvaljujemo se vam za vaše naročilo. V najkrajšem možnem času bomo začeli z obdelavo.</p>
         
         <h2>Podrobnosti naročila</h2>
         <table>
+            <tr>
+                <th>Številka naročila:</th>
+                <td>#' . htmlspecialchars($orderId) . '</td>
+            </tr>
             <tr>
                 <th>Skupni znesek:</th>
                 <td>€' . number_format($orderDetails['totalCostWithVat'], 2) . '</td>
@@ -260,13 +275,13 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail, $orderDetails, $c
     
     switch ($type) {
         case 'progress':
-            $subject = "LCC Naročilo razreza - Naročilo #{$orderId} v obdelavi";
-            $statusMessage = "Vaše naročilo (#{$orderId}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.";
+            $subject = "LCC Naročilo razreza - Naročilo v obdelavi";
+            $statusMessage = "Vaše naročilo je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.";
             break;
             
         case 'completed':
-            $subject = "LCC Naročilo razreza - Naročilo #{$orderId} zaključeno";
-            $statusMessage = "Vaše naročilo (#{$orderId}) je zaključeno in pripravljeno " . 
+            $subject = "LCC Naročilo razreza - Naročilo zaključeno";
+            $statusMessage = "Vaše naročilo je zaključeno in pripravljeno " . 
                 ($orderDetails['shippingMethod'] === 'pickup' ? 'za prevzem' : 'za dostavo') . ".";
             break;
             
@@ -299,7 +314,7 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail, $orderDetails, $c
             </tr>
         </table>
         
-        <p>V primeru vprašanj nas kontaktirajte na <a href="mailto:info@lcc-razrez.si">info@lcc-razrez.si</a>.</p>
+        <p>V primeru vprašanj nas kontaktirajte na <a href="mailto:info@lcc.si">info@lcc.si</a>.</p>
         <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
     ';
     
@@ -315,8 +330,8 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail, $orderDetails, $c
  * @return array Status and message
  */
 function sendAdminOrderNotification($orderId, $orderDetails, $customer) {
-    $adminEmail = "info@lcc-razrez.si";
-    $subject = "Novo naročilo #{$orderId}";
+    $adminEmail = "info@lcc.si";
+    $subject = "Novo naročilo";
     
     // Create HTML content
     $content = '
@@ -342,6 +357,10 @@ function sendAdminOrderNotification($orderId, $orderDetails, $customer) {
         <h2>Podrobnosti naročila</h2>
         <table>
             <tr>
+                <th>Številka naročila:</th>
+                <td>#' . htmlspecialchars($orderId) . '</td>
+            </tr>
+            <tr>
                 <th>Skupni znesek:</th>
                 <td>€' . number_format($orderDetails['totalCostWithVat'], 2) . '</td>
             </tr>
@@ -358,7 +377,7 @@ function sendAdminOrderNotification($orderId, $orderDetails, $customer) {
         <p><a href="https://your-domain.com/admin/order-detail.php?id=' . htmlspecialchars($orderId) . '" class="button">Oglejte si naročilo</a></p>
     ';
     
-    return sendHtmlMail($adminEmail, $subject, $content, 'LCC Sistem', 'noreply@lcc-razrez.si');
+    return sendHtmlMail($adminEmail, $subject, $content, 'LCC Sistem', 'noreply@lcc.si');
 }
 
 /**

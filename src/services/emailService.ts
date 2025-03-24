@@ -1,3 +1,4 @@
+
 import { Order, Product } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -48,7 +49,8 @@ const sendEmail = async (
       message: body,
       from_name: 'LCC Naročilo razreza',
       reply_to: 'info@lcc.si',
-      html_content: isHtml // Add a flag to indicate HTML content
+      html_content: isHtml, // Add a flag to indicate HTML content
+      hideFooter: true // Add parameter to hide EmailJS footer
     };
     
     // Send email
@@ -114,7 +116,7 @@ const sendEmail = async (
 };
 
 /**
- * Creates an HTML table of product details
+ * Creates an HTML table of product details with color visualization
  */
 const createProductsTable = (products: Product[]): string => {
   let tableRows = '';
@@ -130,10 +132,20 @@ const createProductsTable = (products: Product[]): string => {
       ? borderInfo.join(', ') 
       : 'brez';
     
+    // Create color display with hex code
+    const colorHex = product.color?.hex || '#CCCCCC';
+    const colorName = product.color?.title || 'Barva ni na voljo';
+    const colorDisplay = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 20px; height: 20px; background-color: ${colorHex}; border: 1px solid #ddd; border-radius: 3px;"></div>
+        <span>${colorName} (${colorHex})</span>
+      </div>
+    `;
+    
     tableRows += `
       <tr style="background-color: ${index % 2 === 0 ? '#f9f9f9' : '#ffffff'}">
         <td style="padding: 8px; border: 1px solid #ddd;">${index + 1}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${product.color?.title || 'Barva ni na voljo'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${colorDisplay}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${product.length} × ${product.width} × ${product.thickness} mm</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${product.surfaceArea} m²</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${borderText}</td>
@@ -223,6 +235,7 @@ const createEmailContent = (
       </div>
       
       <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
+      <p style="font-size: 14px; color: #666;">Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si" style="color: #1D6EC1;">info@lcc.si</a> ali po telefonu na +386 7 393 07 00.</p>
     </div>
   `;
   
@@ -234,22 +247,22 @@ const createEmailContent = (
   // Customize content based on order type and recipient
   switch (type) {
     case 'new':
-      title = `Novo naročilo #${order.id}`;
-      subject = `LCC Naročilo razreza - Novo naročilo #${order.id}`;
+      title = 'Novo naročilo';
+      subject = 'LCC Naročilo razreza - Novo naročilo';
       message = isAdmin ? 'Prejeli ste novo naročilo.' : 'Zahvaljujemo se vam za vaše naročilo.';
       status = 'Novo naročilo';
       break;
       
     case 'progress':
-      title = `Naročilo v obdelavi #${order.id}`;
-      subject = `LCC Naročilo razreza - Naročilo #${order.id} v obdelavi`;
+      title = 'Naročilo v obdelavi';
+      subject = 'LCC Naročilo razreza - Naročilo v obdelavi';
       message = 'Vaše naročilo je trenutno v obdelavi.';
       status = 'V obdelavi';
       break;
       
     case 'completed':
-      title = `Naročilo zaključeno #${order.id}`;
-      subject = `LCC Naročilo razreza - Naročilo #${order.id} zaključeno`;
+      title = 'Naročilo zaključeno';
+      subject = 'LCC Naročilo razreza - Naročilo zaključeno';
       message = 'Vaše naročilo je zaključeno in pripravljeno.';
       status = 'Zaključeno';
       break;
@@ -276,7 +289,7 @@ export const sendOrderEmail = async (
   const requestId = `order_email_${Date.now()}`;
   
   console.log(`[${requestId}] START: Sending ${type} order email for order ${order.id}`);
-  console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: jerebic.jernej@gmail.com`);
+  console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: info@lcc.si`);
   
   // Log the start of email sending process with more details
   addLog(
@@ -312,7 +325,7 @@ export const sendOrderEmail = async (
     );
     
     // Create and send admin email
-    const adminEmail = 'jerebic.jernej@gmail.com';
+    const adminEmail = 'info@lcc.si';
     console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
     const adminEmailContent = createEmailContent(type, order, true);
     
@@ -398,7 +411,7 @@ export const sendOrderEmail = async (
         error: error instanceof Error ? error.message : String(error),
         stackTrace: error instanceof Error ? error.stack : undefined,
         customerEmail,
-        adminEmail: 'jerebic.jernej@gmail.com',
+        adminEmail: 'info@lcc.si',
         orderId: order.id,
         timestamp
       }
