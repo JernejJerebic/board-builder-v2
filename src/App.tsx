@@ -1,43 +1,34 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
-import AppRoutes from "./AppRoutes";
-import { BasketProvider } from "./context/BasketContext";
-import { useEffect } from "react";
+import React from 'react';
+import { HashRouter as Router } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AppRoutes from './AppRoutes';
+import Layout from './components/Layout';
+import { Toaster } from 'sonner';
 
-const queryClient = new QueryClient();
+import './App.css';
 
-const App = () => {
-  // Set global font size
-  useEffect(() => {
-    // Set base font size to 18px
-    document.documentElement.style.fontSize = "18px";
-    
-    // You could also add a CSS class to the body for more styling control
-    document.body.classList.add("text-lg");
-    
-    return () => {
-      // Cleanup in case component unmounts
-      document.body.classList.remove("text-lg");
-    };
-  }, []);
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BasketProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </BasketProvider>
-      </TooltipProvider>
+      <Router>
+        <Layout>
+          <AppRoutes />
+        </Layout>
+        <Toaster position="top-right" richColors closeButton />
+      </Router>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
