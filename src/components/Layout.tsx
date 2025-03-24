@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { User, UserRoundCog } from 'lucide-react';
@@ -7,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -20,22 +18,20 @@ const ADMIN_CREDENTIALS = [{
   email: "jerebic.jernej@gmail.com",
   password: "12jernej34"
 }];
-
 const Layout: React.FC<LayoutProps> = ({
   children
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('isAdmin') === 'true';
   });
-  
   const [loginOpen, setLoginOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
   const navItems = [{
     name: 'Naročilo razreza',
     path: '/',
@@ -57,7 +53,6 @@ const Layout: React.FC<LayoutProps> = ({
     path: '/logs',
     adminOnly: true
   }];
-  
   const handleLogin = () => {
     const isValidCredentials = ADMIN_CREDENTIALS.some(cred => cred.email === email && cred.password === password);
     if (isValidCredentials) {
@@ -76,7 +71,6 @@ const Layout: React.FC<LayoutProps> = ({
       });
     }
   };
-  
   const handleLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('isAdmin');
@@ -88,33 +82,27 @@ const Layout: React.FC<LayoutProps> = ({
       description: "Uspešno ste se odjavili."
     });
   };
-  
   return <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Link to="/">
-                <img 
-                  src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" 
-                  alt="LCC Logo" 
-                  className="h-12 object-contain"
-                />
+                <h1 className="text-2xl font-bold text-primary">LCC Naročilo razreza</h1>
               </Link>
             </div>
             <nav className="hidden md:flex space-x-8">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map(item => (
-                <Link key={item.path} to={item.path} className="mx-[17px] py-[7px]">
-                  {item.name}
-                </Link>
-              ))}
+              {navItems.filter(item => !item.adminOnly || isAdmin).map(item => <Link key={item.path} to={item.path} className="mx-[17px] py-[7px]">
+                    {item.name}
+                  </Link>)}
               
-              {isAdmin ? (
-                <Button variant="ghost" onClick={handleLogout} className="flex items-center py-0">
+              {isAdmin ? <Button variant="ghost" onClick={handleLogout} className="flex items-center py-0">
                   <UserRoundCog className="mr-2 h-4 w-4" />
                   Odjava
-                </Button>
-              ) : null}
+                </Button> : <Button variant="ghost" onClick={() => setLoginOpen(true)} className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  Admin
+                </Button>}
             </nav>
           </div>
         </div>
@@ -129,18 +117,6 @@ const Layout: React.FC<LayoutProps> = ({
           <p className="text-center text-gray-500 text-sm">
             © {new Date().getFullYear()} LCC Naročilo razreza - Aplikacija za rezanje po meri
           </p>
-          {!isAdmin && (
-            <div className="fixed bottom-3 right-3 opacity-10 hover:opacity-100 transition-opacity">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setLoginOpen(true)} 
-                className="text-xs text-gray-400"
-              >
-                Admin
-              </Button>
-            </div>
-          )}
         </div>
       </footer>
 
@@ -160,17 +136,11 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">Geslo</label>
-              <Input 
-                id="password" 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    handleLogin();
-                  }
-                }} 
-              />
+              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => {
+              if (e.key === 'Enter') {
+                handleLogin();
+              }
+            }} />
             </div>
           </div>
           <DialogFooter>
@@ -181,5 +151,4 @@ const Layout: React.FC<LayoutProps> = ({
       </Dialog>
     </div>;
 };
-
 export default Layout;

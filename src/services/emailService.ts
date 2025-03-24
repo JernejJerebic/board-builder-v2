@@ -27,21 +27,26 @@ export const sendOrderEmail = async (
   );
   
   try {
-    // Send email to customer
+    // Try to send email to customer first
     const customerEmailRequest: EmailRequest = {
       type,
       orderId: order.id,
       email: customerEmail
     };
     
-    // Adding timeout and better error handling for the API call
-    const customerResponse = await axios.post('./api/email/order.php', customerEmailRequest, {
-      timeout: 15000,
+    // Add more robust request configuration
+    const requestConfig = {
+      timeout: 15000, // Longer timeout
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       }
-    });
+    };
+    
+    // Send customer email
+    const customerResponse = await axios.post('/api/email/order.php', customerEmailRequest, requestConfig);
+    
+    console.log(`[${timestamp}] Customer email response:`, customerResponse.data);
     
     addLog(
       'info',
@@ -52,34 +57,28 @@ export const sendOrderEmail = async (
       }
     );
     
-    // Send email to admin
+    // If customer email was successful, try sending admin email
+    const adminEmail = 'jerebic.jernej@gmail.com';
     const adminEmailRequest: EmailRequest = {
       type,
       orderId: order.id,
-      email: 'jerebic.jernej@gmail.com',
+      email: adminEmail,
       adminEmail: 'true'
     };
     
-    // Adding timeout and better error handling for the API call
-    const adminResponse = await axios.post('./api/email/order.php', adminEmailRequest, {
-      timeout: 15000,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
+    // Send admin email
+    const adminResponse = await axios.post('/api/email/order.php', adminEmailRequest, requestConfig);
+    
+    console.log(`[${timestamp}] Admin email response:`, adminResponse.data);
     
     addLog(
       'info',
-      `E-pošta uspešno poslana administratorju: jerebic.jernej@gmail.com`,
+      `E-pošta uspešno poslana administratorju: ${adminEmail}`,
       { 
         response: adminResponse.data,
         orderId: order.id
       }
     );
-    
-    console.log(`[${timestamp}] Email sent to customer:`, customerResponse.data);
-    console.log(`[${timestamp}] Email sent to admin:`, adminResponse.data);
     
     // Show toast notification of success
     toast.success("E-poštna sporočila uspešno poslana", {
@@ -119,11 +118,6 @@ export const sendOrderEmail = async (
       }
     );
     
-    // Show toast notification of failure but with more details
-    toast.error("Napaka pri pošiljanju e-pošte", {
-      description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju. Administrator bo obveščen o vašem naročilu.`
-    });
-    
     // Create a fallback notification in logs that will be visible to admin
     addLog(
       'warning',
@@ -138,6 +132,11 @@ export const sendOrderEmail = async (
         timestamp: new Date().toISOString()
       }
     );
+    
+    // Show toast notification of failure but with more details
+    toast.error("Napaka pri pošiljanju e-pošte", {
+      description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju e-pošte (${errorMessage}). Administrator bo obveščen o vašem naročilu.`
+    });
     
     return { 
       success: false, 
