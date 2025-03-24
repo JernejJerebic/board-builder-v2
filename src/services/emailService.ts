@@ -34,7 +34,14 @@ export const sendOrderEmail = async (
       email: customerEmail
     };
     
-    const customerResponse = await axios.post('/api/email/order.php', customerEmailRequest);
+    // Adding timeout and better error handling for the API call
+    const customerResponse = await axios.post('/api/email/order.php', customerEmailRequest, {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
     
     addLog(
       'info',
@@ -53,7 +60,14 @@ export const sendOrderEmail = async (
       adminEmail: 'true'
     };
     
-    const adminResponse = await axios.post('/api/email/order.php', adminEmailRequest);
+    // Adding timeout and better error handling for the API call
+    const adminResponse = await axios.post('/api/email/order.php', adminEmailRequest, {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
     
     addLog(
       'info',
@@ -79,25 +93,55 @@ export const sendOrderEmail = async (
   } catch (error) {
     console.error(`[${timestamp}] Error sending email:`, error);
     
+    // Extract more detailed error information
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorDetails = axios.isAxiosError(error) 
+      ? {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method
+          }
+        }
+      : {};
+    
     addLog(
       'error',
       `Napaka pri pošiljanju e-pošte za naročilo #${order.id}`,
       { 
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
+        details: errorDetails,
         customerEmail,
         adminEmail: 'jerebic.jernej@gmail.com',
         orderId: order.id
       }
     );
     
-    // Show toast notification of failure
+    // Show toast notification of failure but with more details
     toast.error("Napaka pri pošiljanju e-pošte", {
-      description: "Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju potrditvenega e-poštnega sporočila."
+      description: `Naročilo je bilo uspešno oddano, vendar je prišlo do napake pri pošiljanju (${errorMessage}). Administrator bo obveščen o vašem naročilu.`
     });
+    
+    // Create a fallback notification in logs that will be visible to admin
+    addLog(
+      'warning',
+      `POZOR: Naročilo #${order.id} ni poslalo e-pošte stranki ${customerEmail}`,
+      {
+        reason: "Napaka API strežnika: " + errorMessage,
+        orderDetails: {
+          id: order.id,
+          totalCostWithVat: order.totalCostWithVat,
+          status: order.status
+        },
+        timestamp: new Date().toISOString()
+      }
+    );
     
     return { 
       success: false, 
-      message: `Failed to send email: ${error instanceof Error ? error.message : String(error)}` 
+      message: `Failed to send email: ${errorMessage}` 
     };
   }
 };

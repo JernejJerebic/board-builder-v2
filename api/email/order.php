@@ -3,9 +3,18 @@
 require_once '../config/database.php';
 require_once '../utils/utils.php';
 
-// Enable CORS
-enableCORS();
+// Enable CORS - moved to the top to ensure it works for all responses
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Now proceed with the regular request handling
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method !== 'POST') {
@@ -26,7 +35,7 @@ $isAdminEmail = isset($data['adminEmail']) && $data['adminEmail'] === 'true';
 // Get order info
 $conn = getConnection();
 $orderStmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
-$orderStmt->bind_param("i", $orderId);
+$orderStmt->bind_param("s", $orderId);
 $orderStmt->execute();
 $orderResult = $orderStmt->get_result();
 
