@@ -2,6 +2,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../includes/utils.php';
+require_once '../includes/mailer.php';
 
 // Require admin login
 session_start();
@@ -42,12 +43,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 if ($emailType) {
-                    sendOrderStatusEmail($emailType, $orderId, $customerEmail);
+                    // Get order details for email
+                    $orderStmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+                    $orderStmt->bind_param("s", $orderId);
+                    $orderStmt->execute();
+                    $orderResult = $orderStmt->get_result();
+                    $order = $orderResult->fetch_assoc();
+                    
+                    // Get customer details for email
+                    $customerStmt = $conn->prepare("SELECT * FROM customers WHERE id = ?");
+                    $customerStmt->bind_param("i", $order['customerId']);
+                    $customerStmt->execute();
+                    $customerResult = $customerStmt->get_result();
+                    $customer = $customerResult->fetch_assoc();
+                    
+                    // Send the status update email
+                    $emailResult = sendOrderStatusEmail($emailType, $orderId, $customerEmail, $order, $customer);
+                    
+                    if ($emailResult['success']) {
+                        $_SESSION['success_message'] = 'Status naročila je bil uspešno posodobljen in e-poštno obvestilo poslano';
+                    } else {
+                        $_SESSION['success_message'] = 'Status naročila je bil uspešno posodobljen, vendar obvestilo po e-pošti ni bilo poslano';
+                        $_SESSION['error_message'] = 'Napaka pri pošiljanju e-pošte: ' . $emailResult['message'];
+                    }
+                } else {
+                    $_SESSION['success_message'] = 'Status naročila je bil uspešno posodobljen';
                 }
+            } else {
+                $_SESSION['success_message'] = 'Status naročila je bil uspešno posodobljen';
             }
-            
-            // Set success message
-            $_SESSION['success_message'] = 'Status naročila je bil uspešno posodobljen';
         } else {
             $_SESSION['error_message'] = 'Napaka pri posodobitvi statusa naročila';
         }
@@ -360,6 +384,29 @@ function sendEmail(type) {
         console.error('Error sending email:', error);
         showToast('Napaka pri pošiljanju e-pošte', 'error');
     });
+}
+
+// Function to show toast notifications
+function showToast(message, type) {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    toastContainer.appendChild(toast);
+    
+    // Remove toast after 5 seconds
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
 }
 </script>
 

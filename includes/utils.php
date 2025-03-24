@@ -134,7 +134,7 @@ function addLog($level, $message, $details = []) {
     error_log("[{$logEntry['timestamp']}] [{$level}] {$message}");
 }
 
-// Function to send order status email notification
+// Function to send order status email notification using PHPMailer
 function sendOrderStatusEmail($type, $orderId, $customerEmail) {
     global $conn;
     
@@ -153,58 +153,19 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail) {
         $order = $orderResult->fetch_assoc();
         
         // Get customer info
-        $customerStmt = $conn->prepare("SELECT firstName, lastName FROM customers WHERE id = ?");
+        $customerStmt = $conn->prepare("SELECT * FROM customers WHERE id = ?");
         $customerStmt->bind_param("i", $order['customerId']);
         $customerStmt->execute();
         $customerResult = $customerStmt->get_result();
         $customer = $customerResult->fetch_assoc();
         
-        // Set up email data based on type
-        $subject = "";
-        $message = "";
+        // Include the mailer utilities
+        require_once __DIR__ . '/mailer.php';
         
-        switch ($type) {
-            case 'progress':
-                $subject = "LCC Naročilo razreza - Naročilo #{$orderId} v obdelavi";
-                $message = "Spoštovani {$customer['firstName']} {$customer['lastName']},\n\n";
-                $message .= "Vaše naročilo (#{$orderId}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.\n\n";
-                $message .= "Podrobnosti naročila:\n";
-                $message .= "Skupni znesek: €" . number_format($order['totalCostWithVat'], 2) . "\n";
-                $message .= "Način dostave: " . ($order['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava') . "\n\n";
-                $message .= "Lep pozdrav,\nEkipa LCC Naročilo razreza";
-                break;
-                
-            case 'completed':
-                $subject = "LCC Naročilo razreza - Naročilo #{$orderId} zaključeno";
-                $message = "Spoštovani {$customer['firstName']} {$customer['lastName']},\n\n";
-                $message .= "Vaše naročilo (#{$orderId}) je zaključeno in pripravljeno " . ($order['shippingMethod'] === 'pickup' ? 'za prevzem' : 'za dostavo') . ".\n\n";
-                $message .= "Podrobnosti naročila:\n";
-                $message .= "Skupni znesek: €" . number_format($order['totalCostWithVat'], 2) . "\n";
-                $message .= "Način dostave: " . ($order['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava') . "\n\n";
-                $message .= "V primeru vprašanj nas kontaktirajte na info@lcc-razrez.si\n\n";
-                $message .= "Lep pozdrav,\nEkipa LCC Naročilo razreza";
-                break;
-                
-            default:
-                addLog('error', "Invalid email type", ['type' => $type, 'orderId' => $orderId]);
-                return false;
-        }
+        // Send the email using our new mailer function
+        $result = sendOrderStatusEmail($type, $orderId, $customerEmail, $order, $customer);
         
-        // Set up email headers
-        $headers = 'From: LCC Naročilo razreza <info@lcc-razrez.si>' . "\r\n";
-        $headers .= 'Reply-To: info@lcc-razrez.si' . "\r\n";
-        $headers .= 'MIME-Version: 1.0' . "\r\n";
-        $headers .= 'Content-type: text/plain; charset=UTF-8' . "\r\n";
-        
-        // Log the email information
-        error_log("Attempting to send status email: Type={$type}, OrderID={$orderId}, To={$customerEmail}");
-        error_log("Subject: {$subject}");
-        error_log("Message: {$message}");
-        
-        // Send the email
-        $mailSent = mail($customerEmail, $subject, $message, $headers);
-        
-        if ($mailSent) {
+        if ($result['success']) {
             addLog('info', "Status email sent successfully", [
                 'type' => $type,
                 'orderId' => $orderId,
@@ -212,12 +173,11 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail) {
             ]);
             return true;
         } else {
-            $error = error_get_last();
             addLog('error', "Failed to send status email", [
                 'type' => $type,
                 'orderId' => $orderId,
                 'recipient' => $customerEmail,
-                'error' => $error ? $error['message'] : 'Unknown error'
+                'error' => $result['message']
             ]);
             return false;
         }
@@ -231,30 +191,66 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail) {
     }
 }
 
-// Handle email sending
+// Handle email sending with PHPMailer
 function sendOrderEmail($type, $order, $customerEmail) {
     // Get customer info
     $conn = getConnection();
-    $customerStmt = $conn->prepare("SELECT firstName, lastName FROM customers WHERE id = ?");
+    $customerStmt = $conn->prepare("SELECT * FROM customers WHERE id = ?");
     $customerStmt->bind_param("i", $order['customerId']);
     $customerStmt->execute();
     $result = $customerStmt->get_result();
     $customer = $result->fetch_assoc();
     
-    // In a real app, you would send an actual email here
-    // For now, just log it
+    // Include the mailer utilities
+    require_once __DIR__ . '/mailer.php';
+    
+    // Log the attempt
     addLog(
         'info',
-        "Email would be sent for order #{$order['id']}",
+        "Attempting to send email for order #{$order['id']}",
         [
             'type' => $type,
             'customerEmail' => $customerEmail,
             'customerName' => $customer['firstName'] . ' ' . $customer['lastName'],
-            'orderTotal' => $order['totalCostWithVat']
         ]
     );
     
-    return ['success' => true, 'message' => 'Email logged successfully'];
+    // Send the appropriate email based on type
+    switch ($type) {
+        case 'new':
+            $result = sendOrderConfirmationEmail($order['id'], $customerEmail, $order, $customer);
+            break;
+        case 'progress':
+        case 'completed':
+            $result = sendOrderStatusEmail($type, $order['id'], $customerEmail, $order, $customer);
+            break;
+        default:
+            $result = [
+                'success' => false,
+                'message' => 'Invalid email type'
+            ];
+    }
+    
+    // Also send notification to admin if this is a new order
+    if ($type === 'new') {
+        sendAdminOrderNotification($order['id'], $order, $customer);
+    }
+    
+    if ($result['success']) {
+        addLog(
+            'info',
+            "Email successfully sent for order #{$order['id']}",
+            ['type' => $type, 'recipient' => $customerEmail]
+        );
+    } else {
+        addLog(
+            'error',
+            "Failed to send email for order #{$order['id']}",
+            ['type' => $type, 'recipient' => $customerEmail, 'error' => $result['message']]
+        );
+    }
+    
+    return $result;
 }
 
 // Session handling

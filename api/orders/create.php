@@ -2,6 +2,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../utils/utils.php';
+require_once '../../includes/mailer.php';
 
 // Enable CORS
 enableCORS();
@@ -171,16 +172,44 @@ try {
     // Commit transaction
     $conn->commit();
     
-    // Send order confirmation email
-    sendOrderEmail($orderId, $data['customer']['email'], $customerId);
+    // Get the complete order and customer information for emails
+    $orderStmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+    $orderStmt->bind_param("s", $orderId);
+    $orderStmt->execute();
+    $orderResult = $orderStmt->get_result();
+    $order = $orderResult->fetch_assoc();
+    
+    $customerStmt = $conn->prepare("SELECT * FROM customers WHERE id = ?");
+    $customerStmt->bind_param("i", $customerId);
+    $customerStmt->execute();
+    $customerResult = $customerStmt->get_result();
+    $customer = $customerResult->fetch_assoc();
+    
+    // Send order confirmation email to customer
+    $emailResult = sendOrderConfirmationEmail($orderId, $data['customer']['email'], $order, $customer);
+    
+    // Log the email result
+    addLog(
+        $emailResult['success'] ? 'info' : 'error',
+        $emailResult['success'] ? "Order confirmation email sent" : "Failed to send order confirmation email",
+        ['orderId' => $orderId, 'recipient' => $data['customer']['email']]
+    );
     
     // Send admin notification email
-    sendAdminOrderNotification($orderId);
+    $adminEmailResult = sendAdminOrderNotification($orderId, $order, $customer);
+    
+    // Log the admin email result
+    addLog(
+        $adminEmailResult['success'] ? 'info' : 'error',
+        $adminEmailResult['success'] ? "Admin notification email sent" : "Failed to send admin notification email",
+        ['orderId' => $orderId]
+    );
     
     sendResponse([
         'success' => true,
         'message' => 'Order created successfully',
-        'orderId' => $orderId
+        'orderId' => $orderId,
+        'emailSent' => $emailResult['success']
     ], 201);
     
 } catch (Exception $e) {
@@ -189,109 +218,10 @@ try {
     
     // Log error
     error_log("Order creation error: " . $e->getMessage());
+    addLog('error', "Order creation error", ['error' => $e->getMessage()]);
     
     sendError("Failed to create order: " . $e->getMessage());
 }
 
 $conn->close();
-
-// Function to send order confirmation email
-function sendOrderEmail($orderId, $customerEmail, $customerId) {
-    global $conn;
-    
-    try {
-        // Get customer info
-        $stmt = $conn->prepare("SELECT firstName, lastName FROM customers WHERE id = ?");
-        $stmt->bind_param("i", $customerId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $customer = $result->fetch_assoc();
-        
-        // Get order info
-        $orderStmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
-        $orderStmt->bind_param("s", $orderId);
-        $orderStmt->execute();
-        $orderResult = $orderStmt->get_result();
-        $order = $orderResult->fetch_assoc();
-        
-        // Set up email data
-        $subject = "LCC Naročilo razreza - Novo naročilo #{$orderId}";
-        $message = "Spoštovani {$customer['firstName']} {$customer['lastName']},\n\n";
-        $message .= "Zahvaljujemo se vam za vaše naročilo (#{$orderId}). V najkrajšem možnem času bomo začeli z obdelavo vašega naročila.\n\n";
-        $message .= "Podrobnosti naročila:\n";
-        $message .= "Skupni znesek: €" . number_format($order['totalCostWithVat'], 2) . "\n";
-        $message .= "Način plačila: " . ucfirst(str_replace('_', ' ', $order['paymentMethod'])) . "\n";
-        $message .= "Način dostave: " . ($order['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava') . "\n\n";
-        $message .= "Lep pozdrav,\nEkipa LCC Naročilo razreza";
-        
-        // Set up headers
-        $headers = "From: LCC Naročilo razreza <info@lcc-razrez.si>\r\n";
-        $headers .= "Reply-To: info@lcc-razrez.si\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        
-        // Log the email that would be sent
-        error_log("Sending order confirmation email to {$customerEmail}");
-        error_log("Subject: {$subject}");
-        error_log("Message: {$message}");
-        
-        // Send email
-        if (mail($customerEmail, $subject, $message, $headers)) {
-            error_log("Order confirmation email sent successfully to {$customerEmail}");
-            return true;
-        } else {
-            error_log("Failed to send order confirmation email to {$customerEmail}");
-            return false;
-        }
-    } catch (Exception $e) {
-        error_log("Error sending order confirmation email: " . $e->getMessage());
-        return false;
-    }
-}
-
-// Function to send admin notification email
-function sendAdminOrderNotification($orderId) {
-    global $conn;
-    
-    try {
-        // Get order info
-        $orderStmt = $conn->prepare("SELECT o.*, c.firstName, c.lastName, c.email FROM orders o JOIN customers c ON o.customerId = c.id WHERE o.id = ?");
-        $orderStmt->bind_param("s", $orderId);
-        $orderStmt->execute();
-        $orderResult = $orderStmt->get_result();
-        $order = $orderResult->fetch_assoc();
-        
-        // Admin email
-        $adminEmail = "info@lcc-razrez.si";
-        
-        // Set up email data
-        $subject = "Novo naročilo #{$orderId}";
-        $message = "Prejeli ste novo naročilo #{$orderId}.\n\n";
-        $message .= "Podrobnosti naročila:\n";
-        $message .= "Stranka: {$order['firstName']} {$order['lastName']}\n";
-        $message .= "Email: {$order['email']}\n";
-        $message .= "Znesek: €" . number_format($order['totalCostWithVat'], 2) . "\n\n";
-        $message .= "Prijavite se v administratorsko ploščo za več podrobnosti.";
-        
-        // Set up headers
-        $headers = "From: LCC Naročilo razreza <noreply@lcc-razrez.si>\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        
-        // Log the email that would be sent
-        error_log("Sending admin notification email to {$adminEmail}");
-        error_log("Subject: {$subject}");
-        error_log("Message: {$message}");
-        
-        // Send email
-        if (mail($adminEmail, $subject, $message, $headers)) {
-            error_log("Admin notification email sent successfully");
-            return true;
-        } else {
-            error_log("Failed to send admin notification email");
-            return false;
-        }
-    } catch (Exception $e) {
-        error_log("Error sending admin notification email: " . $e->getMessage());
-        return false;
-    }
-}
 ?>
