@@ -159,7 +159,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">4. Vrtanje lukenj</h3>
+        <h3 className="font-medium mb-2 text-xl">4. Vrtanje lukenj</h3>
         <div className="flex items-center space-x-2">
           <Checkbox id="drilling" checked={drilling} onCheckedChange={checked => setDrilling(checked === true)} />
           <Label htmlFor="drilling">Dodaj luknje (100mm od roba)</Label>
@@ -167,7 +167,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">5. Količina in cena</h3>
+        <h3 className="font-medium mb-2 text-xl">5. Količina in cena</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="quantity">Količina</Label>
