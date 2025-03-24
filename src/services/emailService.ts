@@ -49,9 +49,9 @@ const sendEmail = async (
 
     console.log('Email sent via EmailJS:', response.data);
     
-    // Log success
+    // Log success - Changed 'success' to 'info' to match the allowed log levels
     addLog(
-      'success',
+      'info',
       `E-pošta uspešno poslana na naslov: ${to}`,
       { 
         subject,
