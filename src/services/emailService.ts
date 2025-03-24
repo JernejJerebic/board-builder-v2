@@ -37,9 +37,7 @@ const sendEmail = async (
     );
     
     // Check if EmailJS is configured
-    if (EMAILJS_USER_ID === 'user_id' || 
-        EMAILJS_SERVICE_ID === 'service_iqv96th' || 
-        EMAILJS_TEMPLATE_ID === 'template_email_id') {
+    if (!EMAILJS_USER_ID || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
       throw new Error('EmailJS is not properly configured');
     }
     
@@ -208,9 +206,7 @@ export const sendOrderEmail = async (
   
   try {
     // Check if EmailJS is configured
-    if (EMAILJS_USER_ID === 'user_id' || 
-        EMAILJS_SERVICE_ID === 'service_iqv96th' || 
-        EMAILJS_TEMPLATE_ID === 'template_email_id') {
+    if (!EMAILJS_USER_ID || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
       throw new Error('EmailJS is not properly configured');
     }
     
