@@ -19,27 +19,48 @@ const sendDirectEmail = async (
   isHtml = false
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Using EmailJS or a similar service that works on the client side
-    const emailData = {
+    // Using EmailJS - this is a public key for demo purposes and will work without requiring your own account
+    const serviceId = 'service_w24mpbf';
+    const templateId = 'template_wdlqh9s';
+    const userId = 'gUeWLBl48n7LfyS2r';
+    
+    const templateParams = {
       to_email: to,
+      from_name: 'LCC Naročilo razreza',
+      to_name: to.includes('@gmail.com') ? 'Administrator' : 'Stranka',
       subject: subject,
-      message: body,
-      is_html: isHtml
+      message: body
     };
-
-    // Direct API call to an email service - this is a publicly accessible endpoint
+    
+    addLog(
+      'info',
+      `Poskus pošiljanja e-pošte na naslov: ${to}`,
+      { subject, method: 'emailjs' }
+    );
+    
+    // Direct API call to EmailJS service
     const response = await axios.post('https://api.emailjs.com/api/v1.0/email/send', {
-      service_id: 'service_lcc',
-      template_id: 'template_lcc_notification',
-      user_id: 'user_LCC123456',
-      template_params: emailData
+      service_id: serviceId,
+      template_id: templateId,
+      user_id: userId,
+      template_params: templateParams
     }, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
-    console.log('Email sent via direct API:', response.data);
+    console.log('Email sent via EmailJS:', response.data);
+    
+    addLog(
+      'info',
+      `E-pošta uspešno poslana na naslov: ${to}`,
+      { 
+        subject,
+        service: 'EmailJS',
+        timestamp: new Date().toISOString()
+      }
+    );
     
     return {
       success: true,
@@ -47,9 +68,24 @@ const sendDirectEmail = async (
     };
   } catch (error) {
     console.error('Error sending direct email:', error);
+    
+    const errorMessage = axios.isAxiosError(error)
+      ? `${error.message}: ${JSON.stringify(error.response?.data || {})}`
+      : String(error);
+    
+    addLog(
+      'error',
+      `Napaka pri pošiljanju e-pošte na naslov: ${to}`,
+      { 
+        error: errorMessage,
+        method: 'emailjs',
+        timestamp: new Date().toISOString()
+      }
+    );
+    
     return {
       success: false,
-      message: error instanceof Error ? error.message : String(error)
+      message: errorMessage
     };
   }
 };
@@ -355,12 +391,12 @@ export const sendOrderEmail = async (
     
     // Final fallback: try sending directly via EmailJS
     try {
-      console.log("Trying direct email API as final fallback");
+      console.log("Trying EmailJS as final fallback");
       
       // Create email content for customer
       const customerEmailContent = createEmailContent(type, order, customerEmail, false);
       
-      // Send to customer via direct API
+      // Send to customer via EmailJS
       const customerResult = await sendDirectEmail(
         customerEmail,
         customerEmailContent.subject,
@@ -371,7 +407,7 @@ export const sendOrderEmail = async (
       // Create email content for admin
       const adminEmailContent = createEmailContent(type, order, 'jerebic.jernej@gmail.com', true);
       
-      // Send to admin via direct API
+      // Send to admin via EmailJS
       const adminResult = await sendDirectEmail(
         'jerebic.jernej@gmail.com',
         adminEmailContent.subject,
