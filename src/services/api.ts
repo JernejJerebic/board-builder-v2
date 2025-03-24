@@ -1,6 +1,6 @@
-
 import { Customer, Order, Color } from '@/types';
 import * as localStorageService from './localStorage';
+import { sendOrderEmail } from './emailService';
 
 // Customer API
 export const fetchCustomers = async (): Promise<Customer[]> => {
@@ -253,24 +253,8 @@ export const deleteOrder = async (id: string): Promise<void> => {
   }
 };
 
-// Email service
-export const sendOrderEmail = async (
-  type: 'new' | 'progress' | 'completed',
-  order: Order,
-  customerEmail: string
-): Promise<{ success: boolean; message?: string }> => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] Sending ${type} order email to ${customerEmail} for order ${order.id}`);
-  
-  try {
-    const result = await localStorageService.simulateSendEmail(type, order, customerEmail);
-    console.log(`[${timestamp}] Email sent:`, result);
-    return result;
-  } catch (error) {
-    console.error(`[${timestamp}] Error sending email:`, error);
-    return { success: false, message: `Failed to send email: ${error}` };
-  }
-};
+// Email service (now using our external service implementation directly)
+export { sendOrderEmail };
 
 // Backwards compatibility functions
 export const mockCustomers: Customer[] = [];
