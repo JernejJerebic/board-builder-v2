@@ -1,3 +1,4 @@
+
 <?php
 // PHPMailer classes
 use PHPMailer\PHPMailer\PHPMailer;
@@ -25,11 +26,30 @@ function sendMail($to, $subject, $message, $fromName = 'LCC Naročilo razreza', 
         
         // Server settings
         $mail->CharSet = "UTF-8";
-        $mail->isMail();              // Use PHP mail() function
-        $mail->Host = 'lcc.si';       // SMTP server
-        $mail->SMTPAuth = false;      // No SMTP authentication needed as per your config
-        $mail->SMTPSecure = 'tls';    // Enable TLS encryption
-        $mail->Port = 465;            // TCP port to connect to
+        
+        // Check if SMTP settings are defined
+        $smtpHost = getenv('SMTP_HOST');
+        $smtpUser = getenv('SMTP_USER');
+        $smtpPass = getenv('SMTP_PASS');
+        $smtpPort = getenv('SMTP_PORT') ?: 587;
+        
+        // If SMTP credentials are available, use SMTP, otherwise use PHP mail()
+        if ($smtpHost && $smtpUser && $smtpPass) {
+            $mail->isSMTP();
+            $mail->Host = $smtpHost;
+            $mail->SMTPAuth = true;
+            $mail->Username = $smtpUser;
+            $mail->Password = $smtpPass;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = $smtpPort;
+            
+            // Log SMTP usage
+            error_log("Using SMTP configuration with host: {$smtpHost}");
+        } else {
+            // Fallback to PHP mail() function
+            $mail->isMail();
+            error_log("SMTP settings not found. Using PHP mail() function");
+        }
         
         // Recipients
         $mail->setFrom($fromEmail, $fromName);
@@ -59,8 +79,9 @@ function sendMail($to, $subject, $message, $fromName = 'LCC Naročilo razreza', 
             'message' => "Email sent successfully to {$to}"
         ];
     } catch (Exception $e) {
-        // Log error
-        error_log("Failed to send email: {$mail->ErrorInfo}");
+        // Log detailed error
+        error_log("Failed to send email to {$to}: {$mail->ErrorInfo}");
+        error_log("Error details: " . print_r($e, true));
         
         return [
             'success' => false,
