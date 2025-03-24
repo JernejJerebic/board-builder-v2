@@ -52,11 +52,16 @@ const ThankYouPage = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Status naročila</p>
-              <p className="capitalize">{order.status}</p>
+              <p className="capitalize">{order.status === 'placed' ? 'Oddano' : 
+                order.status === 'in_progress' ? 'V obdelavi' : 'Zaključeno'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Način plačila</p>
-              <p className="capitalize">{order.paymentMethod.replace(/_/g, ' ')}</p>
+              <p className="capitalize">
+                {order.paymentMethod === 'credit_card' ? 'Kreditna kartica' :
+                 order.paymentMethod === 'payment_on_delivery' ? 'Plačilo ob dostavi' :
+                 order.paymentMethod === 'pickup_at_shop' ? 'Prevzem v trgovini' : 'Bančno nakazilo'}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Način dostave</p>
@@ -112,7 +117,7 @@ const ThankYouPage = () => {
           Potrdilo o naročilu smo poslali na vaš e-poštni naslov.
         </p>
         <p className="text-gray-500">
-          V primeru vprašanj nas kontaktirajte na <span className="font-medium">info@woodboard.si</span>
+          V primeru vprašanj nas kontaktirajte na <span className="font-medium">info@lcc-razrez.si</span>
         </p>
       </div>
     </div>

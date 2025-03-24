@@ -24,6 +24,7 @@ export interface Order {
   shippingMethod: 'pickup' | 'delivery';
   paymentMethod: 'credit_card' | 'payment_on_delivery' | 'pickup_at_shop' | 'bank_transfer';
   status: 'placed' | 'in_progress' | 'completed';
+  transactionId?: string;
 }
 
 export interface Color {

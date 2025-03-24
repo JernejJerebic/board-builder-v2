@@ -1,10 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBasket } from '@/context/BasketContext';
-import { createOrder, sendOrderEmail, createCustomer, findCustomerByEmail } from '@/services/api';
+import { createOrder, createCustomer, findCustomerByEmail, updateOrder } from '@/services/api';
+import { sendOrderEmail } from '@/services/emailService';
+import { generateClientToken, processBraintreePayment } from '@/services/braintree';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -65,6 +68,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const [confirmationLoading, setConfirmationLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [braintreeReady, setBraintreeReady] = useState(false);
+  const [braintreeToken, setBraintreeToken] = useState<string | null>(null);
   const [existingCustomer, setExistingCustomer] = useState<{ id: string; name: string } | null>(null);
   const navigate = useNavigate();
   
@@ -89,6 +93,24 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   
   const paymentMethod = form.watch('paymentMethod');
   const email = form.watch('email');
+  
+  // Initialize Braintree
+  useEffect(() => {
+    const initBraintree = async () => {
+      try {
+        console.log('Initializing Braintree...');
+        const token = await generateClientToken();
+        setBraintreeToken(token);
+        console.log('Braintree initialized with token:', token);
+        setBraintreeReady(true);
+      } catch (error) {
+        console.error('Error initializing Braintree:', error);
+        toast.error('Napaka pri inicializaciji plačilnega sistema');
+      }
+    };
+    
+    initBraintree();
+  }, []);
   
   useEffect(() => {
     const checkExistingCustomer = async () => {
@@ -124,15 +146,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     
     return () => clearTimeout(timeoutId);
   }, [email, form]);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setBraintreeReady(true);
-      console.log('Braintree client initialized');
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
   
   const handleSubmit = async (values: FormValues) => {
     setSubmitting(true);
@@ -177,15 +190,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log(`Created new customer with ID: ${customerId}`);
       }
       
-      if (formValues.paymentMethod === 'credit_card') {
-        console.log('Processing payment with Braintree...');
-        console.log(`Card number: ${formValues.cardNumber}`);
-        console.log(`Expiry date: ${formValues.expiryDate}`);
-        console.log(`CVV: ${formValues.cvv}`);
-        
-        console.log('Payment processed successfully');
-      }
-      
+      // Create order first with "pending_payment" status
       const newOrder = await createOrder({
         customerId: customerId,
         products: items,
@@ -196,15 +201,44 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         status: 'placed',
       });
       
-      try {
-        const emailResult = await sendOrderEmail('new', newOrder, formValues.email);
-        if (emailResult.success) {
-          console.log('Order emails sent successfully');
-        } else {
-          console.error('Failed to send order emails:', emailResult.message);
+      console.log('New order created:', newOrder);
+      
+      // Process payment if using credit card
+      if (formValues.paymentMethod === 'credit_card') {
+        console.log('Processing payment with Braintree...');
+        
+        if (!braintreeToken) {
+          throw new Error('Braintree token not available');
         }
+        
+        // In a real app, you would collect a payment method nonce from Braintree SDK
+        // For this demo, we'll simulate it
+        const simulatedNonce = `fake-valid-nonce-${Date.now()}`;
+        
+        const paymentResult = await processBraintreePayment(
+          simulatedNonce, 
+          total.withVat
+        );
+        
+        if (!paymentResult.success) {
+          throw new Error(paymentResult.error || 'Payment processing failed');
+        }
+        
+        console.log('Payment processed successfully:', paymentResult);
+        
+        // Update order with transaction ID
+        await updateOrder(newOrder.id, {
+          transactionId: paymentResult.transactionId
+        });
+      }
+      
+      // Send order emails
+      try {
+        await sendOrderEmail('new', newOrder, formValues.email);
+        console.log('Order emails sent successfully');
       } catch (error) {
         console.error('Error sending order emails:', error);
+        toast.error('Napaka pri pošiljanju e-poštnih sporočil');
       }
       
       toast.success('Naročilo uspešno oddano!');
@@ -212,8 +246,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       clearBasket();
       navigate('/thank-you', { state: { order: newOrder } });
     } catch (error) {
+      console.error('Error during checkout:', error);
       toast.error('Napaka pri potrditvi naročila');
-      console.error(error);
     } finally {
       setConfirmationLoading(false);
       setShowConfirmation(false);
@@ -494,6 +528,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
               
               <div className="text-sm text-gray-500">
                 <p>Vaši podatki o plačilu so varni in šifrirani. Nikoli ne shranjujemo podatkov o vaši kartici.</p>
+                {braintreeReady ? (
+                  <p className="text-green-600 mt-2">Plačilni sistem je pripravljen</p>
+                ) : (
+                  <p className="text-amber-600 mt-2">Inicializacija plačilnega sistema...</p>
+                )}
               </div>
             </div>
           )}
