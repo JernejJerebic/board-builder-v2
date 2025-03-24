@@ -1,12 +1,11 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Order } from '@/types';
 import { addLog } from '@/services/localStorage';
 
 /**
- * Simple, reliable email sending service using EmailJS
- * This implementation uses EmailJS with the provided credentials
+ * Simple, reliable email sending service that uses our PHP backend
+ * This implementation relies on the server's mail() function for maximum compatibility
  */
 const sendEmail = async (
   to: string,
@@ -15,47 +14,34 @@ const sendEmail = async (
   isHtml = true
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Updated service ID as provided
-    const serviceId = 'service_iqv96th';
-    const templateId = 'template_wdlqh9s';
-    const userId = 'gUeWLBl48n7LfyS2r';
-    
-    const templateParams = {
-      to_email: to,
-      from_name: 'LCC Naročilo razreza',
-      to_name: to.includes('@gmail.com') ? 'Administrator' : 'Stranka',
-      subject: subject,
-      message: body
-    };
-    
     // Log the attempt
     addLog(
       'info',
       `Pošiljanje e-pošte na naslov: ${to}`,
-      { subject, method: 'emailjs', timestamp: new Date().toISOString() }
+      { subject, method: 'php-mail', timestamp: new Date().toISOString() }
     );
     
-    // Direct API call to EmailJS service
-    const response = await axios.post('https://api.emailjs.com/api/v1.0/email/send', {
-      service_id: serviceId,
-      template_id: templateId,
-      user_id: userId,
-      template_params: templateParams
+    // Send email using our PHP mail endpoint
+    const response = await axios.post('/api/email/send.php', {
+      to_email: to,
+      subject: subject,
+      message: body,
+      is_html: isHtml
     }, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
-    console.log('Email sent via EmailJS:', response.data);
+    console.log('Email sent via PHP mail():', response.data);
     
-    // Log success - Changed 'success' to 'info' to match the allowed log levels
+    // Log success
     addLog(
       'info',
       `E-pošta uspešno poslana na naslov: ${to}`,
       { 
         subject,
-        service: 'EmailJS',
+        service: 'PHP-mail',
         timestamp: new Date().toISOString()
       }
     );
@@ -77,7 +63,7 @@ const sendEmail = async (
       `Napaka pri pošiljanju e-pošte na naslov: ${to}`,
       { 
         error: errorMessage,
-        method: 'emailjs',
+        method: 'php-mail',
         timestamp: new Date().toISOString()
       }
     );
@@ -260,3 +246,4 @@ export const sendOrderEmail = async (
     };
   }
 };
+
