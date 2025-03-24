@@ -6,7 +6,7 @@ import { addLog } from '@/services/localStorage';
 
 /**
  * Simple, reliable email sending service using EmailJS
- * This implementation uses public demo credentials and will actually work without setup
+ * This implementation uses EmailJS with the provided credentials
  */
 const sendEmail = async (
   to: string,
@@ -15,8 +15,8 @@ const sendEmail = async (
   isHtml = true
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // These are working public credentials for demo purposes
-    const serviceId = 'service_w24mpbf';
+    // Updated service ID as provided
+    const serviceId = 'service_iqv96th';
     const templateId = 'template_wdlqh9s';
     const userId = 'gUeWLBl48n7LfyS2r';
     
@@ -180,6 +180,7 @@ export const sendOrderEmail = async (
     );
     
     // Create and send admin email
+    // Using the provided email for admin
     const adminEmail = 'jerebic.jernej@gmail.com';
     const adminEmailContent = createEmailContent(type, order, true);
     const adminResult = await sendEmail(
