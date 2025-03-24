@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +8,7 @@ import { createOrder, createCustomer, findCustomerByEmail, updateOrder } from '@
 import { sendOrderEmail } from '@/services/emailService';
 import { generateClientToken, processBraintreePayment } from '@/services/braintree';
 import { Button } from '@/components/ui/button';
+import { addLog } from '@/services/localStorage';
 import {
   Form,
   FormControl,
@@ -94,7 +94,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const paymentMethod = form.watch('paymentMethod');
   const email = form.watch('email');
   
-  // Initialize Braintree
   useEffect(() => {
     const initBraintree = async () => {
       try {
@@ -190,7 +189,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log(`Created new customer with ID: ${customerId}`);
       }
       
-      // Create order first with "pending_payment" status
       const newOrder = await createOrder({
         customerId: customerId,
         products: items,
@@ -203,7 +201,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       
       console.log('New order created:', newOrder);
       
-      // Process payment if using credit card
       if (formValues.paymentMethod === 'credit_card') {
         console.log('Processing payment with Braintree...');
         
@@ -211,13 +208,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
           throw new Error('Braintree token not available');
         }
         
-        // In a real app, you would collect a payment method nonce from Braintree SDK
-        // For this demo, we'll simulate it
         const simulatedNonce = `fake-valid-nonce-${Date.now()}`;
         
         const paymentResult = await processBraintreePayment(
           simulatedNonce, 
-          total.withVat
+          total.withVat,
+          newOrder.id
         );
         
         if (!paymentResult.success) {
@@ -226,27 +222,37 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         
         console.log('Payment processed successfully:', paymentResult);
         
-        // Update order with transaction ID
         await updateOrder(newOrder.id, {
           transactionId: paymentResult.transactionId
         });
+        
+        newOrder.transactionId = paymentResult.transactionId;
       }
       
-      // Send order emails
       try {
         await sendOrderEmail('new', newOrder, formValues.email);
         console.log('Order emails sent successfully');
       } catch (error) {
         console.error('Error sending order emails:', error);
-        toast.error('Napaka pri pošiljanju e-poštnih sporočil');
+        addLog({
+          level: 'error',
+          message: 'Napaka pri pošiljanju e-pošte za naročilo',
+          details: { 
+            error: error instanceof Error ? error.message : String(error),
+            orderId: newOrder.id
+          }
+        });
       }
-      
-      toast.success('Naročilo uspešno oddano!');
       
       clearBasket();
       navigate('/thank-you', { state: { order: newOrder } });
     } catch (error) {
       console.error('Error during checkout:', error);
+      addLog({
+        level: 'error',
+        message: 'Napaka pri potrditvi naročila',
+        details: { error: error instanceof Error ? error.message : String(error) }
+      });
       toast.error('Napaka pri potrditvi naročila');
     } finally {
       setConfirmationLoading(false);
