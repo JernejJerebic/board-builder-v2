@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import ColorSelector from './ColorSelector';
 import { useBasket } from '@/context/BasketContext';
-
 interface BoardConfiguratorProps {
   onConfigChange: (config: {
     color: Color | null;
@@ -23,10 +21,12 @@ interface BoardConfiguratorProps {
     drilling: boolean;
   }) => void;
 }
-
-const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange }) => {
-  const { addItem } = useBasket();
-  
+const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
+  onConfigChange
+}) => {
+  const {
+    addItem
+  } = useBasket();
   const [color, setColor] = useState<Color | null>(null);
   const [length, setLength] = useState<number>(800);
   const [width, setWidth] = useState<number>(600);
@@ -42,41 +42,40 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
   const [quantity, setQuantity] = useState<number>(1);
   const [pricePerUnit, setPricePerUnit] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
-  
+
   // Update thickness when color changes
   useEffect(() => {
     if (color) {
       setThickness(color.thickness);
     }
   }, [color]);
-  
+
   // Calculate surface area
   useEffect(() => {
     if (length && width) {
-      const area = (length * width) / 1000000; // Convert to m²
+      const area = length * width / 1000000; // Convert to m²
       setSurfaceArea(area);
     }
   }, [length, width]);
-  
+
   // Calculate price
   useEffect(() => {
     if (color && surfaceArea) {
       // Base price based on material and surface area
       let price = color.priceWithVat * surfaceArea;
-      
+
       // Add cost for borders
       const borderCount = Object.values(borders).filter(Boolean).length;
       const borderPrice = borderCount * (length + width) / 1000 * 3; // €3 per meter
-      
+
       // Add cost for drilling
       const drillingPrice = drilling ? 5 : 0;
-      
       const unitPrice = price + borderPrice + drillingPrice;
       setPricePerUnit(parseFloat(unitPrice.toFixed(2)));
       setTotalPrice(parseFloat((unitPrice * quantity).toFixed(2)));
     }
   }, [color, surfaceArea, borders, drilling, quantity, length, width]);
-  
+
   // Update parent component when configuration changes
   useEffect(() => {
     onConfigChange({
@@ -88,10 +87,8 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
       drilling
     });
   }, [color, length, width, thickness, borders, drilling, onConfigChange]);
-  
   const handleAddToBasket = () => {
     if (!color) return;
-    
     const product: Omit<Product, 'id'> = {
       colorId: color.id,
       length,
@@ -104,57 +101,34 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
       pricePerUnit,
       totalPrice
     };
-    
     addItem(product);
   };
-  
   const handleBorderChange = (side: keyof typeof borders, checked: boolean) => {
     setBorders(prev => ({
       ...prev,
       [side]: checked
     }));
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2">1. Izbira materiala</h3>
+        <h3 className="font-medium mb-2 text-xl">1. Izbira materiala</h3>
         <ColorSelector selectedColor={color} onSelectColor={setColor} />
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">2. Dimenzije plošče</h3>
+        <h3 className="font-medium mb-2 text-xl">2. Dimenzije plošče</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="length">Dolžina (mm)</Label>
-            <Input
-              id="length"
-              type="number"
-              min="100"
-              max="3000"
-              value={length}
-              onChange={(e) => setLength(parseInt(e.target.value) || 0)}
-            />
+            <Input id="length" type="number" min="100" max="3000" value={length} onChange={e => setLength(parseInt(e.target.value) || 0)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="width">Širina (mm)</Label>
-            <Input
-              id="width"
-              type="number"
-              min="100"
-              max="2000"
-              value={width}
-              onChange={(e) => setWidth(parseInt(e.target.value) || 0)}
-            />
+            <Input id="width" type="number" min="100" max="2000" value={width} onChange={e => setWidth(parseInt(e.target.value) || 0)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="thickness">Debelina (mm)</Label>
-            <Input
-              id="thickness"
-              type="number"
-              value={thickness}
-              disabled
-            />
+            <Input id="thickness" type="number" value={thickness} disabled />
           </div>
         </div>
         <div className="mt-2 text-sm text-gray-500">
@@ -163,38 +137,22 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
       </div>
       
       <div>
-        <h3 className="text-lg font-medium mb-2">3. ABS robovi</h3>
+        <h3 className="font-medium mb-2 text-xl">3. ABS robovi</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="top-border" 
-              checked={borders.top} 
-              onCheckedChange={(checked) => handleBorderChange('top', checked === true)}
-            />
+            <Checkbox id="top-border" checked={borders.top} onCheckedChange={checked => handleBorderChange('top', checked === true)} />
             <Label htmlFor="top-border">Zgoraj</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="right-border" 
-              checked={borders.right} 
-              onCheckedChange={(checked) => handleBorderChange('right', checked === true)}
-            />
+            <Checkbox id="right-border" checked={borders.right} onCheckedChange={checked => handleBorderChange('right', checked === true)} />
             <Label htmlFor="right-border">Desno</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="bottom-border" 
-              checked={borders.bottom} 
-              onCheckedChange={(checked) => handleBorderChange('bottom', checked === true)}
-            />
+            <Checkbox id="bottom-border" checked={borders.bottom} onCheckedChange={checked => handleBorderChange('bottom', checked === true)} />
             <Label htmlFor="bottom-border">Spodaj</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="left-border" 
-              checked={borders.left} 
-              onCheckedChange={(checked) => handleBorderChange('left', checked === true)}
-            />
+            <Checkbox id="left-border" checked={borders.left} onCheckedChange={checked => handleBorderChange('left', checked === true)} />
             <Label htmlFor="left-border">Levo</Label>
           </div>
         </div>
@@ -203,11 +161,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
       <div>
         <h3 className="text-lg font-medium mb-2">4. Vrtanje lukenj</h3>
         <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="drilling" 
-            checked={drilling} 
-            onCheckedChange={(checked) => setDrilling(checked === true)}
-          />
+          <Checkbox id="drilling" checked={drilling} onCheckedChange={checked => setDrilling(checked === true)} />
           <Label htmlFor="drilling">Dodaj luknje (100mm od roba)</Label>
         </div>
       </div>
@@ -217,45 +171,22 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({ onConfigChange })
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="quantity">Količina</Label>
-            <Input
-              id="quantity"
-              type="number"
-              min="1"
-              max="100"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-            />
+            <Input id="quantity" type="number" min="1" max="100" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="pricePerUnit">Cena na enoto</Label>
-            <Input
-              id="pricePerUnit"
-              type="text"
-              value={`€${pricePerUnit.toFixed(2)}`}
-              disabled
-            />
+            <Input id="pricePerUnit" type="text" value={`€${pricePerUnit.toFixed(2)}`} disabled />
           </div>
           <div className="space-y-2">
             <Label htmlFor="totalPrice">Skupna cena</Label>
-            <Input
-              id="totalPrice"
-              type="text"
-              value={`€${totalPrice.toFixed(2)}`}
-              disabled
-            />
+            <Input id="totalPrice" type="text" value={`€${totalPrice.toFixed(2)}`} disabled />
           </div>
         </div>
       </div>
       
-      <Button 
-        className="w-full py-6 text-lg"
-        disabled={!color || quantity < 1}
-        onClick={handleAddToBasket}
-      >
+      <Button className="w-full py-6 text-lg" disabled={!color || quantity < 1} onClick={handleAddToBasket}>
         Dodaj v košarico
       </Button>
-    </div>
-  );
+    </div>;
 };
-
 export default BoardConfigurator;
