@@ -1,6 +1,5 @@
-
-import { Customer, Order, Color, Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { Customer, Order, Color, Product } from '@/types';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -38,8 +37,8 @@ export const initializeStorage = () => {
         title: 'Oak Natural',
         htmlColor: '#d2b48c',
         thickness: 18,
-        priceWithoutVat: 45.00,
         priceWithVat: 54.90,
+        imageUrl: null,
         active: true,
       },
       {
@@ -47,8 +46,8 @@ export const initializeStorage = () => {
         title: 'Walnut Dark',
         htmlColor: '#614126',
         thickness: 25,
-        priceWithoutVat: 65.00,
         priceWithVat: 79.30,
+        imageUrl: null,
         active: true,
       },
       {
@@ -56,8 +55,8 @@ export const initializeStorage = () => {
         title: 'Pine Light',
         htmlColor: '#e8d0a9',
         thickness: 18,
-        priceWithoutVat: 35.00,
         priceWithVat: 42.70,
+        imageUrl: null,
         active: true,
       },
       {
@@ -65,8 +64,8 @@ export const initializeStorage = () => {
         title: 'Mahogany Red',
         htmlColor: '#c04000',
         thickness: 25,
-        priceWithoutVat: 75.00,
         priceWithVat: 91.50,
+        imageUrl: null,
         active: true,
       },
       {
@@ -74,8 +73,8 @@ export const initializeStorage = () => {
         title: 'Maple White',
         htmlColor: '#f5deb3',
         thickness: 18,
-        priceWithoutVat: 50.00,
         priceWithVat: 61.00,
+        imageUrl: null,
         active: false,
       },
     ];

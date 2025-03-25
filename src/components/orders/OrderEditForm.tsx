@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { Order, Product, Color } from '@/types';
+import { Order, Product, Color, Customer } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockCustomers, mockColors } from '@/data/mockData';
+import { mockCustomers } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Plus, X, Save, Trash2 } from 'lucide-react';
@@ -31,7 +31,7 @@ interface OrderEditFormProps {
 }
 
 const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel }) => {
-  const form = useForm({
+  const form = useForm<Order>({
     defaultValues: {
       customerId: order.customerId,
       shippingMethod: order.shippingMethod,
@@ -40,6 +40,8 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
       products: [...order.products],
       totalCostWithoutVat: order.totalCostWithoutVat,
       totalCostWithVat: order.totalCostWithVat,
+      id: order.id,
+      orderDate: order.orderDate
     },
   });
   
@@ -50,7 +52,7 @@ const OrderEditForm: React.FC<OrderEditFormProps> = ({ order, onSubmit, onCancel
   
   const { formState } = form;
   
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: Order) => {
     // Recalculate totals based on products
     const totalWithoutVat = data.products.reduce(
       (sum: number, product: Product) => sum + (product.totalPrice / 1.22), 
