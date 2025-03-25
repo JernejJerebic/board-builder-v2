@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { User, UserRoundCog } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -100,14 +99,6 @@ const Layout: React.FC<LayoutProps> = ({
               {navItems.filter(item => !item.adminOnly || isAdmin).map(item => <Link key={item.path} to={item.path} className="mx-[17px] py-[7px]">
                     {item.name}
                   </Link>)}
-              
-              {isAdmin ? <Button variant="ghost" onClick={handleLogout} className="flex items-center py-0">
-                  <UserRoundCog className="mr-2 h-4 w-4" />
-                  Odjava
-                </Button> : <Button variant="ghost" onClick={() => setLoginOpen(true)} className="flex items-center">
-                  <User className="mr-2 h-4 w-4" />
-                  Admin
-                </Button>}
             </nav>
           </div>
         </div>
@@ -119,9 +110,28 @@ const Layout: React.FC<LayoutProps> = ({
       </main>
       <footer className="bg-white border-t border-gray-200 py-4">
         <div className="container mx-auto px-4">
-          <p className="text-center text-gray-500 text-sm">
-            © {new Date().getFullYear()} LCC Naročilo razreza - Aplikacija za rezanje po meri
-          </p>
+          <div className="flex flex-col items-center">
+            <p className="text-center text-gray-500 text-sm">
+              © {new Date().getFullYear()} LCC Naročilo razreza - Aplikacija za rezanje po meri
+            </p>
+            <div className="mt-1">
+              {isAdmin ? (
+                <button 
+                  onClick={handleLogout} 
+                  className="text-gray-400 text-xs hover:text-gray-600"
+                >
+                  administrator odjava
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setLoginOpen(true)} 
+                  className="text-gray-400 text-xs hover:text-gray-600"
+                >
+                  administrator
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </footer>
 
