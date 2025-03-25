@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -88,11 +87,7 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Link to="/">
-                <img 
-                  src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" 
-                  alt="LCC" 
-                  className="h-12 md:h-16"
-                />
+                <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" className="h-12 md:h-16" />
               </Link>
             </div>
             <nav className="hidden md:flex space-x-8">
@@ -115,21 +110,9 @@ const Layout: React.FC<LayoutProps> = ({
               © {new Date().getFullYear()} LCC Naročilo razreza - Aplikacija za rezanje po meri
             </p>
             <div className="mt-1">
-              {isAdmin ? (
-                <button 
-                  onClick={handleLogout} 
-                  className="text-gray-400 text-xs hover:text-gray-600"
-                >
-                  administrator odjava
-                </button>
-              ) : (
-                <button 
-                  onClick={() => setLoginOpen(true)} 
-                  className="text-gray-400 text-xs hover:text-gray-600"
-                >
+              {isAdmin ? <button onClick={handleLogout} className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-50 px-[12px] py-[5px] rounded-full">Odjava administratorja</button> : <button onClick={() => setLoginOpen(true)} className="text-gray-400 text-xs hover:text-gray-600">
                   administrator
-                </button>
-              )}
+                </button>}
             </div>
           </div>
         </div>
