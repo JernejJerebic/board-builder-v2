@@ -19,6 +19,7 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const initBraintree = async () => {
@@ -26,7 +27,9 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
         setIsLoading(true);
         setError(null);
         
+        console.log('Initializing Braintree hosted fields...');
         await initBraintreeHostedFields();
+        console.log('Braintree hosted fields initialized successfully');
         
         setIsInitialized(true);
         onPaymentMethodReady(true);
@@ -48,7 +51,11 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
         console.error('Error tearing down Braintree:', err);
       });
     };
-  }, [onPaymentMethodReady]);
+  }, [onPaymentMethodReady, retryCount]);
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -87,6 +94,14 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">
               {error}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-2 mt-2" 
+                onClick={handleRetry}
+              >
+                Poskusi ponovno
+              </Button>
             </div>
           )}
           

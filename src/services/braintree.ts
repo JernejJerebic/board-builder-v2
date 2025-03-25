@@ -7,12 +7,24 @@ import axios from 'axios';
 let braintreeClient: braintree.Client | null = null;
 let hostedFieldsInstance: braintree.HostedFields | null = null;
 
+// Base API URL - ensure this matches your server configuration
+const API_BASE_URL = '/api';
+
 /**
  * Get a client token from the server
  */
 export const getClientToken = async (): Promise<string> => {
   try {
-    const response = await axios.get('/api/braintree/token.php');
+    // Add a timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    const response = await axios.get(`${API_BASE_URL}/braintree/token?_=${timestamp}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Token response:', response);
     
     if (!response.data || !response.data.clientToken) {
       console.error('Invalid response from token endpoint:', response.data);
@@ -46,6 +58,7 @@ export const initBraintreeClient = async (): Promise<braintree.Client> => {
 
     // Get authorization from server
     const authorization = await getClientToken();
+    console.log('Received authorization token:', authorization.substring(0, 20) + '...');
 
     braintreeClient = await braintree.client.create({
       authorization
@@ -160,11 +173,18 @@ export const processBraintreePayment = async (
       }
     );
     
-    const response = await axios.post('/api/braintree/process.php', {
+    const response = await axios.post(`${API_BASE_URL}/braintree/process`, {
       paymentMethodNonce,
       amount,
       orderId
+    }, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
     });
+    
+    console.log('Payment response:', response);
     
     addLog(
       'info',

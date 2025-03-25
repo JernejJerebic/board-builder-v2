@@ -53,3 +53,4 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*\.php
 RewriteCond %{REQUEST_URI} !^/api/setup/setup.php
 RewriteRule ^(.*)\.php$ /$1 [R=301,L]
+
