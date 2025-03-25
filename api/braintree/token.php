@@ -5,18 +5,29 @@ require_once '../includes/utils.php';
 require_once '../../vendor/autoload.php';
 
 // Enable CORS
-enableCORS();
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json");
+
+// Handle OPTIONS method for CORS preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 // Check request method
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    sendError('Method not allowed', 405);
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+    exit;
 }
 
 // This endpoint generates a client token for Braintree
 try {
-    // Initialize Braintree Gateway with production credentials
+    // Initialize Braintree Gateway with credentials
     $gateway = new Braintree\Gateway([
-        'environment' => 'production',
+        'environment' => 'sandbox', // Use sandbox for testing
         'merchantId' => 'pszgyg5dgnw997bx',
         'publicKey' => 'df6b3f98fhfj57mh',
         'privateKey' => 'faedbfa95f2bf78f2ba4c1cc444dc63b'
@@ -26,22 +37,17 @@ try {
     $clientToken = $gateway->clientToken()->generate();
     
     // Log the token generation
-    addLog('info', 'Generated Braintree client token', [
-        'timestamp' => date('Y-m-d H:i:s'),
-        'ip' => $_SERVER['REMOTE_ADDR']
-    ]);
+    error_log('Generated Braintree client token at ' . date('Y-m-d H:i:s'));
     
     // Send the response
-    sendResponse(['clientToken' => $clientToken]);
+    echo json_encode(['clientToken' => $clientToken]);
     
 } catch (Exception $e) {
     // Log error
-    addLog('error', 'Error generating Braintree client token', [
-        'error' => $e->getMessage(),
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
+    error_log('Error generating Braintree client token: ' . $e->getMessage());
     
     // Send error response
-    sendError('Failed to generate client token: ' . $e->getMessage(), 500);
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to generate client token: ' . $e->getMessage()]);
 }
 ?>

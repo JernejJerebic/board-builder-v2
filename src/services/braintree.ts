@@ -12,9 +12,10 @@ let hostedFieldsInstance: braintree.HostedFields | null = null;
  */
 export const getClientToken = async (): Promise<string> => {
   try {
-    const response = await axios.get('/api/braintree/token');
+    const response = await axios.get('/api/braintree/token.php');
     
     if (!response.data || !response.data.clientToken) {
+      console.error('Invalid response from token endpoint:', response.data);
       throw new Error('Invalid response from server');
     }
     
@@ -159,7 +160,7 @@ export const processBraintreePayment = async (
       }
     );
     
-    const response = await axios.post('/api/braintree/process', {
+    const response = await axios.post('/api/braintree/process.php', {
       paymentMethodNonce,
       amount,
       orderId
@@ -186,7 +187,7 @@ export const processBraintreePayment = async (
     let errorMessage = 'Unknown payment processing error';
     
     if (axios.isAxiosError(error) && error.response) {
-      errorMessage = error.response.data?.message || 'Payment processing failed';
+      errorMessage = error.response.data?.error || 'Payment processing failed';
     } else if (error instanceof Error) {
       errorMessage = error.message;
     }
