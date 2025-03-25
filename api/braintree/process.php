@@ -36,9 +36,9 @@ if (!isset($data['paymentMethodNonce']) || !isset($data['amount']) || !isset($da
 
 // This endpoint processes a payment with Braintree
 try {
-    // Initialize Braintree Gateway with sandbox credentials
+    // Initialize Braintree Gateway with production credentials
     $gateway = new Braintree\Gateway([
-        'environment' => 'sandbox', // Use sandbox for testing
+        'environment' => 'production', // Use production environment
         'merchantId' => 'pszgyg5dgnw997bx',
         'publicKey' => 'df6b3f98fhfj57mh',
         'privateKey' => 'faedbfa95f2bf78f2ba4c1cc444dc63b'

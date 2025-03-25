@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     // Initialize Braintree Gateway with credentials
     $gateway = new Braintree\Gateway([
-        'environment' => 'sandbox', // Use sandbox for testing
+        'environment' => 'production', // Use production environment
         'merchantId' => 'pszgyg5dgnw997bx',
         'publicKey' => 'df6b3f98fhfj57mh',
         'privateKey' => 'faedbfa95f2bf78f2ba4c1cc444dc63b'
