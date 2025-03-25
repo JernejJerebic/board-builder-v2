@@ -1,22 +1,47 @@
 
+export interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  companyName?: string;
+  vatId?: string;
+  email?: string;
+  phone?: string;
+  street: string;
+  city: string;
+  zipCode: string;
+  lastPurchase?: string;
+  totalPurchases: number;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  orderDate: string;
+  products: Product[];
+  totalCostWithoutVat: number;
+  totalCostWithVat: number;
+  shippingMethod: 'pickup' | 'delivery';
+  paymentMethod: 'credit_card' | 'payment_on_delivery' | 'pickup_at_shop' | 'bank_transfer';
+  status: 'placed' | 'in_progress' | 'completed';
+  transactionId?: string;
+}
+
 export interface Color {
   id: string;
   title: string;
-  htmlColor: string;
-  imageUrl: string | null;
-  priceWithVat: number;
-  priceWithoutVat: number;
+  htmlColor?: string;
+  imageUrl?: string;
   thickness: number;
+  priceWithoutVat: number;
+  priceWithVat: number;
   active: boolean;
-}
-
-export interface ColorFormValues extends Omit<Color, 'id'> {
-  imageFile?: File;
 }
 
 export interface Product {
   id: string;
   colorId: string;
+  color?: Color;
   length: number;
   width: number;
   thickness: number;
@@ -31,46 +56,8 @@ export interface Product {
   quantity: number;
   pricePerUnit: number;
   totalPrice: number;
-  colorTitle?: string;
-  colorHtml?: string;
 }
 
 export interface BasketItem extends Product {
   basketId: string;
-  color?: Color;
-}
-
-export interface Customer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  street: string;
-  city: string;
-  zipCode: string;
-  companyName?: string;
-  vatId?: string;
-  lastPurchase?: string;
-  totalPurchases?: number;
-}
-
-export interface Order {
-  id: string;
-  customerId: string;
-  products: Product[];
-  orderDate: string;
-  status: 'placed' | 'in_progress' | 'completed';
-  totalCostWithoutVat: number;
-  totalCostWithVat: number;
-  paymentMethod: string;
-  shippingMethod: string;
-  transactionId?: string;
-}
-
-export interface LogEntry {
-  timestamp: string;
-  level: string;
-  message: string;
-  details?: any;
 }

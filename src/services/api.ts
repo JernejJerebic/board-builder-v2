@@ -1,10 +1,6 @@
 import { Customer, Order, Color } from '@/types';
 import * as localStorageService from './localStorage';
 import { sendOrderEmail } from './emailService';
-import axios from 'axios';
-
-// Define API_URL for axios requests
-const API_URL = import.meta.env.VITE_API_URL || '';
 
 // Customer API
 export const fetchCustomers = async (): Promise<Customer[]> => {
@@ -57,7 +53,10 @@ export const deleteCustomer = async (id: string): Promise<void> => {
   console.log(`[${timestamp}] Deleting customer ${id}`);
   
   try {
-    localStorageService.deleteCustomer(id);
+    const success = localStorageService.deleteCustomer(id);
+    if (!success) {
+      throw new Error(`Customer with ID ${id} not found`);
+    }
     console.log(`[${timestamp}] Customer deleted: ${id}`);
   } catch (error) {
     console.error(`[${timestamp}] Error deleting customer:`, error);
@@ -94,48 +93,37 @@ export const fetchColors = async (): Promise<Color[]> => {
   }
 };
 
-export const createColor = async (data: FormData | Partial<Omit<Color, 'id' | 'active'>>): Promise<Color> => {
+export const createColor = async (color: Partial<Omit<Color, 'id' | 'active'>>): Promise<Color> => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Creating color:`, color);
+  
   try {
-    if (data instanceof FormData) {
-      const response = await axios.post(`${API_URL}/colors/index.php`, data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    } else {
-      const response = await axios.post(`${API_URL}/colors/index.php`, data);
-      return response.data;
-    }
+    const newColor = localStorageService.addColor({
+      ...color,
+      active: true
+    } as Color);
+    console.log(`[${timestamp}] Color created with ID: ${newColor.id}`);
+    return newColor;
   } catch (error) {
-    console.error("Error creating color:", error);
-    // Fallback to localStorage for development
-    const newColor = {
-      ...data as any,
-      id: String(Date.now()),
-      active: true,
-    };
-    return localStorageService.saveColor(newColor);
+    console.error(`[${timestamp}] Error creating color:`, error);
+    throw error;
   }
 };
 
-export const updateColor = async (id: string, data: FormData | Partial<Color>): Promise<Color> => {
+export const updateColor = async (id: string, colorData: Partial<Color>): Promise<Color> => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Updating color ${id}:`, colorData);
+  
   try {
-    if (data instanceof FormData) {
-      const response = await axios.post(`${API_URL}/colors/color.php?id=${id}`, data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    } else {
-      const response = await axios.post(`${API_URL}/colors/color.php?id=${id}`, data);
-      return response.data;
+    const updatedColor = localStorageService.updateColor(id, colorData);
+    if (!updatedColor) {
+      throw new Error(`Color with ID ${id} not found`);
     }
+    console.log(`[${timestamp}] Color updated: ${updatedColor.id}`);
+    return updatedColor;
   } catch (error) {
-    console.error("Error updating color:", error);
-    // Fallback to localStorage for development
-    return localStorageService.saveColor({ id, ...data as any });
+    console.error(`[${timestamp}] Error updating color:`, error);
+    throw error;
   }
 };
 
@@ -161,7 +149,10 @@ export const deleteColor = async (id: string): Promise<void> => {
   console.log(`[${timestamp}] Deleting color ${id}`);
   
   try {
-    localStorageService.deleteColor(id);
+    const success = localStorageService.deleteColor(id);
+    if (!success) {
+      throw new Error(`Color with ID ${id} not found`);
+    }
     console.log(`[${timestamp}] Color deleted: ${id}`);
   } catch (error) {
     console.error(`[${timestamp}] Error deleting color:`, error);
@@ -251,7 +242,10 @@ export const deleteOrder = async (id: string): Promise<void> => {
   console.log(`[${timestamp}] Deleting order ${id}`);
   
   try {
-    localStorageService.deleteOrder(id);
+    const success = localStorageService.deleteOrder(id);
+    if (!success) {
+      throw new Error(`Order with ID ${id} not found`);
+    }
     console.log(`[${timestamp}] Order deleted: ${id}`);
   } catch (error) {
     console.error(`[${timestamp}] Error deleting order:`, error);

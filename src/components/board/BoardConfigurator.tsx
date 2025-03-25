@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -7,9 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import ColorSelector from './ColorSelector';
 import { useBasket } from '@/context/BasketContext';
-import { useToast } from '@/components/ui/use-toast';
-import { X } from 'lucide-react';
-
 interface BoardConfiguratorProps {
   onConfigChange: (config: {
     color: Color | null;
@@ -23,17 +19,14 @@ interface BoardConfiguratorProps {
       left: boolean;
     };
     drilling: boolean;
-    customImage: File | null;
   }) => void;
-  initialCustomImage?: File | null;
 }
-
 const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
-  onConfigChange,
-  initialCustomImage = null
+  onConfigChange
 }) => {
-  const { addItem } = useBasket();
-  const { toast } = useToast();
+  const {
+    addItem
+  } = useBasket();
   const [color, setColor] = useState<Color | null>(null);
   const [length, setLength] = useState<number>(800);
   const [width, setWidth] = useState<number>(600);
@@ -49,8 +42,6 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [pricePerUnit, setPricePerUnit] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
-  const [customImage, setCustomImage] = useState<File | null>(initialCustomImage);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Update thickness when color changes
   useEffect(() => {
@@ -58,19 +49,6 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       setThickness(color.thickness);
     }
   }, [color]);
-
-  // Update image preview when custom image changes
-  useEffect(() => {
-    if (customImage) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(customImage);
-    } else {
-      setImagePreview(null);
-    }
-  }, [customImage]);
 
   // Calculate surface area
   useEffect(() => {
@@ -106,31 +84,9 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       width,
       thickness,
       borders,
-      drilling,
-      customImage
+      drilling
     });
-  }, [color, length, width, thickness, borders, drilling, customImage, onConfigChange]);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setCustomImage(file);
-      toast({
-        title: "Slika naložena",
-        description: "Vaša slika je bila uspešno naložena."
-      });
-    }
-  };
-
-  const removeImage = () => {
-    setCustomImage(null);
-    setImagePreview(null);
-    toast({
-      title: "Slika odstranjena",
-      description: "Vaša slika je bila uspešno odstranjena."
-    });
-  };
-
+  }, [color, length, width, thickness, borders, drilling, onConfigChange]);
   const handleAddToBasket = () => {
     if (!color) return;
     const product: Omit<Product, 'id'> = {
@@ -147,14 +103,12 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     };
     addItem(product);
   };
-
   const handleBorderChange = (side: keyof typeof borders, checked: boolean) => {
     setBorders(prev => ({
       ...prev,
       [side]: checked
     }));
   };
-
   return <div className="space-y-6">
       <div>
         <h3 className="font-medium mb-2 text-xl">1. Izbira materiala</h3>
@@ -162,39 +116,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </div>
       
       <div>
-        <h3 className="font-medium mb-2 text-xl">2. Dodaj svojo sliko</h3>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="image-upload">Slika za ploščo (neobvezno)</Label>
-            <Input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-          </div>
-          
-          {imagePreview && (
-            <div className="relative inline-block">
-              <img 
-                src={imagePreview} 
-                alt="Predogled slike" 
-                className="max-w-full h-auto max-h-48 rounded-md border border-gray-200" 
-              />
-              <button 
-                onClick={removeImage}
-                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-                title="Odstrani sliko"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div>
-        <h3 className="font-medium mb-2 text-xl">3. Dimenzije plošče</h3>
+        <h3 className="font-medium mb-2 text-xl">2. Dimenzije plošče</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="length">Dolžina (mm)</Label>
@@ -215,7 +137,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </div>
       
       <div>
-        <h3 className="font-medium mb-2 text-xl">4. ABS robovi</h3>
+        <h3 className="font-medium mb-2 text-xl">3. ABS robovi</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center space-x-2">
             <Checkbox id="top-border" checked={borders.top} onCheckedChange={checked => handleBorderChange('top', checked === true)} />
@@ -237,7 +159,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </div>
       
       <div>
-        <h3 className="font-medium mb-2 text-xl">5. Vrtanje lukenj</h3>
+        <h3 className="font-medium mb-2 text-xl">4. Vrtanje lukenj</h3>
         <div className="flex items-center space-x-2">
           <Checkbox id="drilling" checked={drilling} onCheckedChange={checked => setDrilling(checked === true)} />
           <Label htmlFor="drilling">Dodaj luknje (100mm od roba)</Label>
@@ -245,7 +167,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </div>
       
       <div>
-        <h3 className="font-medium mb-2 text-xl">6. Količina in cena</h3>
+        <h3 className="font-medium mb-2 text-xl">5. Količina in cena</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="quantity">Količina</Label>
@@ -267,5 +189,4 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </Button>
     </div>;
 };
-
 export default BoardConfigurator;

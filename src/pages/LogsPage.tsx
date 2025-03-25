@@ -4,10 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getLogs, clearLogs } from '@/services/localStorage';
+import { LogEntry, getLogs, clearLogs } from '@/services/localStorage';
 import { Download, RefreshCw, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { LogEntry } from '@/types';
 
 const LogsPage = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);

@@ -15,7 +15,6 @@ interface BoardVisualizationProps {
     bottom: boolean;
     left: boolean;
   };
-  customImage?: File | null;
 }
 
 const BoardVisualization: React.FC<BoardVisualizationProps> = ({
@@ -24,25 +23,10 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   width,
   thickness,
   drilling,
-  borders,
-  customImage = null
+  borders
 }) => {
   const [ratio, setRatio] = useState(1);
   const [rotated, setRotated] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  // Convert custom image to URL for display
-  useEffect(() => {
-    if (customImage) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(customImage);
-    } else {
-      setImageUrl(null);
-    }
-  }, [customImage]);
 
   useEffect(() => {
     if (length && width) {
@@ -58,10 +42,10 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const visualWidth = width * ratio;
   const visualLength = length * ratio;
 
-  if (!color && !customImage) {
+  if (!color) {
     return (
       <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300">
-        <p className="text-gray-500">Izberite barvo ali naložite sliko za vizualizacijo plošče</p>
+        <p className="text-gray-500">Izberite barvo za vizualizacijo plošče</p>
       </div>
     );
   }
@@ -84,14 +68,15 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             position: 'relative',
             transformStyle: 'preserve-3d',
             transform: `perspective(800px) rotateX(30deg)`,
+            // Removed box shadow
           }}
         >
-          {/* Board background - using custom image if available, otherwise using color or image from color */}
+          {/* Board background - using image if available, otherwise color */}
           <div 
             className="absolute inset-0"
             style={{
-              backgroundColor: imageUrl ? 'transparent' : (color?.htmlColor || '#d2b48c'),
-              backgroundImage: imageUrl ? `url(${imageUrl})` : (color?.imageUrl ? `url(${color.imageUrl})` : 'none'),
+              backgroundColor: color.imageUrl ? 'transparent' : (color.htmlColor || '#d2b48c'),
+              backgroundImage: color.imageUrl ? `url(${color.imageUrl})` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -143,7 +128,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               left: 0,
               right: 0,
               height: `${thickness * ratio * 1.2}px`, // Increased thickness by 20%
-              backgroundColor: color?.htmlColor ? adjustColorBrightness(color.htmlColor, -20) : '#b69b7d',
+              backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -20) : '#b69b7d',
               transform: 'rotateX(-90deg)',
               transformOrigin: 'top',
             }}
@@ -157,7 +142,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               top: 0,
               bottom: 0,
               width: `${thickness * ratio * 1.2}px`, // Increased thickness by 20%
-              backgroundColor: color?.htmlColor ? adjustColorBrightness(color.htmlColor, -40) : '#8c7a63',
+              backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -40) : '#8c7a63',
               transform: 'rotateY(90deg)',
               transformOrigin: 'left',
             }}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchColors } from '@/services/api';
@@ -6,18 +5,15 @@ import { Color } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-
 interface ColorSelectorProps {
   selectedColor: Color | null;
   onSelectColor: (color: Color) => void;
 }
-
 const ColorSelector: React.FC<ColorSelectorProps> = ({
   selectedColor,
   onSelectColor
 }) => {
   const [open, setOpen] = useState(false);
-  
   const {
     data: colors,
     isLoading
@@ -25,12 +21,10 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
     queryKey: ['colors'],
     queryFn: fetchColors
   });
-  
   const handleColorSelect = (color: Color) => {
     onSelectColor(color);
     setOpen(false);
   };
-  
   const renderColorPreview = (color: Color) => {
     if (color.imageUrl) {
       return <div className="w-8 h-8 rounded border border-gray-300 bg-cover bg-center" style={{
@@ -42,7 +36,6 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
       }} />;
     }
   };
-  
   return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-between flex items-center h-16 px-4">
@@ -84,5 +77,4 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
       </DialogContent>
     </Dialog>;
 };
-
 export default ColorSelector;

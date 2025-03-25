@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useBasket } from '@/context/BasketContext';
 import { Button } from '@/components/ui/button';
@@ -31,9 +32,9 @@ const Basket: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <div 
                   className="w-6 h-6 rounded" 
-                  style={{ backgroundColor: item.color?.htmlColor || item.colorHtml || '#d2b48c' }}
+                  style={{ backgroundColor: item.color?.htmlColor || '#d2b48c' }}
                 />
-                <h3 className="font-medium">{item.color?.title || item.colorTitle}</h3>
+                <h3 className="font-medium">{item.color?.title}</h3>
               </div>
               <p className="text-sm text-gray-600 mt-1">
                 {item.length} x {item.width} x {item.thickness}mm

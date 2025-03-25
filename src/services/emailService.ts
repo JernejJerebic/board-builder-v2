@@ -1,5 +1,5 @@
 
-import { Order, Product, Customer } from '@/types';
+import { Order, Product } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
 import emailjs from 'emailjs-com';
@@ -132,9 +132,9 @@ const createProductsTable = (products: Product[]): string => {
       ? borderInfo.join(', ') 
       : 'brez';
     
-    // Create color display with hex code
-    const colorHex = product.colorHtml || '#CCCCCC';
-    const colorName = product.colorTitle || 'Barva ni na voljo';
+    // Create color display with hex code - fixed to use htmlColor instead of hex
+    const colorHex = product.color?.htmlColor || '#CCCCCC';
+    const colorName = product.color?.title || 'Barva ni na voljo';
     const colorDisplay = `
       <div style="display: flex; align-items: center; gap: 8px;">
         <div style="width: 20px; height: 20px; background-color: ${colorHex}; border: 1px solid #ddd; border-radius: 3px;"></div>
@@ -184,48 +184,15 @@ const createProductsTable = (products: Product[]): string => {
 };
 
 /**
- * Create HTML table with customer info
+ * Creates an email with appropriate content based on order status
  */
-const createCustomerInfoTable = (customer: Customer): string => {
-  return `
-    <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px;">
-      <tr style="background-color: #f2f2f2;">
-        <th colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: left;">Podatki o stranki</th>
-      </tr>
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd; width: 30%;"><strong>Ime in priimek:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${customer.firstName} ${customer.lastName}</td>
-      </tr>
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>E-pošta:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;"><a href="mailto:${customer.email}" style="color: #1D6EC1;">${customer.email}</a></td>
-      </tr>
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Telefon:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;"><a href="tel:${customer.phone}" style="color: #1D6EC1;">${customer.phone}</a></td>
-      </tr>
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Naslov:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${customer.street}, ${customer.zipCode} ${customer.city}</td>
-      </tr>
-      ${customer.companyName ? `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Podjetje:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${customer.companyName}</td>
-      </tr>` : ''}
-      ${customer.vatId ? `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>ID za DDV:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${customer.vatId}</td>
-      </tr>` : ''}
-    </table>
-  `;
-};
-
-/**
- * Create HTML table with payment info
- */
-const createPaymentInfoTable = (order: Order): string => {
+const createEmailContent = (
+  type: 'new' | 'progress' | 'completed',
+  order: Order,
+  isAdmin = false
+): { subject: string; body: string } => {
+  const recipient = isAdmin ? 'Administrator' : 'Stranka';
+  
   // Payment method text
   const getPaymentMethodText = (method: string): string => {
     switch (method) {
@@ -241,69 +208,24 @@ const createPaymentInfoTable = (order: Order): string => {
   const getShippingMethodText = (method: string): string => {
     return method === 'pickup' ? 'Prevzem v trgovini' : 'Dostava';
   };
-
-  return `
-    <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px;">
-      <tr style="background-color: #f2f2f2;">
-        <th colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: left;">Podatki o plačilu</th>
-      </tr>
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd; width: 30%;"><strong>Način plačila:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${getPaymentMethodText(order.paymentMethod)}</td>
-      </tr>
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Način dostave:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${getShippingMethodText(order.shippingMethod)}</td>
-      </tr>
-      ${order.transactionId ? `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>ID transakcije:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${order.transactionId}</td>
-      </tr>` : ''}
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Znesek brez DDV:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">€${order.totalCostWithoutVat.toFixed(2)}</td>
-      </tr>
-      <tr style="font-weight: bold;">
-        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Skupni znesek z DDV:</strong></td>
-        <td style="padding: 8px; border: 1px solid #ddd;">€${order.totalCostWithVat.toFixed(2)}</td>
-      </tr>
-    </table>
-  `;
-};
-
-/**
- * Creates an email with appropriate content based on order status
- */
-const createEmailContent = (
-  type: 'new' | 'progress' | 'completed',
-  order: Order,
-  customer: Customer,
-  isAdmin = false
-): { subject: string; body: string } => {
-  const recipientName = isAdmin ? 'Administrator' : `${customer.firstName} ${customer.lastName}`;
   
   // Products table
   const productsTable = createProductsTable(order.products);
   
-  // Customer info table
-  const customerInfoTable = createCustomerInfoTable(customer);
-  
-  // Payment info table
-  const paymentInfoTable = createPaymentInfoTable(order);
-  
   // Base HTML structure for all emails
   const baseHtml = `
-    <div style="font-family: 'Poppins', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
       <div style="text-align: center; padding: 20px 0; border-bottom: 1px solid #eee;">
         <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" style="max-width: 200px; height: auto;">
       </div>
       <h2 style="color: #1D6EC1;">{TITLE}</h2>
-      <p>Spoštovani ${recipientName},</p>
+      <p>Spoštovani ${recipient},</p>
       <p>{MESSAGE}</p>
       <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
         <p style="margin: 5px 0;"><strong>Številka naročila:</strong> #${order.id}</p>
         <p style="margin: 5px 0;"><strong>Datum naročila:</strong> ${new Date(order.orderDate).toLocaleDateString('sl-SI')}</p>
+        <p style="margin: 5px 0;"><strong>Način plačila:</strong> ${getPaymentMethodText(order.paymentMethod)}</p>
+        <p style="margin: 5px 0;"><strong>Način dostave:</strong> ${getShippingMethodText(order.shippingMethod)}</p>
         <p style="margin: 5px 0;"><strong>Status:</strong> {STATUS}</p>
       </div>
       
@@ -314,9 +236,6 @@ const createEmailContent = (
         <p style="margin: 5px 0; font-size: 16px;"><strong>Skupni znesek brez DDV:</strong> €${order.totalCostWithoutVat.toFixed(2)}</p>
         <p style="margin: 5px 0; font-size: 18px;"><strong>Skupni znesek z DDV:</strong> €${order.totalCostWithVat.toFixed(2)}</p>
       </div>
-      
-      ${customerInfoTable}
-      ${paymentInfoTable}
       
       <p>Lep pozdrav,<br>Ekipa LCC Naročilo razreza</p>
       <p style="font-size: 14px; color: #666;">Za dodatne informacije nas kontaktirajte na <a href="mailto:info@lcc.si" style="color: #1D6EC1;">info@lcc.si</a> ali po telefonu na +386 7 393 07 00.</p>
@@ -367,26 +286,13 @@ const createEmailContent = (
 export const sendOrderEmail = async (
   type: 'new' | 'progress' | 'completed',
   order: Order,
-  customerEmail: string,
-  customerData?: Customer
+  customerEmail: string
 ): Promise<{ success: boolean; message?: string }> => {
   const timestamp = new Date().toISOString();
   const requestId = `order_email_${Date.now()}`;
   
   console.log(`[${requestId}] START: Sending ${type} order email for order ${order.id}`);
   console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: info@lcc.si`);
-  
-  // Create a default customer if not provided
-  const customer: Customer = customerData || {
-    id: 'temp',
-    firstName: customerEmail.split('@')[0],
-    lastName: '',
-    email: customerEmail,
-    phone: '',
-    street: '',
-    city: '',
-    zipCode: ''
-  };
   
   // Log the start of email sending process with more details
   addLog(
@@ -411,7 +317,7 @@ export const sendOrderEmail = async (
     
     // Create and send customer email
     console.log(`[${requestId}] CUSTOMER: Creating email content for ${customerEmail}`);
-    const customerEmailContent = createEmailContent(type, order, customer, false);
+    const customerEmailContent = createEmailContent(type, order, false);
     
     console.log(`[${requestId}] CUSTOMER: Sending email to ${customerEmail}`);
     const customerResult = await sendEmail(
@@ -424,7 +330,7 @@ export const sendOrderEmail = async (
     // Create and send admin email
     const adminEmail = 'info@lcc.si';
     console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
-    const adminEmailContent = createEmailContent(type, order, customer, true);
+    const adminEmailContent = createEmailContent(type, order, true);
     
     console.log(`[${requestId}] ADMIN: Sending email to ${adminEmail}`);
     const adminResult = await sendEmail(

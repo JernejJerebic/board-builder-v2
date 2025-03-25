@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchColors, updateColorStatus, createColor, updateColor, deleteColor } from '@/services/api';
-import { Color, ColorFormValues } from '@/types';
+import { Color } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,8 +31,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Search, Plus, Edit, Trash, Power, Loader2, Save, Upload, X } from 'lucide-react';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Search, Plus, Edit, Trash, Power, Loader2, Save } from 'lucide-react';
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,11 +45,10 @@ const colorSchema = z.object({
   priceWithoutVat: z.number().min(0, "Cena ne more biti negativna"),
   priceWithVat: z.number().min(0, "Cena ne more biti negativna"),
   active: z.boolean().default(true),
-  imageUrl: z.string().nullable().optional(),
-  imageFile: z.instanceof(File).optional(),
+  imageUrl: z.string().optional(),
 });
 
-type ColorSchemaValues = z.infer<typeof colorSchema>;
+type ColorFormValues = z.infer<typeof colorSchema>;
 
 const ColorsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,12 +56,10 @@ const ColorsPage = () => {
   const [currentColor, setCurrentColor] = useState<Color | null>(null);
   const [colorToDelete, setColorToDelete] = useState<Color | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryClient = useQueryClient();
   
-  const form = useForm<ColorSchemaValues>({
+  const form = useForm<ColorFormValues>({
     resolver: zodResolver(colorSchema),
     defaultValues: {
       title: '',
@@ -70,8 +68,6 @@ const ColorsPage = () => {
       priceWithoutVat: 0,
       priceWithVat: 0,
       active: true,
-      imageUrl: null,
-      imageFile: undefined,
     },
   });
   
@@ -93,37 +89,35 @@ const ColorsPage = () => {
   });
   
   const saveMutation = useMutation({
-    mutationFn: (data: ColorSchemaValues) => {
+    mutationFn: (data: ColorFormValues) => {
+      // Calculate VAT price if not provided
       if (data.priceWithoutVat && !data.priceWithVat) {
         data.priceWithVat = data.priceWithoutVat * 1.22;
       }
 
-      const formData = new FormData();
-      
-      if (data.imageFile) {
-        formData.append('imageFile', data.imageFile);
-      }
-      
-      formData.append('title', data.title);
-      formData.append('htmlColor', data.htmlColor);
-      formData.append('thickness', String(data.thickness));
-      formData.append('priceWithoutVat', String(data.priceWithoutVat));
-      formData.append('priceWithVat', String(data.priceWithVat));
-      
-      if (data.imageUrl) {
-        formData.append('imageUrl', data.imageUrl);
-      }
-
       if (data.id) {
-        return updateColor(data.id, formData);
+        return updateColor(data.id, {
+          title: data.title,
+          htmlColor: data.htmlColor,
+          thickness: data.thickness,
+          priceWithoutVat: data.priceWithoutVat,
+          priceWithVat: data.priceWithVat,
+          imageUrl: data.imageUrl
+        });
       } else {
-        return createColor(formData);
+        return createColor({
+          title: data.title,
+          htmlColor: data.htmlColor,
+          thickness: data.thickness,
+          priceWithoutVat: data.priceWithoutVat,
+          priceWithVat: data.priceWithVat,
+          imageUrl: data.imageUrl
+        });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colors'] });
       setIsEditDialogOpen(false);
-      setImagePreview(null);
       toast.success(currentColor ? 'Barva posodobljena' : 'Barva dodana');
     },
     onError: (error) => {
@@ -158,10 +152,8 @@ const ColorsPage = () => {
       priceWithoutVat: color.priceWithoutVat,
       priceWithVat: color.priceWithVat,
       active: color.active,
-      imageUrl: color.imageUrl,
-      imageFile: undefined,
+      imageUrl: color.imageUrl || '',
     });
-    setImagePreview(color.imageUrl);
     setIsEditDialogOpen(true);
   };
   
@@ -174,10 +166,8 @@ const ColorsPage = () => {
       priceWithoutVat: 0,
       priceWithVat: 0,
       active: true,
-      imageUrl: null,
-      imageFile: undefined,
+      imageUrl: '',
     });
-    setImagePreview(null);
     setIsEditDialogOpen(true);
   };
   
@@ -192,32 +182,8 @@ const ColorsPage = () => {
     }
   };
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      
-      form.setValue('imageFile', file);
-    }
-  };
-  
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    form.setValue('imageUrl', null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-  
-  const onSubmit = (data: ColorSchemaValues) => {
-    saveMutation.mutate({
-      ...data,
-      imageFile: form.getValues('imageFile')
-    });
+  const onSubmit = (data: ColorFormValues) => {
+    saveMutation.mutate(data);
   };
   
   const filteredColors = colors?.filter(color =>
@@ -261,7 +227,6 @@ const ColorsPage = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Barva/Material</TableHead>
                 <TableHead>Predogled</TableHead>
-                <TableHead>Slika</TableHead>
                 <TableHead>Debelina</TableHead>
                 <TableHead>Cena (brez DDV)</TableHead>
                 <TableHead>Cena (z DDV)</TableHead>
@@ -280,12 +245,6 @@ const ColorsPage = () => {
                         className="w-10 h-10 rounded border border-gray-300"
                         style={{ backgroundColor: color.htmlColor || '#d2b48c' }}
                       />
-                    </TableCell>
-                    <TableCell>
-                      {color.imageUrl && (
-                        <div className="w-10 h-10 rounded border border-gray-300 bg-cover bg-center" 
-                          style={{ backgroundImage: `url(${color.imageUrl})` }} />
-                      )}
                     </TableCell>
                     <TableCell>{color.thickness}mm</TableCell>
                     <TableCell>€{color.priceWithoutVat.toFixed(2)}</TableCell>
@@ -331,7 +290,7 @@ const ColorsPage = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-4">
+                  <TableCell colSpan={8} className="text-center py-4">
                     Ni najdenih barv
                   </TableCell>
                 </TableRow>
@@ -358,7 +317,6 @@ const ColorsPage = () => {
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -378,7 +336,6 @@ const ColorsPage = () => {
                           style={{ backgroundColor: field.value || '#d2b48c' }}
                         />
                       </div>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -396,7 +353,6 @@ const ColorsPage = () => {
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -416,11 +372,11 @@ const ColorsPage = () => {
                             onChange={(e) => {
                               const value = Number(e.target.value);
                               field.onChange(value);
+                              // Update price with VAT
                               form.setValue('priceWithVat', Number((value * 1.22).toFixed(2)));
                             }}
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -439,50 +395,28 @@ const ColorsPage = () => {
                             onChange={(e) => {
                               const value = Number(e.target.value);
                               field.onChange(value);
+                              // Update price without VAT
                               form.setValue('priceWithoutVat', Number((value / 1.22).toFixed(2)));
                             }}
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
                 
-                <FormItem>
-                  <FormLabel>Slika</FormLabel>
-                  <div className="space-y-2">
-                    {imagePreview ? (
-                      <div className="relative w-full h-40 bg-cover bg-center rounded border border-gray-300" 
-                          style={{ backgroundImage: `url(${imagePreview})` }}>
-                        <Button 
-                          type="button" 
-                          variant="destructive" 
-                          size="icon" 
-                          className="absolute top-2 right-2"
-                          onClick={handleRemoveImage}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-40 border-2 border-dashed rounded-md border-gray-300 cursor-pointer"
-                          onClick={() => fileInputRef.current?.click()}>
-                        <div className="text-center">
-                          <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                          <p className="mt-1 text-sm text-gray-500">Kliknite za nalaganje slike</p>
-                        </div>
-                      </div>
-                    )}
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                    />
-                  </div>
-                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL slike (neobvezno)</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={saveMutation.isPending}>
