@@ -266,7 +266,7 @@ export const getColorById = (id: string): Color | undefined => {
 };
 
 // Add a customer to local storage
-export const addCustomer = (customer: Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>>): Customer => {
+export const addCustomer = (customer: Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>): Customer => {
   const id = 'cust' + Date.now().toString();
   const newCustomer: Customer = {
     ...customer,
