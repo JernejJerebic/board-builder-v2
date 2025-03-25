@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -88,7 +89,11 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Link to="/">
-                <h1 className="text-2xl font-bold text-primary">LCC Naročilo razreza</h1>
+                <img 
+                  src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" 
+                  alt="LCC" 
+                  className="h-12 md:h-16"
+                />
               </Link>
             </div>
             <nav className="hidden md:flex space-x-8">
