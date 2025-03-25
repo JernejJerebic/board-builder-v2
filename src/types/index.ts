@@ -5,6 +5,7 @@ export interface Color {
   htmlColor: string;
   imageUrl: string | null;
   priceWithVat: number;
+  priceWithoutVat: number;
   thickness: number;
   active: boolean;
 }
@@ -30,6 +31,8 @@ export interface Product {
 }
 
 export interface BasketItem extends Product {
+  basketId: string;
+  color?: Color;
   colorTitle?: string;
   colorHtml?: string;
 }
@@ -43,6 +46,8 @@ export interface Customer {
   street: string;
   city: string;
   zipCode: string;
+  companyName?: string;
+  vatId?: string;
   lastPurchase?: string;
   totalPurchases?: number;
 }
@@ -57,4 +62,5 @@ export interface Order {
   totalCostWithVat: number;
   paymentMethod: string;
   shippingMethod: string;
+  transactionId?: string;
 }

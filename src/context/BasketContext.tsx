@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { BasketItem, Product, Color } from '@/types';
 import { v4 as uuidv4 } from 'uuid';

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchColors, updateColorStatus, createColor, updateColor, deleteColor } from '@/services/api';
@@ -68,6 +67,7 @@ const ColorsPage = () => {
       priceWithoutVat: 0,
       priceWithVat: 0,
       active: true,
+      imageUrl: '',
     },
   });
   

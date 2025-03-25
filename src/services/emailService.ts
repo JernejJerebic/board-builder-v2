@@ -1,4 +1,3 @@
-
 import { Order, Product } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -133,8 +132,8 @@ const createProductsTable = (products: Product[]): string => {
       : 'brez';
     
     // Create color display with hex code - fixed to use htmlColor instead of hex
-    const colorHex = product.color?.htmlColor || '#CCCCCC';
-    const colorName = product.color?.title || 'Barva ni na voljo';
+    const colorHex = product.color?.htmlColor || product.colorHtml || '#CCCCCC';
+    const colorName = product.color?.title || product.colorTitle || 'Barva ni na voljo';
     const colorDisplay = `
       <div style="display: flex; align-items: center; gap: 8px;">
         <div style="width: 20px; height: 20px; background-color: ${colorHex}; border: 1px solid #ddd; border-radius: 3px;"></div>
