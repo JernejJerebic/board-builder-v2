@@ -6,9 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useBasket } from '@/context/BasketContext';
 import { createOrder, createCustomer, findCustomerByEmail, updateOrder } from '@/services/api';
 import { sendOrderEmail } from '@/services/emailService';
-import { generateClientToken, processBraintreePayment } from '@/services/braintree';
+import { processBraintreePayment } from '@/services/braintree';
 import { Button } from '@/components/ui/button';
 import { addLog } from '@/services/localStorage';
+import BraintreeForm from '@/components/payment/BraintreeForm';
 import {
   Form,
   FormControl,
@@ -47,18 +48,6 @@ const formSchema = z.object({
   email: z.string().email('Neveljaven e-poštni naslov'),
   phone: z.string().min(6, 'Telefonska številka je obvezna'),
   paymentMethod: z.enum(['credit_card', 'payment_on_delivery', 'pickup_at_shop', 'bank_transfer']),
-  cardNumber: z.string().optional().refine(val => {
-    if (val === undefined) return true;
-    return val === '' || (val.replace(/\s/g, '').length === 16 && /^\d+$/.test(val.replace(/\s/g, '')));
-  }, 'Vnesite veljavno 16-mestno številko kartice'),
-  expiryDate: z.string().optional().refine(val => {
-    if (val === undefined) return true;
-    return val === '' || /^(0[1-9]|1[0-2])\/\d{2}$/.test(val);
-  }, 'Vnesite datum v obliki MM/YY'),
-  cvv: z.string().optional().refine(val => {
-    if (val === undefined) return true;
-    return val === '' || (/^\d{3,4}$/.test(val));
-  }, 'CVV mora vsebovati 3 ali 4 številke'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -68,8 +57,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationLoading, setConfirmationLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [braintreeReady, setBraintreeReady] = useState(false);
-  const [braintreeToken, setBraintreeToken] = useState<string | null>(null);
+  const [paymentMethodReady, setPaymentMethodReady] = useState(false);
+  const [paymentMethodNonce, setPaymentMethodNonce] = useState<string | null>(null);
   const [existingCustomer, setExistingCustomer] = useState<{ id: string; name: string } | null>(null);
   const navigate = useNavigate();
   
@@ -86,31 +75,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       email: '',
       phone: '',
       paymentMethod: 'credit_card',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
     },
   });
   
   const paymentMethod = form.watch('paymentMethod');
   const email = form.watch('email');
-  
-  useEffect(() => {
-    const initBraintree = async () => {
-      try {
-        console.log('Initializing Braintree...');
-        const token = await generateClientToken();
-        setBraintreeToken(token);
-        console.log('Braintree initialized with token:', token);
-        setBraintreeReady(true);
-      } catch (error) {
-        console.error('Error initializing Braintree:', error);
-        toast.error('Napaka pri inicializaciji plačilnega sistema');
-      }
-    };
-    
-    initBraintree();
-  }, []);
   
   useEffect(() => {
     const checkExistingCustomer = async () => {
@@ -153,7 +122,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
     try {
       addLog(
         'info',
-        'Začetek oddaje naročila',
+        'Starting order submission',
         {
           email: values.email,
           paymentMethod: values.paymentMethod,
@@ -161,12 +130,46 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         }
       );
       
+      if (values.paymentMethod === 'credit_card') {
+        if (!paymentMethodNonce && !paymentMethodReady) {
+          toast.error('Plačilni sistem ni pripravljen. Poskusite znova kasneje.');
+          setSubmitting(false);
+          return;
+        }
+        
+        if (!paymentMethodNonce && paymentMethodReady) {
+          const braintreeForm = document.getElementById('braintree-form');
+          if (braintreeForm) {
+            braintreeForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            setSubmitting(false);
+            return;
+          } else {
+            toast.error('Plačilni sistem ni pripravljen. Poskusite znova kasneje.');
+            setSubmitting(false);
+            return;
+          }
+        }
+      }
+      
       setShowConfirmation(true);
     } catch (error) {
       toast.error('Napaka pri obdelavi naročila');
       console.error(error);
     } finally {
       setSubmitting(false);
+    }
+  };
+  
+  const handlePaymentMethodReady = (isReady: boolean) => {
+    setPaymentMethodReady(isReady);
+  };
+  
+  const handlePaymentMethodReceived = (nonce: string) => {
+    setPaymentMethodNonce(nonce);
+    
+    if (nonce) {
+      toast.success('Podatki o plačilu so bili uspešno preverjeni');
+      form.handleSubmit(handleSubmit)();
     }
   };
   
@@ -179,7 +182,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       
       addLog(
         'info',
-        'Potrditev naročila',
+        'Order confirmation',
         {
           email: formValues.email,
           totalAmount: total.withVat,
@@ -212,7 +215,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       }
       
       const newOrder = await createOrder({
-        customerId: customerId,
+        customerId: existingCustomer ? existingCustomer.id : customerId,
         products: items,
         totalCostWithoutVat: total.withoutVat,
         totalCostWithVat: total.withVat,
@@ -223,17 +226,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       
       console.log('New order created:', newOrder);
       
-      if (formValues.paymentMethod === 'credit_card') {
+      if (formValues.paymentMethod === 'credit_card' && paymentMethodNonce) {
         console.log('Processing payment with Braintree...');
         
-        if (!braintreeToken) {
-          throw new Error('Braintree token not available');
-        }
-        
-        const simulatedNonce = `fake-valid-nonce-${Date.now()}`;
-        
         const paymentResult = await processBraintreePayment(
-          simulatedNonce, 
+          paymentMethodNonce, 
           total.withVat,
           newOrder.id
         );
@@ -272,7 +269,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       console.error('Error during checkout:', error);
       addLog(
         'error',
-        'Napaka pri potrditvi naročila',
+        'Error confirming order',
         { error: error instanceof Error ? error.message : String(error) }
       );
       toast.error('Napaka pri potrditvi naročila');
@@ -475,96 +472,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
           />
           
           {paymentMethod === 'credit_card' && (
-            <div className="p-4 border border-gray-200 rounded-md space-y-4">
-              <h3 className="font-medium">Podatki o kreditni kartici</h3>
-              
-              <FormField
-                control={form.control}
-                name="cardNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Številka kartice</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="1234 5678 9012 3456" 
-                        {...field} 
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\s/g, '');
-                          const formattedValue = value
-                            .replace(/\D/g, '')
-                            .replace(/(\d{4})(?=\d)/g, '$1 ')
-                            .trim()
-                            .substring(0, 19);
-                          field.onChange(formattedValue);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Datum veljavnosti (MM/YY)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="MM/YY" 
-                          {...field} 
-                          onChange={(e) => {
-                            let value = e.target.value.replace(/\D/g, '');
-                            if (value.length > 0) {
-                              value = value.substring(0, 4);
-                              if (value.length > 2) {
-                                value = `${value.substring(0, 2)}/${value.substring(2)}`;
-                              }
-                            }
-                            field.onChange(value);
-                          }}
-                          maxLength={5}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="cvv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CVV</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="123" 
-                          {...field} 
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').substring(0, 4);
-                            field.onChange(value);
-                          }}
-                          maxLength={4}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="text-sm text-gray-500">
-                <p>Vaši podatki o plačilu so varni in šifrirani. Nikoli ne shranjujemo podatkov o vaši kartici.</p>
-                {braintreeReady ? (
-                  <p className="text-green-600 mt-2">Plačilni sistem je pripravljen</p>
-                ) : (
-                  <p className="text-amber-600 mt-2">Inicializacija plačilnega sistema...</p>
-                )}
-              </div>
-            </div>
+            <BraintreeForm
+              onPaymentMethodReady={handlePaymentMethodReady}
+              onPaymentMethodReceived={handlePaymentMethodReceived}
+            />
           )}
           
           <div className="flex gap-4">
@@ -579,10 +490,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
             <Button 
               type="submit" 
               className="w-full"
-              disabled={submitting || (paymentMethod === 'credit_card' && !braintreeReady)}
+              disabled={submitting || (paymentMethod === 'credit_card' && !paymentMethodReady)}
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {paymentMethod === 'credit_card' && !braintreeReady ? 'Inicializacija plačilnega sistema...' : 'Oddaj naročilo'}
+              {paymentMethod === 'credit_card' && !paymentMethodReady 
+                ? 'Inicializacija plačilnega sistema...' 
+                : 'Oddaj naročilo'}
             </Button>
           </div>
         </form>

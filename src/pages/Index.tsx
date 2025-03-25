@@ -69,8 +69,8 @@ const Index = () => {
       
       <Basket />
       
-      {/* This is where we'll add the hidden Braintree container for hosted fields */}
-      <div style={{ display: 'none' }}>
+      {/* Hidden container for Braintree Hosted Fields */}
+      <div style={{ position: 'absolute', left: '-9999px' }}>
         <div id="card-number"></div>
         <div id="cvv"></div>
         <div id="expiration-date"></div>
