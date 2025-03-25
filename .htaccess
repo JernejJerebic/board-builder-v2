@@ -2,6 +2,12 @@
 # Enable rewriting
 RewriteEngine On
 
+# If requesting a page without .html extension, add it
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
 # If the request is not for a file or directory, redirect to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

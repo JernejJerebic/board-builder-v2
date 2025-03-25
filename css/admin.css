@@ -1,0 +1,67 @@
+
+/**
+ * Admin styles for LCC Naročilo razreza
+ */
+
+/* Table styles */
+.admin-table-container {
+    margin-top: 1.5rem;
+}
+
+.admin-table-loading,
+.admin-table-error,
+.admin-table-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.admin-table-error {
+    color: var(--danger-color);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border-color);
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table th {
+    background-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.admin-table tr:hover {
+    background-color: var(--accent-color);
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    background-color: var(--border-color);
+}
+
+.status-placed {
+    background-color: #FFD700;
+    color: #000;
+}
+
+.status-in-progress {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.status-completed {
+    background-color: #2ecc71;
+    color: #fff;
+}
