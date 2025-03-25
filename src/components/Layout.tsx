@@ -110,7 +110,7 @@ const Layout: React.FC<LayoutProps> = ({
               © {new Date().getFullYear()} LCC Naročilo razreza - Aplikacija za rezanje po meri
             </p>
             <div className="mt-1">
-              {isAdmin ? <button onClick={handleLogout} className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-50 px-[12px] py-[5px] rounded-full">Prijava</button> : <button onClick={() => setLoginOpen(true)} className="text-gray-400 text-xs hover:text-gray-600">
+              {isAdmin ? <button onClick={handleLogout} className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-50 px-[12px] py-[5px] rounded-full">Odjava</button> : <button onClick={() => setLoginOpen(true)} className="text-gray-400 text-xs hover:text-gray-600">
                   administrator
                 </button>}
             </div>
