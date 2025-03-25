@@ -1,5 +1,7 @@
 
+import * as braintree from 'braintree-web';
 import { addLog } from '@/services/localStorage';
+import axios from 'axios';
 
 interface BraintreeConfig {
   merchantId: string;
@@ -7,13 +9,42 @@ interface BraintreeConfig {
   privateKey: string;
 }
 
-// Webhook URL for Braintree notifications - in a real app, this would be your server endpoint
-const BRAINTREE_WEBHOOK_URL = '/api/webhooks/braintree';
-
+// Braintree credentials - in a real production app, these should be stored server-side
 const BRAINTREE_CONFIG: BraintreeConfig = {
   merchantId: 'pszgyg5dgnw997bx',
   publicKey: 'df6b3f98fhfj57mh',
   privateKey: 'faedbfa95f2bf78f2ba4c1cc444dc63b',
+};
+
+// Initialize Braintree client
+let braintreeClient: braintree.Client | null = null;
+
+const initBraintreeClient = async (): Promise<braintree.Client> => {
+  if (braintreeClient) {
+    return braintreeClient;
+  }
+
+  try {
+    addLog(
+      'info',
+      'Inicializacija Braintree klienta',
+      { timestamp: new Date().toISOString() }
+    );
+
+    braintreeClient = await braintree.client.create({
+      authorization: BRAINTREE_CONFIG.publicKey
+    });
+
+    return braintreeClient;
+  } catch (error) {
+    console.error('Error initializing Braintree client:', error);
+    addLog(
+      'error',
+      'Napaka pri inicializaciji Braintree klienta',
+      { error: error instanceof Error ? error.message : String(error) }
+    );
+    throw error;
+  }
 };
 
 export const getBraintreeConfig = (): BraintreeConfig => {
@@ -21,36 +52,50 @@ export const getBraintreeConfig = (): BraintreeConfig => {
 };
 
 export const generateClientToken = async (): Promise<string> => {
-  // In a real app, this would be a server request to generate a client token
-  // For demo purposes, we'll simulate this and provide detailed logging
-  console.log('Generating Braintree client token with:', BRAINTREE_CONFIG.merchantId);
-  
-  addLog(
-    'info',
-    'Začetek generiranja Braintree žetona',
-    { 
-      merchantId: BRAINTREE_CONFIG.merchantId,
-      timestamp: new Date().toISOString()
-    }
-  );
-  
-  // Simulate token generation
-  const timestamp = new Date().getTime();
-  const simulatedToken = `braintree-client-token-${timestamp}`;
-  
-  // Wait for 500ms to simulate network request
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  addLog(
-    'info',
-    'Braintree žeton uspešno generiran',
-    { 
-      tokenPreview: `${simulatedToken.substring(0, 10)}...`,
-      timestamp: new Date().toISOString()
-    }
-  );
-  
-  return simulatedToken;
+  try {
+    addLog(
+      'info',
+      'Začetek generiranja Braintree žetona',
+      { 
+        merchantId: BRAINTREE_CONFIG.merchantId,
+        timestamp: new Date().toISOString()
+      }
+    );
+    
+    // In a real production app, this would be a server request to generate a client token
+    // For this implementation, we're using a client-side approach which isn't recommended for production
+    
+    // Normally, you would make a request to your server:
+    // const response = await axios.get('/api/braintree/client-token');
+    // return response.data.clientToken;
+    
+    // For demo purposes, we're using the client-side SDK directly
+    const client = await initBraintreeClient();
+    
+    // This is a temporary solution - in a real app, token generation should happen server-side
+    // We're using a temporary token approach for demonstration
+    const timestamp = new Date().getTime();
+    const simulatedToken = `${BRAINTREE_CONFIG.publicKey}_${timestamp}`;
+    
+    addLog(
+      'info',
+      'Braintree žeton uspešno generiran',
+      { 
+        tokenPreview: `${simulatedToken.substring(0, 10)}...`,
+        timestamp: new Date().toISOString()
+      }
+    );
+    
+    return simulatedToken;
+  } catch (error) {
+    console.error('Error generating client token:', error);
+    addLog(
+      'error',
+      'Napaka pri generiranju Braintree žetona',
+      { error: error instanceof Error ? error.message : String(error) }
+    );
+    throw error;
+  }
 };
 
 export const processBraintreePayment = async (
@@ -58,51 +103,79 @@ export const processBraintreePayment = async (
   amount: number,
   orderId: string
 ): Promise<{ success: boolean; transactionId?: string; error?: string }> => {
-  // In a real app, this would be a server request to process payment
-  // For demo purposes, we'll simulate this with comprehensive logging
-  console.log(`Processing payment with nonce: ${paymentMethodNonce}, amount: ${amount}`);
-  
-  const timestamp = new Date().toISOString();
-  
-  addLog(
-    'info',
-    `Začetek obdelave plačila za naročilo #${orderId}`,
-    { 
-      amount,
-      orderId,
-      paymentMethodNonce: `${paymentMethodNonce.substring(0, 10)}...`,
-      timestamp
-    }
-  );
-  
-  // Simulate payment processing
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Always succeed in this demo
-  const transactionId = `bt-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-  
-  // Log the successful transaction
-  addLog(
-    'info',
-    `Plačilo uspešno obdelano za naročilo #${orderId}`,
-    { 
+  try {
+    console.log(`Processing payment with nonce: ${paymentMethodNonce}, amount: ${amount}`);
+    
+    const timestamp = new Date().toISOString();
+    
+    addLog(
+      'info',
+      `Začetek obdelave plačila za naročilo #${orderId}`,
+      { 
+        amount,
+        orderId,
+        paymentMethodNonce: `${paymentMethodNonce.substring(0, 10)}...`,
+        timestamp
+      }
+    );
+    
+    // Initialize Braintree client
+    const client = await initBraintreeClient();
+    
+    // In a real production app, this would be a server request to process payment
+    // const response = await axios.post('/api/braintree/process-payment', {
+    //   paymentMethodNonce,
+    //   amount,
+    //   orderId
+    // });
+    
+    // For demo purposes, we're creating a fake successful transaction
+    // In a real integration, you would process this server-side with proper error handling
+    
+    const hostedFieldsInstance = await braintree.hostedFields.create({
+      client,
+      fields: {
+        // These would normally be set up in the UI
+        number: { selector: '#card-number' },
+        cvv: { selector: '#cvv' },
+        expirationDate: { selector: '#expiration-date' }
+      }
+    });
+    
+    // Log success for demonstration
+    const transactionId = `bt-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+    
+    addLog(
+      'info',
+      `Plačilo uspešno obdelano za naročilo #${orderId}`,
+      { 
+        transactionId,
+        amount,
+        orderId,
+        timestamp: new Date().toISOString()
+      }
+    );
+    
+    return {
+      success: true,
       transactionId,
-      amount,
-      orderId,
-      timestamp: new Date().toISOString()
-    }
-  );
-  
-  // Simulate a webhook call to your backend (in a real app, Braintree would call your webhook)
-  simulateWebhookNotification(transactionId, amount, orderId);
-  
-  return {
-    success: true,
-    transactionId,
-  };
+    };
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    addLog(
+      'error',
+      `Napaka pri obdelavi plačila za naročilo #${orderId}`,
+      { error: error instanceof Error ? error.message : String(error) }
+    );
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown payment processing error'
+    };
+  }
 };
 
-// Simulate Braintree webhook notification
+// This should be implemented server-side in a real application
 const simulateWebhookNotification = async (
   transactionId: string, 
   amount: number,
@@ -110,8 +183,6 @@ const simulateWebhookNotification = async (
 ) => {
   console.log(`Simulating Braintree webhook notification for transaction: ${transactionId}`);
   
-  // In a real app, Braintree would call your webhook with transaction details
-  // Here we're just logging it for demonstration purposes
   const webhookPayload = {
     kind: 'transaction.settled',
     timestamp: new Date().toISOString(),
@@ -126,7 +197,6 @@ const simulateWebhookNotification = async (
     }
   };
   
-  // Log the webhook notification
   addLog(
     'info',
     'Prejeto Braintree webhook obvestilo',
@@ -139,4 +209,39 @@ const simulateWebhookNotification = async (
     success: true,
     message: 'Webhook notification received'
   };
+};
+
+/**
+ * This is a convenience function to help you set up Braintree in your UI
+ * In a real implementation, you would use the Braintree Drop-in UI or Hosted Fields
+ */
+export const setupBraintreeUI = async (dropinContainerId: string): Promise<any> => {
+  try {
+    const client = await initBraintreeClient();
+    
+    // This is a stub that would normally initialize Braintree's Drop-in UI
+    // In a real app, you would use braintree.dropin.create() here
+    
+    addLog(
+      'info',
+      'Braintree UI inicializiran',
+      { timestamp: new Date().toISOString() }
+    );
+    
+    return {
+      requestPaymentMethod: () => {
+        return Promise.resolve({
+          nonce: `fake-valid-nonce-${Date.now()}`
+        });
+      }
+    };
+  } catch (error) {
+    console.error('Error setting up Braintree UI:', error);
+    addLog(
+      'error',
+      'Napaka pri inicializaciji Braintree UI',
+      { error: error instanceof Error ? error.message : String(error) }
+    );
+    throw error;
+  }
 };
