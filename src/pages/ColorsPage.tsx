@@ -1,8 +1,7 @@
-
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchColors, updateColorStatus, createColor, updateColor, deleteColor } from '@/services/api';
-import { Color } from '@/types';
+import { Color, ColorFormValues } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -46,9 +45,10 @@ const colorSchema = z.object({
   priceWithVat: z.number().min(0, "Cena ne more biti negativna"),
   active: z.boolean().default(true),
   imageUrl: z.string().nullable().optional(),
+  imageFile: z.instanceof(File).optional(),
 });
 
-type ColorFormValues = z.infer<typeof colorSchema>;
+type ColorSchemaValues = z.infer<typeof colorSchema>;
 
 const ColorsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,7 +61,7 @@ const ColorsPage = () => {
   
   const queryClient = useQueryClient();
   
-  const form = useForm<ColorFormValues>({
+  const form = useForm<ColorSchemaValues>({
     resolver: zodResolver(colorSchema),
     defaultValues: {
       title: '',
@@ -71,6 +71,7 @@ const ColorsPage = () => {
       priceWithVat: 0,
       active: true,
       imageUrl: null,
+      imageFile: undefined,
     },
   });
   
@@ -92,8 +93,7 @@ const ColorsPage = () => {
   });
   
   const saveMutation = useMutation({
-    mutationFn: (data: ColorFormValues & { imageFile?: File }) => {
-      // Calculate VAT price if not provided
+    mutationFn: (data: ColorSchemaValues) => {
       if (data.priceWithoutVat && !data.priceWithVat) {
         data.priceWithVat = data.priceWithoutVat * 1.22;
       }
@@ -159,6 +159,7 @@ const ColorsPage = () => {
       priceWithVat: color.priceWithVat,
       active: color.active,
       imageUrl: color.imageUrl,
+      imageFile: undefined,
     });
     setImagePreview(color.imageUrl);
     setIsEditDialogOpen(true);
@@ -174,6 +175,7 @@ const ColorsPage = () => {
       priceWithVat: 0,
       active: true,
       imageUrl: null,
+      imageFile: undefined,
     });
     setImagePreview(null);
     setIsEditDialogOpen(true);
@@ -193,15 +195,13 @@ const ColorsPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Create a preview of the selected image
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
       
-      // Store the file in the form data
-      form.setValue('imageFile', file as any);
+      form.setValue('imageFile', file);
     }
   };
   
@@ -213,7 +213,7 @@ const ColorsPage = () => {
     }
   };
   
-  const onSubmit = (data: ColorFormValues) => {
+  const onSubmit = (data: ColorSchemaValues) => {
     saveMutation.mutate({
       ...data,
       imageFile: form.getValues('imageFile')
@@ -416,7 +416,6 @@ const ColorsPage = () => {
                             onChange={(e) => {
                               const value = Number(e.target.value);
                               field.onChange(value);
-                              // Update price with VAT
                               form.setValue('priceWithVat', Number((value * 1.22).toFixed(2)));
                             }}
                           />
@@ -440,7 +439,6 @@ const ColorsPage = () => {
                             onChange={(e) => {
                               const value = Number(e.target.value);
                               field.onChange(value);
-                              // Update price without VAT
                               form.setValue('priceWithoutVat', Number((value / 1.22).toFixed(2)));
                             }}
                           />

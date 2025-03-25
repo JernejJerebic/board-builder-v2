@@ -1,15 +1,15 @@
-import { Color, Customer, Order, Product, BasketItem } from '@/types';
+import { Color, Customer, Order, Product, BasketItem, LogEntry } from '@/types';
 
 // Function to simulate delay
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Function to add a log entry
-export const addLog = (type: 'info' | 'warning' | 'error', message: string, details?: any) => {
+export const addLog = (level: 'info' | 'warning' | 'error', message: string, details?: any): void => {
   if (typeof window === 'undefined') return;
 
-  const logEntry = {
+  const logEntry: LogEntry = {
     timestamp: new Date().toISOString(),
-    type,
+    level,
     message,
     details
   };
@@ -20,7 +20,7 @@ export const addLog = (type: 'info' | 'warning' | 'error', message: string, deta
 };
 
 // Function to retrieve logs
-export const getLogs = (): any[] => {
+export const getLogs = (): LogEntry[] => {
   if (typeof window === 'undefined') return [];
 
   const logs = localStorage.getItem('logs');
@@ -28,7 +28,7 @@ export const getLogs = (): any[] => {
 };
 
 // Function to clear logs
-export const clearLogs = () => {
+export const clearLogs = (): void => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('logs');
   }
@@ -231,7 +231,7 @@ export const getMockOrders = (): Order[] => {
 };
 
 // Function to initialize mock data
-export const initMockData = () => {
+export const initMockData = (): void => {
   if (typeof window === 'undefined') return;
   
   if (!localStorage.getItem('colors')) {
@@ -263,6 +263,102 @@ export const getColors = (): Color[] => {
 export const getColorById = (id: string): Color | undefined => {
   const colors = getColors();
   return colors.find(color => color.id === id);
+};
+
+// Add a customer to local storage
+export const addCustomer = (customer: Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>>): Customer => {
+  const id = 'cust' + Date.now().toString();
+  const newCustomer: Customer = {
+    ...customer,
+    id,
+    lastPurchase: undefined,
+    totalPurchases: 0
+  };
+  
+  const customers = getCustomers();
+  customers.push(newCustomer);
+  localStorage.setItem('customers', JSON.stringify(customers));
+  
+  return newCustomer;
+};
+
+// Update a customer in local storage
+export const updateCustomer = (id: string, customerData: Partial<Customer>): Customer | null => {
+  const customers = getCustomers();
+  const index = customers.findIndex(c => c.id === id);
+  
+  if (index === -1) return null;
+  
+  const updatedCustomer: Customer = { ...customers[index], ...customerData };
+  customers[index] = updatedCustomer;
+  localStorage.setItem('customers', JSON.stringify(customers));
+  
+  return updatedCustomer;
+};
+
+// Find a customer by email
+export const getCustomerByEmail = (email: string): Customer | null => {
+  const customers = getCustomers();
+  const customer = customers.find(c => c.email === email);
+  return customer || null;
+};
+
+// Update color status
+export const updateColorStatus = (id: string, active: boolean): Color | null => {
+  const colors = getColors();
+  const index = colors.findIndex(c => c.id === id);
+  
+  if (index === -1) return null;
+  
+  const updatedColor: Color = { ...colors[index], active };
+  colors[index] = updatedColor;
+  localStorage.setItem('colors', JSON.stringify(colors));
+  
+  return updatedColor;
+};
+
+// Add an order to local storage
+export const addOrder = (orderData: Omit<Order, 'id' | 'orderDate'>): Order => {
+  const id = 'order' + Date.now().toString();
+  const newOrder: Order = {
+    ...orderData,
+    id,
+    orderDate: new Date().toISOString()
+  };
+  
+  const orders = getOrders();
+  orders.push(newOrder);
+  localStorage.setItem('orders', JSON.stringify(orders));
+  
+  return newOrder;
+};
+
+// Update an order status
+export const updateOrderStatus = (id: string, status: Order['status']): Order | null => {
+  const orders = getOrders();
+  const index = orders.findIndex(o => o.id === id);
+  
+  if (index === -1) return null;
+  
+  const updatedOrder: Order = { ...orders[index], status };
+  orders[index] = updatedOrder;
+  localStorage.setItem('orders', JSON.stringify(orders));
+  
+  return updatedOrder;
+};
+
+// Update an order
+export const updateOrder = (id: string, orderData: Partial<Order>): Order | null => {
+  const orders = getOrders();
+  const index = orders.findIndex(o => o.id === id);
+  
+  if (index === -1) return null;
+  
+  const updatedOrder: Order = { ...orders[index], ...orderData };
+  orders[index] = updatedOrder;
+  localStorage.setItem('orders', JSON.stringify(orders));
+  
+  return updatedOrder;
 };
 
 // Function to save a color to local storage

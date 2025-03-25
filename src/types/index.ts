@@ -10,6 +10,10 @@ export interface Color {
   active: boolean;
 }
 
+export interface ColorFormValues extends Omit<Color, 'id'> {
+  imageFile?: File;
+}
+
 export interface Product {
   id: string;
   colorId: string;
@@ -62,4 +66,11 @@ export interface Order {
   paymentMethod: string;
   shippingMethod: string;
   transactionId?: string;
+}
+
+export interface LogEntry {
+  timestamp: string;
+  level: string;
+  message: string;
+  details?: any;
 }
