@@ -16,8 +16,29 @@ cp -r css/* dist/css/
 mkdir -p dist/js
 cp -r js/* dist/js/
 
-# Copy .htaccess
+# Copy any PHP files (for the API)
+mkdir -p dist/api
+cp -r api/* dist/api/
+
+# Copy .htaccess file
 cp .htaccess dist/
+
+# Copy assets if they exist
+if [ -d "assets" ]; then
+  mkdir -p dist/assets
+  cp -r assets/* dist/assets/
+fi
+
+# Copy images if they exist
+if [ -d "images" ]; then
+  mkdir -p dist/images
+  cp -r images/* dist/images/
+fi
+
+# Create an index.php that redirects to index.html if it doesn't exist
+if [ ! -f "index.php" ]; then
+  echo "<?php header('Location: index.html'); ?>" > dist/index.php
+fi
 
 echo "Application packaged successfully. Files are in the dist directory."
 echo ""
