@@ -1,6 +1,7 @@
 
 import * as braintree from 'braintree-web';
 import { addLog } from '@/services/localStorage';
+import axios from 'axios';
 
 // Braintree client instances
 let braintreeClient: braintree.Client | null = null;
@@ -8,19 +9,20 @@ let hostedFieldsInstance: braintree.HostedFields | null = null;
 
 /**
  * Get a client token from the server
- * In production, this should call your server endpoint
  */
 export const getClientToken = async (): Promise<string> => {
   try {
-    // In production, replace this with an API call to your server endpoint that generates a client token
-    // Example:
-    // const response = await fetch('/api/braintree/token');
-    // const data = await response.json();
-    // return data.clientToken;
+    const response = await axios.get('/api/braintree/token');
     
-    // For demo purposes, we're returning a hardcoded value
-    // IMPORTANT: In production, this must be generated server-side!
-    return 'sandbox_g42y39zw_348pk9cgf3bgyw2b';
+    if (!response.data || !response.data.clientToken) {
+      throw new Error('Invalid response from server');
+    }
+    
+    addLog('info', 'Successfully fetched Braintree client token', { 
+      timestamp: new Date().toISOString() 
+    });
+    
+    return response.data.clientToken;
   } catch (error) {
     console.error('Error getting client token:', error);
     addLog('error', 'Error getting Braintree client token', { 
@@ -157,25 +159,17 @@ export const processBraintreePayment = async (
       }
     );
     
-    // In production, this should be a server-side call
-    // Example server-side endpoint call:
-    // const response = await fetch('/api/payment/process', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ paymentMethodNonce, amount, orderId })
-    // });
-    // const result = await response.json();
-    // return result;
-    
-    // For demo purposes, we'll simulate a successful transaction
-    // IMPORTANT: Replace this with actual server-side payment processing in production
-    const transactionId = `bt-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+    const response = await axios.post('/api/braintree/process', {
+      paymentMethodNonce,
+      amount,
+      orderId
+    });
     
     addLog(
       'info',
       `Payment processed successfully for order #${orderId}`,
       { 
-        transactionId,
+        transactionId: response.data.transactionId,
         amount,
         orderId,
         timestamp: new Date().toISOString()
@@ -184,19 +178,28 @@ export const processBraintreePayment = async (
     
     return {
       success: true,
-      transactionId,
+      transactionId: response.data.transactionId,
     };
   } catch (error) {
     console.error('Error processing payment:', error);
+    
+    let errorMessage = 'Unknown payment processing error';
+    
+    if (axios.isAxiosError(error) && error.response) {
+      errorMessage = error.response.data?.message || 'Payment processing failed';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     addLog(
       'error',
       `Error processing payment for order #${orderId}`,
-      { error: error instanceof Error ? error.message : String(error) }
+      { error: errorMessage }
     );
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown payment processing error'
+      error: errorMessage
     };
   }
 };

@@ -2,6 +2,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../includes/utils.php';
+require_once '../../vendor/autoload.php';
 
 // Enable CORS
 enableCORS();
@@ -21,20 +22,15 @@ if (!isset($data['paymentMethodNonce']) || !isset($data['amount']) || !isset($da
 
 // This endpoint processes a payment with Braintree
 try {
-    // In a real implementation, you would include the Braintree PHP SDK
-    // and use it to process the payment
-    
-    // Example with Braintree SDK:
-    /*
-    require_once '../vendor/autoload.php';
-    
+    // Initialize Braintree Gateway with production credentials
     $gateway = new Braintree\Gateway([
-        'environment' => 'sandbox',
-        'merchantId' => 'your_merchant_id',
-        'publicKey' => 'your_public_key',
-        'privateKey' => 'your_private_key'
+        'environment' => 'production',
+        'merchantId' => 'pszgyg5dgnw997bx',
+        'publicKey' => 'df6b3f98fhfj57mh',
+        'privateKey' => 'faedbfa95f2bf78f2ba4c1cc444dc63b'
     ]);
     
+    // Process the payment
     $result = $gateway->transaction()->sale([
         'amount' => $data['amount'],
         'paymentMethodNonce' => $data['paymentMethodNonce'],
@@ -47,39 +43,30 @@ try {
         // Transaction successful
         $transactionId = $result->transaction->id;
         
-        // Update order in database with transaction ID
-        $conn = getConnection();
-        $stmt = $conn->prepare("UPDATE orders SET transaction_id = ? WHERE id = ?");
-        $stmt->bind_param("si", $transactionId, $data['orderId']);
-        $stmt->execute();
+        // Log the payment processing
+        addLog('info', 'Processed payment through Braintree', [
+            'orderId' => $data['orderId'],
+            'amount' => $data['amount'],
+            'transactionId' => $transactionId,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
         
+        // Send success response
         sendResponse([
             'success' => true,
             'transactionId' => $transactionId
         ]);
     } else {
         // Transaction failed
+        addLog('error', 'Braintree transaction failed', [
+            'orderId' => $data['orderId'],
+            'amount' => $data['amount'],
+            'message' => $result->message,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        
         sendError('Transaction failed: ' . $result->message, 400);
     }
-    */
-    
-    // For demo purposes, we'll just simulate a successful transaction
-    // IMPORTANT: In production, use the Braintree SDK to process the payment
-    $transactionId = 'bt-' . time() . '-' . rand(100000, 999999);
-    
-    // Log the payment processing
-    addLog('info', 'Processed payment through Braintree', [
-        'orderId' => $data['orderId'],
-        'amount' => $data['amount'],
-        'transactionId' => $transactionId,
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-    
-    // Send success response
-    sendResponse([
-        'success' => true,
-        'transactionId' => $transactionId
-    ]);
     
 } catch (Exception $e) {
     // Log error

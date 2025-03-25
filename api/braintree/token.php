@@ -2,6 +2,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../includes/utils.php';
+require_once '../../vendor/autoload.php';
 
 // Enable CORS
 enableCORS();
@@ -13,26 +14,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // This endpoint generates a client token for Braintree
 try {
-    // In a real implementation, you would include the Braintree PHP SDK
-    // and use it to generate a client token
-    
-    // Example with Braintree SDK:
-    /*
-    require_once '../vendor/autoload.php';
-    
+    // Initialize Braintree Gateway with production credentials
     $gateway = new Braintree\Gateway([
-        'environment' => 'sandbox',
-        'merchantId' => 'your_merchant_id',
-        'publicKey' => 'your_public_key',
-        'privateKey' => 'your_private_key'
+        'environment' => 'production',
+        'merchantId' => 'pszgyg5dgnw997bx',
+        'publicKey' => 'df6b3f98fhfj57mh',
+        'privateKey' => 'faedbfa95f2bf78f2ba4c1cc444dc63b'
     ]);
     
+    // Generate a client token
     $clientToken = $gateway->clientToken()->generate();
-    */
-    
-    // For demo purposes, we'll just return a fake token
-    // IMPORTANT: In production, generate a real token with the Braintree SDK
-    $clientToken = 'sandbox_' . bin2hex(random_bytes(10));
     
     // Log the token generation
     addLog('info', 'Generated Braintree client token', [

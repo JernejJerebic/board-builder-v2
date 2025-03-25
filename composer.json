@@ -1,6 +1,7 @@
 
 {
     "require": {
-        "phpmailer/phpmailer": "^6.9"
+        "phpmailer/phpmailer": "^6.9",
+        "braintree/braintree_php": "^6.18.0"
     }
 }

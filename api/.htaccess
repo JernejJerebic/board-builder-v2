@@ -1,5 +1,4 @@
 
-
 # Enable URL rewriting
 RewriteEngine On
 
@@ -40,6 +39,10 @@ RewriteRule ^orders/?$ orders/index.php [L]
 RewriteRule ^orders/([0-9]+)/?$ orders/order.php?id=$1 [L]
 RewriteRule ^orders/([0-9]+)/status/?$ orders/status.php?id=$1 [L]
 
+# Handle Braintree requests
+RewriteRule ^braintree/token/?$ braintree/token.php [L]
+RewriteRule ^braintree/process/?$ braintree/process.php [L]
+
 # Handle email requests
 RewriteRule ^email/order/?$ email/order.php [L]
 
@@ -50,4 +53,3 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*\.php
 RewriteCond %{REQUEST_URI} !^/api/setup/setup.php
 RewriteRule ^(.*)\.php$ /$1 [R=301,L]
-
