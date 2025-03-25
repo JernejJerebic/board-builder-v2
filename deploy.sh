@@ -3,7 +3,8 @@
 # Simple deployment script for React Vite app
 
 echo "Building application..."
-npm run build
+# Use npx to ensure we're using the locally installed vite
+npx vite build
 
 echo "Application built successfully. Files are in the dist directory."
 echo ""
