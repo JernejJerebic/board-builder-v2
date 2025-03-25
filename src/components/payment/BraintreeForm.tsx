@@ -3,15 +3,18 @@ import React, { useEffect, useState } from 'react';
 import { initBraintreeHostedFields, getPaymentMethodNonce, teardownBraintree } from '@/services/braintree';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface BraintreeFormProps {
   onPaymentMethodReady: (isReady: boolean) => void;
   onPaymentMethodReceived: (paymentMethodNonce: string) => void;
+  isSubmitting?: boolean;
 }
 
 const BraintreeForm: React.FC<BraintreeFormProps> = ({ 
   onPaymentMethodReady, 
-  onPaymentMethodReceived 
+  onPaymentMethodReceived,
+  isSubmitting = false
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -118,6 +121,26 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
               <p className="text-green-600 mt-2">Plačilni sistem je pripravljen</p>
             )}
           </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={!isInitialized || isLoading || isSubmitting}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Preverjanje podatkov
+              </>
+            ) : isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Obdelava plačila
+              </>
+            ) : (
+              'Potrdi plačilne podatke'
+            )}
+          </Button>
         </div>
       </form>
     </div>

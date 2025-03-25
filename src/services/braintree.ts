@@ -2,22 +2,33 @@
 import * as braintree from 'braintree-web';
 import { addLog } from '@/services/localStorage';
 
-interface BraintreeConfig {
-  merchantId: string;
-  publicKey: string;
-  privateKey: string;
-}
-
-// Braintree credentials - replace these with your actual Braintree credentials
-const BRAINTREE_CONFIG: BraintreeConfig = {
-  merchantId: 'pszgyg5dgnw997bx', // Replace with your actual merchant ID
-  publicKey: 'df6b3f98fhfj57mh', // Replace with your actual public key
-  privateKey: 'faedbfa95f2bf78f2ba4c1cc444dc63b', // This should only be on server side in production
-};
-
-// Initialize Braintree client
+// Braintree client instances
 let braintreeClient: braintree.Client | null = null;
 let hostedFieldsInstance: braintree.HostedFields | null = null;
+
+/**
+ * Get a client token from the server
+ * In production, this should call your server endpoint
+ */
+export const getClientToken = async (): Promise<string> => {
+  try {
+    // In production, replace this with an API call to your server endpoint that generates a client token
+    // Example:
+    // const response = await fetch('/api/braintree/token');
+    // const data = await response.json();
+    // return data.clientToken;
+    
+    // For demo purposes, we're returning a hardcoded value
+    // IMPORTANT: In production, this must be generated server-side!
+    return 'sandbox_g42y39zw_348pk9cgf3bgyw2b';
+  } catch (error) {
+    console.error('Error getting client token:', error);
+    addLog('error', 'Error getting Braintree client token', { 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    throw error;
+  }
+};
 
 /**
  * Initialize the Braintree client
@@ -30,9 +41,11 @@ export const initBraintreeClient = async (): Promise<braintree.Client> => {
   try {
     addLog('info', 'Initializing Braintree client', { timestamp: new Date().toISOString() });
 
-    // In a real app, you'd fetch a client token from your server
+    // Get authorization from server
+    const authorization = await getClientToken();
+
     braintreeClient = await braintree.client.create({
-      authorization: BRAINTREE_CONFIG.publicKey
+      authorization
     });
 
     return braintreeClient;
@@ -113,6 +126,7 @@ export const getPaymentMethodNonce = async (): Promise<string> => {
     }
     
     const payload = await hostedFieldsInstance.tokenize();
+    addLog('info', 'Payment method nonce generated', { timestamp: new Date().toISOString() });
     return payload.nonce;
   } catch (error) {
     console.error('Error getting payment method nonce:', error);
@@ -132,8 +146,6 @@ export const processBraintreePayment = async (
   orderId: string
 ): Promise<{ success: boolean; transactionId?: string; error?: string }> => {
   try {
-    console.log(`Processing payment with nonce: ${paymentMethodNonce}, amount: ${amount}`);
-    
     addLog(
       'info',
       `Starting payment processing for order #${orderId}`,
@@ -145,14 +157,15 @@ export const processBraintreePayment = async (
       }
     );
     
-    // In a production environment, this should be a server-side call
-    // You should NOT process payments directly from the client
+    // In production, this should be a server-side call
+    // Example server-side endpoint call:
     // const response = await fetch('/api/payment/process', {
     //   method: 'POST',
     //   headers: { 'Content-Type': 'application/json' },
     //   body: JSON.stringify({ paymentMethodNonce, amount, orderId })
     // });
     // const result = await response.json();
+    // return result;
     
     // For demo purposes, we'll simulate a successful transaction
     // IMPORTANT: Replace this with actual server-side payment processing in production
