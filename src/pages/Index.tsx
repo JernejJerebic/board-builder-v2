@@ -35,7 +35,8 @@ const Index = () => {
       bottom: false,
       left: false
     },
-    drilling: false
+    drilling: false,
+    customImage: null as File | null
   });
   
   return (
@@ -58,12 +59,16 @@ const Index = () => {
             width={boardConfig.width} 
             thickness={boardConfig.thickness} 
             borders={boardConfig.borders} 
-            drilling={boardConfig.drilling} 
+            drilling={boardConfig.drilling}
+            customImage={boardConfig.customImage}
           />
         </div>
         
         <div>
-          <BoardConfigurator onConfigChange={setBoardConfig} />
+          <BoardConfigurator 
+            onConfigChange={setBoardConfig}
+            initialCustomImage={boardConfig.customImage} 
+          />
         </div>
       </div>
       

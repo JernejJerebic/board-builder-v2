@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -17,6 +18,7 @@ const ADMIN_CREDENTIALS = [{
   email: "jerebic.jernej@gmail.com",
   password: "12jernej34"
 }];
+
 const Layout: React.FC<LayoutProps> = ({
   children
 }) => {
@@ -52,6 +54,7 @@ const Layout: React.FC<LayoutProps> = ({
     path: '/logs',
     adminOnly: true
   }];
+
   const handleLogin = () => {
     const isValidCredentials = ADMIN_CREDENTIALS.some(cred => cred.email === email && cred.password === password);
     if (isValidCredentials) {
@@ -70,6 +73,7 @@ const Layout: React.FC<LayoutProps> = ({
       });
     }
   };
+
   const handleLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('isAdmin');
@@ -81,7 +85,8 @@ const Layout: React.FC<LayoutProps> = ({
       description: "Uspešno ste se odjavili."
     });
   };
-  return <div className="min-h-screen flex flex-col">
+
+  return <div className="min-h-screen flex flex-col font-poppins">
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -149,4 +154,5 @@ const Layout: React.FC<LayoutProps> = ({
       </Dialog>
     </div>;
 };
+
 export default Layout;
