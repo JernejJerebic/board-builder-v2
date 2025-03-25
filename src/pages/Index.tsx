@@ -46,7 +46,7 @@ const Index = () => {
           Oblikujte svojo leseno ploščo po meri z izbiro materiala, dimenzij in dodatnih možnosti
         </p>
         <p className="text-sm text-gray-500">
-          Za pomoč pri naročilu nas lahko kontaktirate na <span className="font-medium">info@lcc.si</span> ali po telefonu na <span className="font-medium">+386 7 393 07 00</span>
+          Za pomoč pri naročilu nas lahko kontaktirate na <a href="mailto:info@lcc.si" className="font-medium hover:underline">info@lcc.si</a> ali po telefonu na <a href="tel:+38673930700" className="font-medium hover:underline">+386 7 393 07 00</a>
         </p>
       </div>
       
