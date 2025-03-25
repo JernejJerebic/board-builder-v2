@@ -4,7 +4,7 @@ import { sendOrderEmail } from './emailService';
 import axios from 'axios';
 
 // Define API_URL for axios requests
-const API_URL = process.env.API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 // Customer API
 export const fetchCustomers = async (): Promise<Customer[]> => {
