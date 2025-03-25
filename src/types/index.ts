@@ -27,14 +27,13 @@ export interface Product {
   quantity: number;
   pricePerUnit: number;
   totalPrice: number;
-  customImage?: File | null;
+  colorTitle?: string;
+  colorHtml?: string;
 }
 
 export interface BasketItem extends Product {
   basketId: string;
   color?: Color;
-  colorTitle?: string;
-  colorHtml?: string;
 }
 
 export interface Customer {

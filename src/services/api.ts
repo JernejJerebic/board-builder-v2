@@ -1,6 +1,7 @@
 import { Customer, Order, Color } from '@/types';
 import * as localStorageService from './localStorage';
 import { sendOrderEmail } from './emailService';
+import axios from 'axios';
 
 // Customer API
 export const fetchCustomers = async (): Promise<Customer[]> => {
@@ -93,37 +94,45 @@ export const fetchColors = async (): Promise<Color[]> => {
   }
 };
 
-export const createColor = async (color: Partial<Omit<Color, 'id' | 'active'>>): Promise<Color> => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] Creating color:`, color);
-  
+export const createColor = async (data: FormData | Partial<Omit<Color, 'id' | 'active'>>): Promise<Color> => {
   try {
-    const newColor = localStorageService.addColor({
-      ...color,
-      active: true
-    } as Color);
-    console.log(`[${timestamp}] Color created with ID: ${newColor.id}`);
-    return newColor;
+    let response;
+    
+    if (data instanceof FormData) {
+      response = await axios.post(`${API_URL}/colors/index.php`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await axios.post(`${API_URL}/colors/index.php`, data);
+    }
+    
+    return response.data;
   } catch (error) {
-    console.error(`[${timestamp}] Error creating color:`, error);
-    throw error;
+    console.error("Error creating color:", error);
+    throw new Error("Failed to create color");
   }
 };
 
-export const updateColor = async (id: string, colorData: Partial<Color>): Promise<Color> => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] Updating color ${id}:`, colorData);
-  
+export const updateColor = async (id: string, data: FormData | Partial<Color>): Promise<Color> => {
   try {
-    const updatedColor = localStorageService.updateColor(id, colorData);
-    if (!updatedColor) {
-      throw new Error(`Color with ID ${id} not found`);
+    let response;
+    
+    if (data instanceof FormData) {
+      response = await axios.post(`${API_URL}/colors/color.php?id=${id}`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await axios.post(`${API_URL}/colors/color.php?id=${id}`, data);
     }
-    console.log(`[${timestamp}] Color updated: ${updatedColor.id}`);
-    return updatedColor;
+    
+    return response.data;
   } catch (error) {
-    console.error(`[${timestamp}] Error updating color:`, error);
-    throw error;
+    console.error("Error updating color:", error);
+    throw new Error("Failed to update color");
   }
 };
 

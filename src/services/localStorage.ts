@@ -1,418 +1,393 @@
-import { v4 as uuidv4 } from 'uuid';
-import { Customer, Order, Color, Product } from '@/types';
+import { Color, Customer, Order, Product, BasketItem } from '@/types';
 
-// Storage keys
-const STORAGE_KEYS = {
-  CUSTOMERS: 'woodboard_customers',
-  ORDERS: 'woodboard_orders',
-  COLORS: 'woodboard_colors',
-  LOGS: 'woodboard_logs',
-  EMAIL_LOGS: 'woodboard_email_logs',
-};
+// Function to simulate delay
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Log entry interface
-export interface LogEntry {
-  timestamp: string;
-  level: 'info' | 'warning' | 'error';
-  message: string;
-  details?: any;
-}
+// Function to add a log entry
+export const addLog = (type: 'info' | 'warning' | 'error', message: string, details?: any) => {
+  if (typeof window === 'undefined') return;
 
-// Email log interface
-export interface EmailLog {
-  timestamp: string;
-  to: string;
-  subject: string;
-  message: string;
-}
-
-// Initialize storage with default data if empty
-export const initializeStorage = () => {
-  // Check if storage is already initialized
-  if (!localStorage.getItem(STORAGE_KEYS.COLORS)) {
-    // Add default colors
-    const defaultColors: Color[] = [
-      {
-        id: uuidv4(),
-        title: 'Oak Natural',
-        htmlColor: '#d2b48c',
-        thickness: 18,
-        priceWithVat: 54.90,
-        imageUrl: null,
-        active: true,
-      },
-      {
-        id: uuidv4(),
-        title: 'Walnut Dark',
-        htmlColor: '#614126',
-        thickness: 25,
-        priceWithVat: 79.30,
-        imageUrl: null,
-        active: true,
-      },
-      {
-        id: uuidv4(),
-        title: 'Pine Light',
-        htmlColor: '#e8d0a9',
-        thickness: 18,
-        priceWithVat: 42.70,
-        imageUrl: null,
-        active: true,
-      },
-      {
-        id: uuidv4(),
-        title: 'Mahogany Red',
-        htmlColor: '#c04000',
-        thickness: 25,
-        priceWithVat: 91.50,
-        imageUrl: null,
-        active: true,
-      },
-      {
-        id: uuidv4(),
-        title: 'Maple White',
-        htmlColor: '#f5deb3',
-        thickness: 18,
-        priceWithVat: 61.00,
-        imageUrl: null,
-        active: false,
-      },
-    ];
-    
-    setColors(defaultColors);
-    
-    // Initialize empty customers and orders
-    setCustomers([]);
-    setOrders([]);
-    
-    // Initialize empty logs and email logs
-    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify([]));
-  }
-};
-
-// Logging functions
-export const addLog = (level: 'info' | 'warning' | 'error', message: string, details?: any) => {
-  const logs = getLogs();
-  const newLog: LogEntry = {
+  const logEntry = {
     timestamp: new Date().toISOString(),
-    level,
+    type,
     message,
-    details,
+    details
   };
-  
-  logs.unshift(newLog); // Add to beginning
-  
-  // Keep only the most recent 1000 logs
-  const trimmedLogs = logs.slice(0, 1000);
-  localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(trimmedLogs));
-  
-  // Also log to console for debugging
-  console[level](message, details || '');
-  
-  return newLog;
+
+  const logs = getLogs();
+  logs.push(logEntry);
+  localStorage.setItem('logs', JSON.stringify(logs));
 };
 
-export const getLogs = (): LogEntry[] => {
-  const logsJson = localStorage.getItem(STORAGE_KEYS.LOGS);
-  return logsJson ? JSON.parse(logsJson) : [];
+// Function to retrieve logs
+export const getLogs = (): any[] => {
+  if (typeof window === 'undefined') return [];
+
+  const logs = localStorage.getItem('logs');
+  return logs ? JSON.parse(logs) : [];
 };
 
+// Function to clear logs
 export const clearLogs = () => {
-  localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify([]));
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('logs');
+  }
 };
 
-// Customer functions
-export const getCustomers = (): Customer[] => {
-  const customersJson = localStorage.getItem(STORAGE_KEYS.CUSTOMERS);
-  return customersJson ? JSON.parse(customersJson) : [];
+// Mock data for colors
+export const getMockColors = (): Color[] => {
+  return [
+    {
+      id: '1',
+      title: 'Hrast',
+      htmlColor: '#d2b48c',
+      thickness: 18,
+      priceWithVat: 45.99,
+      priceWithoutVat: 37.70,
+      imageUrl: null,
+      active: true
+    },
+    {
+      id: '2',
+      title: 'Oreh',
+      htmlColor: '#654321',
+      thickness: 18,
+      priceWithVat: 52.99,
+      priceWithoutVat: 43.43,
+      imageUrl: null,
+      active: true
+    },
+    {
+      id: '3',
+      title: 'Bela',
+      htmlColor: '#ffffff',
+      thickness: 18,
+      priceWithVat: 39.99,
+      priceWithoutVat: 32.78,
+      imageUrl: null,
+      active: true
+    },
+    {
+      id: '4',
+      title: 'Siva',
+      htmlColor: '#808080',
+      thickness: 18,
+      priceWithVat: 42.99,
+      priceWithoutVat: 35.24,
+      imageUrl: null,
+      active: true
+    },
+    {
+      id: '5',
+      title: 'Črna',
+      htmlColor: '#000000',
+      thickness: 18,
+      priceWithVat: 44.99,
+      priceWithoutVat: 36.88,
+      imageUrl: null,
+      active: false
+    }
+  ];
 };
 
-export const setCustomers = (customers: Customer[]) => {
-  localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
+// Mock data for customers
+export const getMockCustomers = (): Customer[] => {
+  return [
+    {
+      id: 'cust1',
+      firstName: 'Janez',
+      lastName: 'Novak',
+      email: 'janez.novak@example.com',
+      phone: '041234567',
+      street: 'Glavna ulica 1',
+      city: 'Ljubljana',
+      zipCode: '1000',
+      companyName: 'ACME d.o.o.',
+      vatId: 'SI12345678',
+      lastPurchase: '2023-01-15',
+      totalPurchases: 12
+    },
+    {
+      id: 'cust2',
+      firstName: 'Marija',
+      lastName: 'Kovač',
+      email: 'marija.kovac@example.com',
+      phone: '031765432',
+      street: 'Pot na Golovec 5',
+      city: 'Maribor',
+      zipCode: '2000',
+      lastPurchase: '2023-02-20',
+      totalPurchases: 5
+    },
+    {
+      id: 'cust3',
+      firstName: 'Peter',
+      lastName: 'Zupan',
+      email: 'peter.zupan@example.com',
+      phone: '051112233',
+      street: 'Cesta v Rožno dolino 10',
+      city: 'Kranj',
+      zipCode: '4000',
+      companyName: 'XYZ d.o.o.',
+      vatId: 'SI98765432',
+      lastPurchase: '2023-03-10',
+      totalPurchases: 8
+    }
+  ];
 };
 
-export const getCustomerById = (id: string): Customer | undefined => {
-  const customers = getCustomers();
-  return customers.find(customer => customer.id === id);
+// Mock data for orders
+export const getMockOrders = (): Order[] => {
+  return [
+    {
+      id: 'order1',
+      customerId: 'cust1',
+      products: [
+        {
+          id: 'prod1',
+          colorId: '1',
+          length: 120,
+          width: 60,
+          thickness: 18,
+          surfaceArea: 0.72,
+          borders: { top: true, right: false, bottom: true, left: false },
+          drilling: false,
+          quantity: 2,
+          pricePerUnit: 25.50,
+          totalPrice: 51.00
+        },
+        {
+          id: 'prod2',
+          colorId: '2',
+          length: 150,
+          width: 70,
+          thickness: 18,
+          surfaceArea: 1.05,
+          borders: { top: false, right: true, bottom: false, left: true },
+          drilling: true,
+          quantity: 1,
+          pricePerUnit: 32.00,
+          totalPrice: 32.00
+        }
+      ],
+      orderDate: '2023-04-05',
+      status: 'placed',
+      totalCostWithoutVat: 70.00,
+      totalCostWithVat: 85.40,
+      paymentMethod: 'credit_card',
+      shippingMethod: 'delivery'
+    },
+    {
+      id: 'order2',
+      customerId: 'cust2',
+      products: [
+        {
+          id: 'prod3',
+          colorId: '3',
+          length: 100,
+          width: 50,
+          thickness: 18,
+          surfaceArea: 0.50,
+          borders: { top: true, right: true, bottom: true, left: true },
+          drilling: false,
+          quantity: 3,
+          pricePerUnit: 18.00,
+          totalPrice: 54.00
+        }
+      ],
+      orderDate: '2023-04-10',
+      status: 'in_progress',
+      totalCostWithoutVat: 44.26,
+      totalCostWithVat: 54.00,
+      paymentMethod: 'bank_transfer',
+      shippingMethod: 'pickup'
+    },
+    {
+      id: 'order3',
+      customerId: 'cust3',
+      products: [
+        {
+          id: 'prod4',
+          colorId: '4',
+          length: 180,
+          width: 80,
+          thickness: 18,
+          surfaceArea: 1.44,
+          borders: { top: false, right: false, bottom: false, left: false },
+          drilling: true,
+          quantity: 1,
+          pricePerUnit: 40.00,
+          totalPrice: 40.00
+        }
+      ],
+      orderDate: '2023-04-15',
+      status: 'completed',
+      totalCostWithoutVat: 32.79,
+      totalCostWithVat: 40.00,
+      paymentMethod: 'payment_on_delivery',
+      shippingMethod: 'delivery'
+    }
+  ];
 };
 
-export const getCustomerByEmail = (email: string): Customer | undefined => {
-  const customers = getCustomers();
-  return customers.find(customer => customer.email === email);
-};
-
-export const addCustomer = (customer: Omit<Customer, 'id' | 'lastPurchase' | 'totalPurchases'>): Customer => {
-  const customers = getCustomers();
-  const newCustomer: Customer = {
-    ...customer,
-    id: uuidv4(),
-    totalPurchases: 0,
-  };
+// Function to initialize mock data
+export const initMockData = () => {
+  if (typeof window === 'undefined') return;
   
-  customers.push(newCustomer);
-  setCustomers(customers);
-  addLog('info', `Customer added: ${newCustomer.firstName} ${newCustomer.lastName}`);
-  return newCustomer;
-};
-
-export const updateCustomer = (id: string, updates: Partial<Customer>): Customer | undefined => {
-  const customers = getCustomers();
-  const index = customers.findIndex(c => c.id === id);
-  
-  if (index === -1) {
-    addLog('error', `Customer not found for update: ${id}`);
-    return undefined;
+  if (!localStorage.getItem('colors')) {
+    localStorage.setItem('colors', JSON.stringify(getMockColors()));
   }
   
-  const updatedCustomer = { ...customers[index], ...updates };
-  customers[index] = updatedCustomer;
-  setCustomers(customers);
-  addLog('info', `Customer updated: ${updatedCustomer.firstName} ${updatedCustomer.lastName}`);
-  return updatedCustomer;
-};
-
-export const deleteCustomer = (id: string): boolean => {
-  const customers = getCustomers();
-  const initialLength = customers.length;
-  
-  const filteredCustomers = customers.filter(c => c.id !== id);
-  
-  if (filteredCustomers.length === initialLength) {
-    addLog('error', `Customer not found for deletion: ${id}`);
-    return false;
+  if (!localStorage.getItem('customers')) {
+    localStorage.setItem('customers', JSON.stringify(getMockCustomers()));
   }
   
-  setCustomers(filteredCustomers);
-  addLog('info', `Customer deleted: ${id}`);
-  return true;
+  if (!localStorage.getItem('orders')) {
+    localStorage.setItem('orders', JSON.stringify(getMockOrders()));
+  }
+  
+  if (!localStorage.getItem('logs')) {
+    localStorage.setItem('logs', JSON.stringify([]));
+  }
 };
 
-// Color functions
+// Function to get colors from local storage
 export const getColors = (): Color[] => {
-  const colorsJson = localStorage.getItem(STORAGE_KEYS.COLORS);
-  return colorsJson ? JSON.parse(colorsJson) : [];
+  if (typeof window === 'undefined') return [];
+
+  const colors = localStorage.getItem('colors');
+  return colors ? JSON.parse(colors) : [];
 };
 
-export const setColors = (colors: Color[]) => {
-  localStorage.setItem(STORAGE_KEYS.COLORS, JSON.stringify(colors));
-};
-
+// Function to get a color by ID from local storage
 export const getColorById = (id: string): Color | undefined => {
   const colors = getColors();
   return colors.find(color => color.id === id);
 };
 
-export const addColor = (color: Omit<Color, 'id'>): Color => {
-  const colors = getColors();
-  const newColor: Color = {
-    ...color,
-    id: uuidv4(),
-  };
+// Function to save a color to local storage
+export const saveColor = (color: Partial<Color>) => {
+  if (typeof window === 'undefined') return null;
   
-  colors.push(newColor);
-  setColors(colors);
-  addLog('info', `Color added: ${newColor.title}`);
-  return newColor;
-};
-
-export const updateColor = (id: string, updates: Partial<Color>): Color | undefined => {
   const colors = getColors();
-  const index = colors.findIndex(c => c.id === id);
+  let updatedColor: Color;
   
-  if (index === -1) {
-    addLog('error', `Color not found for update: ${id}`);
-    return undefined;
+  if (color.id && color.id !== '0') {
+    // Update existing color
+    const index = colors.findIndex(c => c.id === color.id);
+    
+    if (index === -1) return null;
+    
+    updatedColor = {
+      ...colors[index],
+      ...color,
+      priceWithoutVat: color.priceWithoutVat || colors[index].priceWithoutVat
+    };
+    
+    colors[index] = updatedColor;
+  } else {
+    // Create new color
+    updatedColor = {
+      id: String(Date.now()),
+      title: color.title || 'Unnamed',
+      htmlColor: color.htmlColor || '#cccccc',
+      thickness: color.thickness || 18,
+      priceWithVat: color.priceWithVat || 0,
+      priceWithoutVat: color.priceWithoutVat || 0,
+      imageUrl: color.imageUrl || null,
+      active: color.active !== undefined ? color.active : true
+    };
+    
+    colors.push(updatedColor);
   }
   
-  const updatedColor = { ...colors[index], ...updates };
-  colors[index] = updatedColor;
-  setColors(colors);
-  addLog('info', `Color updated: ${updatedColor.title}`);
+  localStorage.setItem('colors', JSON.stringify(colors));
   return updatedColor;
 };
 
-export const updateColorStatus = (id: string, active: boolean): Color | undefined => {
-  return updateColor(id, { active });
-};
+// Function to delete a color from local storage
+export const deleteColor = (id: string) => {
+  if (typeof window === 'undefined') return;
 
-export const deleteColor = (id: string): boolean => {
   const colors = getColors();
-  const initialLength = colors.length;
-  
-  const filteredColors = colors.filter(c => c.id !== id);
-  
-  if (filteredColors.length === initialLength) {
-    addLog('error', `Color not found for deletion: ${id}`);
-    return false;
+  const updatedColors = colors.filter(color => color.id !== id);
+  localStorage.setItem('colors', JSON.stringify(updatedColors));
+};
+
+// Function to get customers from local storage
+export const getCustomers = (): Customer[] => {
+  if (typeof window === 'undefined') return [];
+
+  const customers = localStorage.getItem('customers');
+  return customers ? JSON.parse(customers) : [];
+};
+
+// Function to get a customer by ID from local storage
+export const getCustomerById = (id: string): Customer | undefined => {
+  const customers = getCustomers();
+  return customers.find(customer => customer.id === id);
+};
+
+// Function to save a customer to local storage
+export const saveCustomer = (customer: Customer) => {
+  if (typeof window === 'undefined') return;
+
+  const customers = getCustomers();
+  const index = customers.findIndex(c => c.id === customer.id);
+
+  if (index !== -1) {
+    customers[index] = customer;
+  } else {
+    customers.push(customer);
   }
-  
-  setColors(filteredColors);
-  addLog('info', `Color deleted: ${id}`);
-  return true;
+
+  localStorage.setItem('customers', JSON.stringify(customers));
 };
 
-// Order functions
+// Function to delete a customer from local storage
+export const deleteCustomer = (id: string) => {
+  if (typeof window === 'undefined') return;
+
+  const customers = getCustomers();
+  const updatedCustomers = customers.filter(customer => customer.id !== id);
+  localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+};
+
+// Function to get orders from local storage
 export const getOrders = (): Order[] => {
-  const ordersJson = localStorage.getItem(STORAGE_KEYS.ORDERS);
-  return ordersJson ? JSON.parse(ordersJson) : [];
+  if (typeof window === 'undefined') return [];
+
+  const orders = localStorage.getItem('orders');
+  return orders ? JSON.parse(orders) : [];
 };
 
-export const setOrders = (orders: Order[]) => {
-  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-};
-
+// Function to get an order by ID from local storage
 export const getOrderById = (id: string): Order | undefined => {
   const orders = getOrders();
   return orders.find(order => order.id === id);
 };
 
-export const addOrder = (orderData: Omit<Order, 'id' | 'orderDate'>): Order => {
+// Function to save an order to local storage
+export const saveOrder = (order: Order) => {
+  if (typeof window === 'undefined') return;
+
   const orders = getOrders();
-  const customers = getCustomers();
-  
-  const newOrder: Order = {
-    ...orderData,
-    id: uuidv4(),
-    orderDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-  };
-  
-  orders.push(newOrder);
-  setOrders(orders);
-  
-  // Update customer's lastPurchase and totalPurchases
-  const customerIndex = customers.findIndex(c => c.id === orderData.customerId);
-  if (customerIndex !== -1) {
-    customers[customerIndex] = {
-      ...customers[customerIndex],
-      lastPurchase: newOrder.orderDate,
-      totalPurchases: (customers[customerIndex].totalPurchases || 0) + orderData.totalCostWithVat,
-    };
-    setCustomers(customers);
+  const index = orders.findIndex(o => o.id === order.id);
+
+  if (index !== -1) {
+    orders[index] = order;
+  } else {
+    orders.push(order);
   }
-  
-  addLog('info', `Order added: ${newOrder.id} for customer ${orderData.customerId}`);
-  return newOrder;
+
+  localStorage.setItem('orders', JSON.stringify(orders));
 };
 
-export const updateOrder = (id: string, updates: Partial<Order>): Order | undefined => {
+// Function to delete an order from local storage
+export const deleteOrder = (id: string) => {
+  if (typeof window === 'undefined') return;
+
   const orders = getOrders();
-  const index = orders.findIndex(o => o.id === id);
-  
-  if (index === -1) {
-    addLog('error', `Order not found for update: ${id}`);
-    return undefined;
-  }
-  
-  const updatedOrder = { ...orders[index], ...updates };
-  orders[index] = updatedOrder;
-  setOrders(orders);
-  addLog('info', `Order updated: ${updatedOrder.id}`);
-  return updatedOrder;
+  const updatedOrders = orders.filter(order => order.id !== id);
+  localStorage.setItem('orders', JSON.stringify(updatedOrders));
 };
-
-export const updateOrderStatus = (id: string, status: Order['status']): Order | undefined => {
-  return updateOrder(id, { status });
-};
-
-export const deleteOrder = (id: string): boolean => {
-  const orders = getOrders();
-  const initialLength = orders.length;
-  
-  const filteredOrders = orders.filter(o => o.id !== id);
-  
-  if (filteredOrders.length === initialLength) {
-    addLog('error', `Order not found for deletion: ${id}`);
-    return false;
-  }
-  
-  setOrders(filteredOrders);
-  addLog('info', `Order deleted: ${id}`);
-  return true;
-};
-
-// Email simulation
-export const simulateSendEmail = async (
-  type: 'new' | 'progress' | 'completed',
-  order: Order,
-  customerEmail: string
-): Promise<{ success: boolean; message?: string }> => {
-  const timestamp = new Date().toISOString();
-  const adminEmail = "jernej@modriweb.com";
-  
-  // Determine subject and message based on email type
-  let customerSubject = "";
-  let customerMessage = "";
-  let adminSubject = "";
-  let adminMessage = "";
-  
-  switch (type) {
-    case 'new':
-      customerSubject = `Novo naročilo #${order.id}`;
-      customerMessage = `Spoštovani,\n\nZahvaljujemo se vam za vaše naročilo (#${order.id}). V najkrajšem možnem času bomo začeli z obdelavo vašega naročila.\n\nLep pozdrav`;
-      
-      adminSubject = `Novo naročilo #${order.id}`;
-      adminMessage = `Novo naročilo #${order.id} je bilo oddano.\n\nPodrobnosti naročila:\nSkupna vrednost: ${order.totalCostWithVat}€\nŠtevilo izdelkov: ${order.products.length}\n\nProsimo, preverite administratorsko ploščo za več informacij.`;
-      break;
-      
-    case 'progress':
-      customerSubject = `Naročilo #${order.id} v obdelavi`;
-      customerMessage = `Spoštovani,\n\nVaše naročilo (#${order.id}) je trenutno v obdelavi. Obvestili vas bomo, ko bo pripravljeno za prevzem ali dostavo.\n\nLep pozdrav`;
-      
-      adminSubject = `Naročilo #${order.id} posodobljeno na status: V obdelavi`;
-      adminMessage = `Naročilo #${order.id} je bilo posodobljeno na status: V obdelavi.\n\nPodrobnosti naročila:\nSkupna vrednost: ${order.totalCostWithVat}€\nŠtevilo izdelkov: ${order.products.length}`;
-      break;
-      
-    case 'completed':
-      customerSubject = `Naročilo #${order.id} zaključeno`;
-      customerMessage = `Spoštovani,\n\nVaše naročilo (#${order.id}) je zaključeno in pripravljeno ${order.shippingMethod === 'pickup' ? 'za prevzem' : 'za dostavo'}.\n\nLep pozdrav`;
-      
-      adminSubject = `Naročilo #${order.id} posodobljeno na status: Zaključeno`;
-      adminMessage = `Naročilo #${order.id} je bilo posodobljeno na status: Zaključeno.\n\nPodrobnosti naročila:\nSkupna vrednost: ${order.totalCostWithVat}€\nŠtevilo izdelkov: ${order.products.length}`;
-      break;
-      
-    default:
-      return { success: false, message: "Invalid email type" };
-  }
-  
-  // Log the emails
-  const customerEmailLog: EmailLog = {
-    timestamp,
-    to: customerEmail,
-    subject: customerSubject,
-    message: customerMessage
-  };
-  
-  const adminEmailLog: EmailLog = {
-    timestamp,
-    to: adminEmail,
-    subject: adminSubject,
-    message: adminMessage
-  };
-  
-  // Store email logs
-  const emails = getEmailLogs();
-  emails.push(customerEmailLog, adminEmailLog);
-  localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify(emails));
-  
-  // Log email details
-  console.log(`[${timestamp}] EMAIL TO CUSTOMER:`, customerEmailLog);
-  console.log(`[${timestamp}] EMAIL TO ADMIN:`, adminEmailLog);
-  
-  // Add to application logs
-  addLog('info', `Emails sent for order #${order.id} (${type}): To customer ${customerEmail} and admin ${adminEmail}`);
-  
-  return { 
-    success: true, 
-    message: `Emails successfully sent to customer (${customerEmail}) and admin (${adminEmail})` 
-  };
-};
-
-// Get email logs
-export const getEmailLogs = (): EmailLog[] => {
-  const emailsJson = localStorage.getItem(STORAGE_KEYS.EMAIL_LOGS);
-  return emailsJson ? JSON.parse(emailsJson) : [];
-};
-
-// Initialize storage on import
-initializeStorage();
