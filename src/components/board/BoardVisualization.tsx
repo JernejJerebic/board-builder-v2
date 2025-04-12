@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Color } from '@/types';
 import { cn } from '@/lib/utils';
@@ -37,11 +38,8 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     }
   }, [length, width]);
 
-  const visualWidth = rotated ? length * ratio : width * ratio;
-  const visualLength = rotated ? width * ratio : length * ratio;
-
-  const realWidth = width * ratio;
-  const realLength = length * ratio;
+  const visualWidth = rotated ? width * ratio : width * ratio;
+  const visualLength = rotated ? length * ratio : length * ratio;
 
   if (!color) {
     return (
@@ -59,8 +57,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
       <div className="absolute inset-0 flex items-center justify-center">
         <div
           className={cn(
-            "transition-all duration-300 ease-out",
-            rotated && "animate-rotate-board"
+            "transition-all duration-300 ease-out"
           )}
           style={{
             width: `${visualWidth}px`,
@@ -79,8 +76,8 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               backgroundPosition: 'center',
               transform: rotated ? 'rotate(90deg)' : 'none',
               transformOrigin: 'center',
-              width: rotated ? '100%' : '100%',
-              height: rotated ? '100%' : '100%',
+              width: '100%',
+              height: '100%',
             }}
           />
           

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -6,10 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useBasket } from '@/context/BasketContext';
 import { createOrder, createCustomer, findCustomerByEmail, updateOrder } from '@/services/api';
 import { sendOrderEmail } from '@/services/emailService';
-import { processBraintreePayment } from '@/services/braintree';
 import { Button } from '@/components/ui/button';
 import { addLog } from '@/services/localStorage';
-import BraintreeForm from '@/components/payment/BraintreeForm';
 import {
   Form,
   FormControl,
@@ -30,7 +29,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { CreditCard, Truck, Store, Building, Loader2 } from 'lucide-react';
+import { Truck, Store, Building, Loader2 } from 'lucide-react';
 import EmailNotice from '@/components/EmailNotice';
 
 interface CheckoutFormProps {
@@ -57,8 +56,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationLoading, setConfirmationLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentMethodReady, setPaymentMethodReady] = useState(false);
-  const [paymentMethodNonce, setPaymentMethodNonce] = useState<string | null>(null);
   const [existingCustomer, setExistingCustomer] = useState<{ id: string; name: string } | null>(null);
   const navigate = useNavigate();
   
@@ -130,46 +127,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         }
       );
       
-      if (values.paymentMethod === 'credit_card') {
-        if (!paymentMethodNonce && !paymentMethodReady) {
-          toast.error('Plačilni sistem ni pripravljen. Poskusite znova kasneje.');
-          setSubmitting(false);
-          return;
-        }
-        
-        if (!paymentMethodNonce && paymentMethodReady) {
-          const braintreeForm = document.getElementById('braintree-form');
-          if (braintreeForm) {
-            braintreeForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-            setSubmitting(false);
-            return;
-          } else {
-            toast.error('Plačilni sistem ni pripravljen. Poskusite znova kasneje.');
-            setSubmitting(false);
-            return;
-          }
-        }
-      }
-      
       setShowConfirmation(true);
     } catch (error) {
       toast.error('Napaka pri obdelavi naročila');
       console.error(error);
     } finally {
       setSubmitting(false);
-    }
-  };
-  
-  const handlePaymentMethodReady = (isReady: boolean) => {
-    setPaymentMethodReady(isReady);
-  };
-  
-  const handlePaymentMethodReceived = (nonce: string) => {
-    setPaymentMethodNonce(nonce);
-    
-    if (nonce) {
-      toast.success('Podatki o plačilu so bili uspešno preverjeni');
-      form.handleSubmit(handleSubmit)();
     }
   };
   
@@ -225,28 +188,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       });
       
       console.log('New order created:', newOrder);
-      
-      if (formValues.paymentMethod === 'credit_card' && paymentMethodNonce) {
-        console.log('Processing payment with Braintree...');
-        
-        const paymentResult = await processBraintreePayment(
-          paymentMethodNonce, 
-          total.withVat,
-          newOrder.id
-        );
-        
-        if (!paymentResult.success) {
-          throw new Error(paymentResult.error || 'Payment processing failed');
-        }
-        
-        console.log('Payment processed successfully:', paymentResult);
-        
-        await updateOrder(newOrder.id, {
-          transactionId: paymentResult.transactionId
-        });
-        
-        newOrder.transactionId = paymentResult.transactionId;
-      }
       
       try {
         await sendOrderEmail('new', newOrder, formValues.email);
@@ -474,12 +415,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
             <Button 
               type="submit" 
               className="w-full"
-              disabled={submitting || (paymentMethod === 'credit_card' && !paymentMethodReady)}
+              disabled={submitting}
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {paymentMethod === 'credit_card' && !paymentMethodReady 
-                ? 'Inicializacija plačilnega sistema...' 
-                : 'Oddaj naročilo'}
+              Oddaj naročilo
             </Button>
           </div>
         </form>
