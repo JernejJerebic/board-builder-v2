@@ -67,6 +67,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             transform: `perspective(800px) rotateX(30deg)`,
           }}
         >
+          {/* Background layer with rotation */}
           <div 
             className="absolute inset-0"
             style={{
@@ -81,19 +82,29 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             }}
           />
           
-          {borders.top && (
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700"></div>
-          )}
-          {borders.right && (
-            <div className="absolute top-0 right-0 bottom-0 w-1 bg-gray-700"></div>
-          )}
-          {borders.bottom && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700"></div>
-          )}
-          {borders.left && (
-            <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
-          )}
+          {/* Borders container - rotates together with the background */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              transform: rotated ? 'rotate(90deg)' : 'none',
+              transformOrigin: 'center',
+            }}
+          >
+            {borders.top && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700"></div>
+            )}
+            {borders.right && (
+              <div className="absolute top-0 right-0 bottom-0 w-1 bg-gray-700"></div>
+            )}
+            {borders.bottom && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700"></div>
+            )}
+            {borders.left && (
+              <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
+            )}
+          </div>
 
+          {/* Drilling holes - should not rotate with the board */}
           {drilling && (
             <>
               <div
