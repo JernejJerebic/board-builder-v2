@@ -104,9 +104,9 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             )}
           </div>
 
-          {/* Drilling holes - should not rotate with the board */}
+          {/* Drilling holes - remain in fixed position regardless of board rotation */}
           {drilling && (
-            <>
+            <div className="absolute inset-0">
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
@@ -123,7 +123,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                   zIndex: 10
                 }}
               ></div>
-            </>
+            </div>
           )}
 
           <div
