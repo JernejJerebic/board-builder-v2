@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Color } from '@/types';
 import { cn } from '@/lib/utils';
@@ -32,15 +31,17 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     if (length && width) {
       setRotated(length < width);
       
-      // Calculate ratio to fit in the visualization area
       const maxDimension = Math.max(length, width);
       const newRatio = 300 / maxDimension;
       setRatio(newRatio);
     }
   }, [length, width]);
 
-  const visualWidth = width * ratio;
-  const visualLength = length * ratio;
+  const visualWidth = rotated ? length * ratio : width * ratio;
+  const visualLength = rotated ? width * ratio : length * ratio;
+
+  const realWidth = width * ratio;
+  const realLength = length * ratio;
 
   if (!color) {
     return (
@@ -50,10 +51,9 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     );
   }
 
-  // Calculate the position of holes (100mm from adjacent sides)
-  const holeSize = 3; // Size of hole in pixels
-  const holeDistanceFromEdge = 100 * ratio; // 100mm from the edge, scaled by ratio
-  
+  const holeSize = 3;
+  const holeDistanceFromEdge = 100 * ratio;
+
   return (
     <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 relative overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center">
@@ -68,21 +68,22 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             position: 'relative',
             transformStyle: 'preserve-3d',
             transform: `perspective(800px) rotateX(30deg)`,
-            // Removed box shadow
           }}
         >
-          {/* Board background - using image if available, otherwise color */}
           <div 
             className="absolute inset-0"
             style={{
               backgroundColor: color.imageUrl ? 'transparent' : (color.htmlColor || '#d2b48c'),
               backgroundImage: color.imageUrl ? `url(${color.imageUrl})` : 'none',
               backgroundSize: 'cover',
-              backgroundPosition: 'center'
+              backgroundPosition: 'center',
+              transform: rotated ? 'rotate(90deg)' : 'none',
+              transformOrigin: 'center',
+              width: rotated ? '100%' : '100%',
+              height: rotated ? '100%' : '100%',
             }}
           />
           
-          {/* Board borders */}
           {borders.top && (
             <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700"></div>
           )}
@@ -96,52 +97,47 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
           )}
 
-          {/* Drilling holes - 100mm from adjacent sides, always on top */}
           {drilling && (
             <>
-              {/* Left hole - 100mm from left edge */}
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
                   left: `${holeDistanceFromEdge - holeSize/2}px`,
                   top: '20px',
-                  zIndex: 10 // Ensure holes are always on top
+                  zIndex: 10
                 }}
               ></div>
-              {/* Right hole - 100mm from right edge */}
               <div
                 className="absolute w-3 h-3 rounded-full bg-black"
                 style={{
                   right: `${holeDistanceFromEdge - holeSize/2}px`,
                   top: '20px',
-                  zIndex: 10 // Ensure holes are always on top
+                  zIndex: 10
                 }}
               ></div>
             </>
           )}
 
-          {/* Thickness visualization (front edge) - increased thickness */}
           <div
             style={{
               position: 'absolute',
-              bottom: `-${thickness * ratio * 1.2}px`, // Increased thickness by 20%
+              bottom: `-${thickness * ratio * 1.2}px`,
               left: 0,
               right: 0,
-              height: `${thickness * ratio * 1.2}px`, // Increased thickness by 20%
+              height: `${thickness * ratio * 1.2}px`,
               backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -20) : '#b69b7d',
               transform: 'rotateX(-90deg)',
               transformOrigin: 'top',
             }}
           ></div>
 
-          {/* Thickness visualization (side edge) - increased thickness */}
           <div
             style={{
               position: 'absolute',
-              right: `-${thickness * ratio * 1.2}px`, // Increased thickness by 20%
+              right: `-${thickness * ratio * 1.2}px`,
               top: 0,
               bottom: 0,
-              width: `${thickness * ratio * 1.2}px`, // Increased thickness by 20%
+              width: `${thickness * ratio * 1.2}px`,
               backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -40) : '#8c7a63',
               transform: 'rotateY(90deg)',
               transformOrigin: 'left',
@@ -150,7 +146,6 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
         </div>
       </div>
 
-      {/* Dimension labels */}
       <div className="absolute bottom-2 left-0 right-0 text-center text-sm text-gray-600">
         {length} x {width} x {thickness} mm
       </div>
@@ -158,7 +153,6 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   );
 };
 
-// Helper to darken/lighten colors for the 3D effect
 function adjustColorBrightness(color: string, percent: number) {
   const num = parseInt(color.replace('#', ''), 16);
   const r = (num >> 16) + percent;

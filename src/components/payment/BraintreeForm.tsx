@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { initBraintreeHostedFields, getPaymentMethodNonce, teardownBraintree } from '@/services/braintree';
 import { Loader2 } from 'lucide-react';
@@ -43,13 +42,15 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
       }
     };
 
-    initBraintree();
+    // Disabling Braintree initialization - credit card payments are disabled
+    // initBraintree();
+    
+    // Inform parent component that payment method is not ready
+    onPaymentMethodReady(false);
 
-    // Clean up on unmount
+    // Return a no-op cleanup function
     return () => {
-      teardownBraintree().catch(err => {
-        console.error('Error tearing down Braintree:', err);
-      });
+      // No Braintree teardown needed since it's not initialized
     };
   }, [onPaymentMethodReady, retryCount]);
 
@@ -60,22 +61,9 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
-    if (!isInitialized) {
-      setError('Payment system not initialized');
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      const paymentMethodNonce = await getPaymentMethodNonce();
-      onPaymentMethodReceived(paymentMethodNonce);
-    } catch (err) {
-      console.error('Failed to process payment:', err);
-      setError('Payment validation failed. Please check your card details and try again.');
-      toast.error('Napaka pri preverjanju plačilnih podatkov');
-    } finally {
-      setIsLoading(false);
-    }
+    // Credit card payments are disabled
+    setError('Credit card payments are currently unavailable. Please choose another payment method.');
+    toast.error('Plačila s kreditno kartico trenutno niso na voljo.');
   };
 
   return (
@@ -84,77 +72,24 @@ const BraintreeForm: React.FC<BraintreeFormProps> = ({
         <div className="p-4 border border-gray-200 rounded-md space-y-4">
           <h3 className="font-medium">Podatki o kreditni kartici</h3>
           
-          {isLoading && (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-              <span className="ml-2 text-gray-500">Inicializacija plačilnega sistema...</span>
-            </div>
-          )}
-          
-          {error && (
-            <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">
-              {error}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-2 mt-2" 
-                onClick={handleRetry}
-              >
-                Poskusi ponovno
-              </Button>
-            </div>
-          )}
-          
-          <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
-            <div className="mb-4">
-              <label htmlFor="card-number" className="block text-sm font-medium text-gray-700 mb-1">
-                Številka kartice
-              </label>
-              <div id="card-number" className="h-10 p-2 border border-gray-300 rounded-md bg-white"></div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="expiration-date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Datum veljavnosti
-                </label>
-                <div id="expiration-date" className="h-10 p-2 border border-gray-300 rounded-md bg-white"></div>
-              </div>
-              
-              <div>
-                <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">
-                  CVV
-                </label>
-                <div id="cvv" className="h-10 p-2 border border-gray-300 rounded-md bg-white"></div>
-              </div>
-            </div>
+          <div className="p-3 bg-amber-50 text-amber-700 rounded-md text-sm">
+            Plačila s kreditno kartico trenutno niso na voljo. Prosimo, izberite drug način plačila.
           </div>
           
-          <div className="text-sm text-gray-500">
-            <p>Vaši podatki o plačilu so varni in šifrirani. Nikoli ne shranjujemo podatkov o vaši kartici.</p>
-            {isInitialized && (
-              <p className="text-green-600 mt-2">Plačilni sistem je pripravljen</p>
-            )}
+          {/* Hidden fields to keep compatibility */}
+          <div style={{ display: 'none' }}>
+            <div id="card-number"></div>
+            <div id="expiration-date"></div>
+            <div id="cvv"></div>
           </div>
           
           <Button 
-            type="submit" 
+            type="button" 
             className="w-full" 
-            disabled={!isInitialized || isLoading || isSubmitting}
+            variant="outline"
+            onClick={() => onPaymentMethodReceived('disabled')}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Preverjanje podatkov
-              </>
-            ) : isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Obdelava plačila
-              </>
-            ) : (
-              'Potrdi plačilne podatke'
-            )}
+            Izberi drug način plačila
           </Button>
         </div>
       </form>

@@ -47,7 +47,7 @@ const formSchema = z.object({
   zipCode: z.string(),
   email: z.string().email('Neveljaven e-poštni naslov'),
   phone: z.string().min(6, 'Telefonska številka je obvezna'),
-  paymentMethod: z.enum(['credit_card', 'payment_on_delivery', 'pickup_at_shop', 'bank_transfer']),
+  paymentMethod: z.enum(['payment_on_delivery', 'pickup_at_shop', 'bank_transfer']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -74,7 +74,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
       zipCode: '',
       email: '',
       phone: '',
-      paymentMethod: 'credit_card',
+      paymentMethod: 'bank_transfer',
     },
   });
   
@@ -430,15 +430,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0 border border-gray-200 rounded-md p-4">
                       <FormControl>
-                        <RadioGroupItem value="credit_card" />
-                      </FormControl>
-                      <FormLabel className="font-normal flex items-center gap-2 cursor-pointer">
-                        <CreditCard size={18} />
-                        Kreditna kartica
-                      </FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0 border border-gray-200 rounded-md p-4">
-                      <FormControl>
                         <RadioGroupItem value="payment_on_delivery" />
                       </FormControl>
                       <FormLabel className="font-normal flex items-center gap-2 cursor-pointer">
@@ -470,13 +461,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
               </FormItem>
             )}
           />
-          
-          {paymentMethod === 'credit_card' && (
-            <BraintreeForm
-              onPaymentMethodReady={handlePaymentMethodReady}
-              onPaymentMethodReceived={handlePaymentMethodReceived}
-            />
-          )}
           
           <div className="flex gap-4">
             <Button
