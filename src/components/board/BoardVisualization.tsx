@@ -28,8 +28,8 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const boardRef = useRef<HTMLDivElement>(null);
   const isInitialRender = useRef(true);
 
-  // Convert real-world dimensions to visualization scale
-  const scale = 0.25; // 1mm = 0.25px
+  // Convert real-world dimensions to visualization scale - increased by 50%
+  const scale = 0.375; // 1mm = 0.375px (increased from 0.25)
   
   const scaledLength = length * scale;
   const scaledWidth = width * scale;
@@ -51,7 +51,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     // Update board dimensions
     boardRef.current.style.width = `${scaledLength}px`;
     boardRef.current.style.height = `${scaledWidth}px`;
-    boardRef.current.style.transform = `perspective(800px) rotateX(45deg) rotateZ(0deg)`;
+    boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(0deg)`;
     
     // Add thickness using box-shadow
     boardRef.current.style.boxShadow = `0 ${scaledThickness}px 0 #a0826c`;
@@ -72,7 +72,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   // Render the board visualization
   return (
     <div className="flex justify-center items-center my-8" ref={containerRef}>
-      <div className="relative" style={{ height: `${scaledWidth + scaledThickness + 40}px` }}>
+      <div className="relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
         {/* The wooden board */}
         <div
           ref={boardRef}
@@ -80,7 +80,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           style={{
             width: `${scaledLength}px`,
             height: `${scaledWidth}px`,
-            transform: 'perspective(800px) rotateX(45deg) rotateZ(0deg)',
+            transform: 'perspective(1000px) rotateX(45deg) rotateZ(0deg)',
             transformStyle: 'preserve-3d',
             boxShadow: `0 ${scaledThickness}px 0 #a0826c`,
             backgroundColor: color?.htmlColor || '#d2b48c',
@@ -107,23 +107,62 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
           
-          {/* Drilling holes */}
+          {/* Drilling holes - improved visualization */}
           {drilling && (
             <>
-              <div className="absolute rounded-full bg-gray-700" 
-                   style={{ width: '8px', height: '8px', top: '10px', left: '10px' }}></div>
-              <div className="absolute rounded-full bg-gray-700" 
-                   style={{ width: '8px', height: '8px', top: '10px', right: '10px' }}></div>
-              <div className="absolute rounded-full bg-gray-700" 
-                   style={{ width: '8px', height: '8px', bottom: '10px', left: '10px' }}></div>
-              <div className="absolute rounded-full bg-gray-700" 
-                   style={{ width: '8px', height: '8px', bottom: '10px', right: '10px' }}></div>
+              {/* Top-left hole */}
+              <div className="absolute rounded-full bg-gray-800" 
+                   style={{ 
+                     width: '10px', 
+                     height: '10px', 
+                     top: '20px', 
+                     left: '20px',
+                     boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
+                   }}>
+                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
+              </div>
+              
+              {/* Top-right hole */}
+              <div className="absolute rounded-full bg-gray-800" 
+                   style={{ 
+                     width: '10px', 
+                     height: '10px', 
+                     top: '20px', 
+                     right: '20px',
+                     boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
+                   }}>
+                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
+              </div>
+              
+              {/* Bottom-left hole */}
+              <div className="absolute rounded-full bg-gray-800" 
+                   style={{ 
+                     width: '10px', 
+                     height: '10px', 
+                     bottom: '20px', 
+                     left: '20px',
+                     boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
+                   }}>
+                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
+              </div>
+              
+              {/* Bottom-right hole */}
+              <div className="absolute rounded-full bg-gray-800" 
+                   style={{ 
+                     width: '10px', 
+                     height: '10px', 
+                     bottom: '20px', 
+                     right: '20px',
+                     boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
+                   }}>
+                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
+              </div>
             </>
           )}
         </div>
         
         {/* Dimensions labels */}
-        <div className="absolute top-full left-0 right-0 text-center text-sm text-gray-600 mt-2">
+        <div className="absolute top-full left-0 right-0 text-center text-sm text-gray-600 mt-4">
           {length} x {width} x {thickness} mm
         </div>
         

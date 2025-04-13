@@ -30,10 +30,17 @@ const Basket: React.FC = () => {
           <div key={item.basketId} className="flex flex-col md:flex-row justify-between border-b border-gray-200 pb-4">
             <div>
               <div className="flex items-center space-x-2">
-                <div 
-                  className="w-6 h-6 rounded" 
-                  style={{ backgroundColor: item.color?.htmlColor || '#d2b48c' }}
-                />
+                {item.color?.imageUrl ? (
+                  <div 
+                    className="w-6 h-6 rounded bg-cover bg-center border border-gray-300" 
+                    style={{ backgroundImage: `url(${item.color.imageUrl})` }}
+                  />
+                ) : (
+                  <div 
+                    className="w-6 h-6 rounded border border-gray-300" 
+                    style={{ backgroundColor: item.color?.htmlColor || '#d2b48c' }}
+                  />
+                )}
                 <h3 className="font-medium">{item.color?.title}</h3>
               </div>
               <p className="text-sm text-gray-600 mt-1">
