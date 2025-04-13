@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '@/context/BasketContext';
-import BoardVisualization from '@/components/board/BoardVisualization';
 import BoardConfigurator from '@/components/board/BoardConfigurator';
 import Basket from '@/components/basket/Basket';
 import { Color } from '@/types';
@@ -50,21 +49,8 @@ const Index = () => {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <BoardVisualization 
-            color={boardConfig.color} 
-            length={boardConfig.length} 
-            width={boardConfig.width} 
-            thickness={boardConfig.thickness} 
-            borders={boardConfig.borders} 
-            drilling={boardConfig.drilling} 
-          />
-        </div>
-        
-        <div>
-          <BoardConfigurator onConfigChange={setBoardConfig} />
-        </div>
+      <div>
+        <BoardConfigurator onConfigChange={setBoardConfig} />
       </div>
       
       <Basket />

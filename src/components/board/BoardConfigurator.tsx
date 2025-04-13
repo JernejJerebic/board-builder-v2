@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import ColorSelector from './ColorSelector';
 import { useBasket } from '@/context/BasketContext';
+
 interface BoardConfiguratorProps {
   onConfigChange: (config: {
     color: Color | null;
@@ -16,11 +18,12 @@ interface BoardConfiguratorProps {
       top: boolean;
       right: boolean;
       bottom: boolean;
-      left: boolean;
+      left: false;
     };
     drilling: boolean;
   }) => void;
 }
+
 const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   onConfigChange
 }) => {
@@ -87,8 +90,10 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       drilling
     });
   }, [color, length, width, thickness, borders, drilling, onConfigChange]);
+
   const handleAddToBasket = () => {
     if (!color) return;
+    
     const product: Omit<Product, 'id'> = {
       colorId: color.id,
       length,
@@ -101,15 +106,19 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       pricePerUnit,
       totalPrice
     };
+    
     addItem(product);
   };
+
   const handleBorderChange = (side: keyof typeof borders, checked: boolean) => {
     setBorders(prev => ({
       ...prev,
       [side]: checked
     }));
   };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div>
         <h3 className="font-medium mb-2 text-xl">1. Izbira materiala</h3>
         <ColorSelector selectedColor={color} onSelectColor={setColor} />
@@ -182,11 +191,28 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
             <Input id="totalPrice" type="text" value={`€${totalPrice.toFixed(2)}`} disabled />
           </div>
         </div>
+        
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span className="font-semibold">Dimenzije:</span> {length} x {width} x {thickness} mm
+          </div>
+          {color && (
+            <div className="flex items-center gap-2 text-sm text-gray-700 mt-1">
+              <span className="font-semibold">Material:</span> {color.title}
+              <div 
+                className="w-4 h-4 rounded-full border border-gray-300" 
+                style={{ backgroundColor: color.htmlColor || 'transparent' }}
+              ></div>
+            </div>
+          )}
+        </div>
       </div>
       
       <Button className="w-full py-6 text-lg" disabled={!color || quantity < 1} onClick={handleAddToBasket}>
         Dodaj v košarico
       </Button>
-    </div>;
+    </div>
+  );
 };
+
 export default BoardConfigurator;

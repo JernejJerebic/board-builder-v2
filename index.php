@@ -40,16 +40,7 @@ include_once 'includes/header.php';
     </div>
   </div>
   
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <div class="card">
-      <div class="card-header">
-        <h2 class="text-xl font-semibold">Vizualizacija</h2>
-      </div>
-      <div id="boardVisualization" class="board-container">
-        <!-- Board visualization will be loaded here via JavaScript -->
-      </div>
-    </div>
-    
+  <div>
     <div class="card">
       <div class="card-header">
         <h2 class="text-xl font-semibold">Konfigurator</h2>
@@ -74,7 +65,6 @@ include_once 'includes/header.php';
   </div>
 </div>
 
-<script src="/assets/js/board.js"></script>
 <script src="/assets/js/configurator.js"></script>
 <script src="/assets/js/basket.js"></script>
 
