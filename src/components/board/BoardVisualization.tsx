@@ -29,11 +29,16 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const isInitialRender = useRef(true);
 
   // Convert real-world dimensions to visualization scale - increased by 50%
-  const scale = 0.375; // 1mm = 0.375px (increased from 0.25)
+  const scale = 0.375; // 1mm = 0.375px
   
   const scaledLength = length * scale;
   const scaledWidth = width * scale;
   const scaledThickness = thickness * scale;
+
+  // Calculate hole positioning - more inset on X axis
+  const holeInsetX = Math.min(scaledLength * 0.15, 40); // 15% of length or max 40px
+  const holeInsetY = Math.min(scaledWidth * 0.1, 30); // 10% of width or max 30px
+  const holeSize = 10;
 
   // Update board visualization whenever props change
   useEffect(() => {
@@ -58,18 +63,13 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     
     // Update board color
     if (color) {
-      if (color.imageUrl) {
-        boardRef.current.style.backgroundImage = `url(${color.imageUrl})`;
-        boardRef.current.style.backgroundSize = 'cover';
-      } else {
-        boardRef.current.style.backgroundColor = color.htmlColor || '#d2b48c';
-      }
+      boardRef.current.style.backgroundColor = color.htmlColor || '#d2b48c';
+      boardRef.current.style.backgroundImage = 'none'; // Clear any previous image
     } else {
       boardRef.current.style.backgroundColor = '#d2b48c'; // Default wood color
     }
   };
 
-  // Render the board visualization
   return (
     <div className="flex justify-center items-center my-8" ref={containerRef}>
       <div className="relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
@@ -84,75 +84,65 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             transformStyle: 'preserve-3d',
             boxShadow: `0 ${scaledThickness}px 0 #a0826c`,
             backgroundColor: color?.htmlColor || '#d2b48c',
-            backgroundImage: color?.imageUrl ? `url(${color.imageUrl})` : 'none',
-            backgroundSize: 'cover',
+            backgroundImage: 'none',
             border: '1px solid rgba(0,0,0,0.2)'
           }}
         >
+          {/* Wood texture or color image as absolute overlay */}
+          {color?.imageUrl && (
+            <div 
+              className="absolute inset-0 z-0" 
+              style={{ 
+                backgroundImage: `url(${color.imageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+          )}
+          
           {/* Borders */}
           {borders.top && (
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400" 
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(-1px)' }}></div>
           )}
           {borders.right && (
-            <div className="absolute top-0 bottom-0 right-0 w-2 bg-gray-300 border border-gray-400" 
+            <div className="absolute top-0 bottom-0 right-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(1px)' }}></div>
           )}
           {borders.bottom && (
-            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400" 
+            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(1px)' }}></div>
           )}
           {borders.left && (
-            <div className="absolute top-0 bottom-0 left-0 w-2 bg-gray-300 border border-gray-400" 
+            <div className="absolute top-0 bottom-0 left-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
           
-          {/* Drilling holes - improved visualization */}
+          {/* Drilling holes - only two holes, more inset on X axis */}
           {drilling && (
             <>
-              {/* Top-left hole */}
-              <div className="absolute rounded-full bg-gray-800" 
+              {/* Top hole */}
+              <div className="absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
-                     width: '10px', 
-                     height: '10px', 
-                     top: '20px', 
-                     left: '20px',
+                     width: `${holeSize}px`, 
+                     height: `${holeSize}px`, 
+                     top: `${holeInsetY}px`, 
+                     left: '50%',
+                     transform: 'translateX(-50%)',
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
               </div>
               
-              {/* Top-right hole */}
-              <div className="absolute rounded-full bg-gray-800" 
+              {/* Bottom hole */}
+              <div className="absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
-                     width: '10px', 
-                     height: '10px', 
-                     top: '20px', 
-                     right: '20px',
-                     boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
-                   }}>
-                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
-              </div>
-              
-              {/* Bottom-left hole */}
-              <div className="absolute rounded-full bg-gray-800" 
-                   style={{ 
-                     width: '10px', 
-                     height: '10px', 
-                     bottom: '20px', 
-                     left: '20px',
-                     boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
-                   }}>
-                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
-              </div>
-              
-              {/* Bottom-right hole */}
-              <div className="absolute rounded-full bg-gray-800" 
-                   style={{ 
-                     width: '10px', 
-                     height: '10px', 
-                     bottom: '20px', 
-                     right: '20px',
+                     width: `${holeSize}px`, 
+                     height: `${holeSize}px`, 
+                     bottom: `${holeInsetY}px`, 
+                     left: '50%',
+                     transform: 'translateX(-50%)',
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
