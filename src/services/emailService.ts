@@ -1,3 +1,4 @@
+
 import { Order, Product, Customer } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -337,6 +338,7 @@ export const sendOrderEmail = async (
   const timestamp = new Date().toISOString();
   const requestId = `order_email_${Date.now()}`;
   
+  // Use only standard console methods directly without dynamic access
   console.log(`[${requestId}] START: Sending ${type} order email for order ${order.id}`);
   console.log(`[${requestId}] RECIPIENTS: Customer: ${customerEmail}, Admin: info@lcc.si`);
   
@@ -415,7 +417,7 @@ export const sendOrderEmail = async (
       true // Always send as HTML
     );
     
-    // Log detailed results
+    // Log detailed results - use direct console methods instead of dynamic access
     if (customerResult.success) {
       console.log(`[${requestId}] CUSTOMER SUCCESS: Email sent to ${customerEmail}, EmailID: ${customerResult.logId || 'N/A'}`);
     } else {
