@@ -40,6 +40,9 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const holeInsetY = Math.max(scaledWidth * 0.05, 10); // 5% from top
   const holeSize = 10;
 
+  // Determine if board needs to be rotated (width > length)
+  const shouldRotateTexture = width > length;
+
   // Update board visualization whenever props change
   useEffect(() => {
     if (isInitialRender.current) {
@@ -91,12 +94,14 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           {/* Wood texture or color image as absolute overlay */}
           {color?.imageUrl && (
             <div 
-              className="absolute inset-0 z-0" 
+              className="absolute inset-0 z-0 overflow-hidden" 
               style={{ 
                 backgroundImage: `url(${color.imageUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
+                backgroundRepeat: 'no-repeat',
+                transform: shouldRotateTexture ? 'rotate(90deg)' : 'none',
+                transformOrigin: 'center center'
               }}
             />
           )}

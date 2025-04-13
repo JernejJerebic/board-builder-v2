@@ -1,4 +1,3 @@
-
 import { Order, Product } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -49,8 +48,8 @@ const sendEmail = async (
       message: body,
       from_name: 'LCC Naročilo razreza',
       reply_to: 'info@lcc.si',
-      html_content: isHtml, // Add a flag to indicate HTML content
-      hideFooter: true // Add parameter to hide EmailJS footer
+      html_content: isHtml,
+      hideFooter: true
     };
     
     // Send email
@@ -184,6 +183,28 @@ const createProductsTable = (products: Product[]): string => {
 };
 
 /**
+ * Creates an HTML section with customer information
+ */
+const createCustomerInfoSection = (order: Order): string => {
+  return `
+    <h3 style="margin-top: 20px; margin-bottom: 10px;">Podatki o stranki</h3>
+    <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+      <p style="margin: 5px 0;"><strong>Ime in priimek:</strong> ${order.customer.firstName} ${order.customer.lastName}</p>
+      <p style="margin: 5px 0;"><strong>Email:</strong> ${order.customer.email}</p>
+      <p style="margin: 5px 0;"><strong>Telefon:</strong> ${order.customer.phone || 'Ni podan'}</p>
+      ${order.customer.address ? `
+        <p style="margin: 5px 0;"><strong>Naslov:</strong> ${order.customer.address}</p>
+        <p style="margin: 5px 0;"><strong>Mesto:</strong> ${order.customer.city}, ${order.customer.postalCode}</p>
+      ` : ''}
+      ${order.customer.companyName ? `
+        <p style="margin: 5px 0;"><strong>Podjetje:</strong> ${order.customer.companyName}</p>
+        ${order.customer.vatNumber ? `<p style="margin: 5px 0;"><strong>ID za DDV:</strong> ${order.customer.vatNumber}</p>` : ''}
+      ` : ''}
+    </div>
+  `;
+};
+
+/**
  * Creates an email with appropriate content based on order status
  */
 const createEmailContent = (
@@ -209,6 +230,9 @@ const createEmailContent = (
     return method === 'pickup' ? 'Prevzem v trgovini' : 'Dostava';
   };
   
+  // Customer information section - always include in all email types
+  const customerInfoSection = createCustomerInfoSection(order);
+  
   // Products table
   const productsTable = createProductsTable(order.products);
   
@@ -228,6 +252,8 @@ const createEmailContent = (
         <p style="margin: 5px 0;"><strong>Način dostave:</strong> ${getShippingMethodText(order.shippingMethod)}</p>
         <p style="margin: 5px 0;"><strong>Status:</strong> {STATUS}</p>
       </div>
+      
+      ${customerInfoSection}
       
       <h3 style="margin-top: 20px; margin-bottom: 10px;">Naročeni izdelki</h3>
       ${productsTable}
