@@ -31,18 +31,11 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   // Convert real-world dimensions to visualization scale - increased by 50%
   const scale = 0.375; // 1mm = 0.375px
   
-  // Determine if board should be rotated (length < width)
-  const shouldRotate = length < width;
-  
-  // Use correct dimensions depending on rotation
-  const displayLength = shouldRotate ? width : length;
-  const displayWidth = shouldRotate ? length : width;
-  
-  const scaledLength = displayLength * scale;
-  const scaledWidth = displayWidth * scale;
+  const scaledLength = length * scale;
+  const scaledWidth = width * scale;
   const scaledThickness = thickness * scale;
 
-  // Calculate hole positioning - same ratio (20% from sides, 5% from top)
+  // Calculate hole positioning
   const holeInsetX = Math.max(scaledLength * 0.2, 20); // 20% from left/right sides
   const holeInsetY = Math.max(scaledWidth * 0.05, 10); // 5% from top
   const holeSize = 10;
@@ -54,7 +47,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     }
     
     updateBoardVisualization();
-  }, [color, length, width, thickness, borders, drilling, shouldRotate]);
+  }, [color, length, width, thickness, borders, drilling]);
 
   // Function to update the board visualization
   const updateBoardVisualization = () => {
@@ -76,14 +69,6 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
       boardRef.current.style.backgroundColor = '#d2b48c'; // Default wood color
     }
   };
-
-  // Transform borders if rotated
-  const rotatedBorders = shouldRotate ? {
-    top: borders.left,
-    right: borders.top,
-    bottom: borders.right,
-    left: borders.bottom
-  } : borders;
 
   return (
     <div className="flex justify-center items-center my-8" ref={containerRef}>
@@ -111,27 +96,25 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                 backgroundImage: `url(${color.imageUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                transform: shouldRotate ? 'rotate(90deg)' : 'none',
-                transformOrigin: 'center'
+                backgroundRepeat: 'no-repeat'
               }}
             />
           )}
           
           {/* Borders */}
-          {rotatedBorders.top && (
+          {borders.top && (
             <div className="absolute top-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(-1px)' }}></div>
           )}
-          {rotatedBorders.right && (
+          {borders.right && (
             <div className="absolute top-0 bottom-0 right-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(1px)' }}></div>
           )}
-          {rotatedBorders.bottom && (
+          {borders.bottom && (
             <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(1px)' }}></div>
           )}
-          {rotatedBorders.left && (
+          {borders.left && (
             <div className="absolute top-0 bottom-0 left-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
@@ -169,7 +152,6 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
         {/* Dimensions labels */}
         <div className="absolute top-full left-0 right-0 text-center text-sm text-gray-600 mt-4">
           {length} x {width} x {thickness} mm
-          {shouldRotate && <span className="ml-2 text-xs">(rotated)</span>}
         </div>
         
         {/* Side surfaces to create 3D effect */}
