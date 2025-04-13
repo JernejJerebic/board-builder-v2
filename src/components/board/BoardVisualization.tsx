@@ -35,9 +35,9 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const scaledWidth = width * scale;
   const scaledThickness = thickness * scale;
 
-  // Calculate hole positioning - more inset on X axis
-  const holeInsetX = Math.min(scaledLength * 0.15, 40); // 15% of length or max 40px
-  const holeInsetY = Math.min(scaledWidth * 0.1, 30); // 10% of width or max 30px
+  // Calculate hole positioning
+  const holeInsetX = Math.max(scaledLength * 0.2, 20); // 20% from left/right sides
+  const holeInsetY = Math.max(scaledWidth * 0.05, 10); // 5% from top
   const holeSize = 10;
 
   // Update board visualization whenever props change
@@ -119,30 +119,28 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
           
-          {/* Drilling holes - only two holes, more inset on X axis */}
+          {/* Drilling holes - positioned along the top side */}
           {drilling && (
             <>
-              {/* Top hole */}
+              {/* Left top hole */}
               <div className="absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
                      width: `${holeSize}px`, 
                      height: `${holeSize}px`, 
                      top: `${holeInsetY}px`, 
-                     left: '50%',
-                     transform: 'translateX(-50%)',
+                     left: `${holeInsetX}px`,
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
               </div>
               
-              {/* Bottom hole */}
+              {/* Right top hole */}
               <div className="absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
                      width: `${holeSize}px`, 
                      height: `${holeSize}px`, 
-                     bottom: `${holeInsetY}px`, 
-                     left: '50%',
-                     transform: 'translateX(-50%)',
+                     top: `${holeInsetY}px`, 
+                     right: `${holeInsetX}px`,
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
