@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '@/context/BasketContext';
 import BoardConfigurator from '@/components/board/BoardConfigurator';
+import BoardVisualization from '@/components/board/BoardVisualization';
 import Basket from '@/components/basket/Basket';
 import { Color } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -49,8 +50,21 @@ const Index = () => {
         </p>
       </div>
       
-      <div>
-        <BoardConfigurator onConfigChange={setBoardConfig} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <BoardConfigurator onConfigChange={setBoardConfig} />
+        </div>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <h3 className="font-medium mb-4 text-xl">Vizualizacija plošče</h3>
+          <BoardVisualization
+            color={boardConfig.color}
+            length={boardConfig.length}
+            width={boardConfig.width}
+            thickness={boardConfig.thickness}
+            borders={boardConfig.borders}
+            drilling={boardConfig.drilling}
+          />
+        </div>
       </div>
       
       <Basket />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
