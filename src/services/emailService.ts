@@ -1,5 +1,4 @@
-
-import { Order, Product } from '@/types';
+import { Order, Product, Customer } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
 import emailjs from 'emailjs-com';
@@ -49,8 +48,8 @@ const sendEmail = async (
       message: body,
       from_name: 'LCC Naročilo razreza',
       reply_to: 'info@lcc.si',
-      html_content: isHtml, // Add a flag to indicate HTML content
-      hideFooter: true // Add parameter to hide EmailJS footer
+      html_content: isHtml,
+      hideFooter: true
     };
     
     // Send email
@@ -184,14 +183,38 @@ const createProductsTable = (products: Product[]): string => {
 };
 
 /**
+ * Creates a customer information section for emails
+ */
+const createCustomerInfoSection = (customer: Customer): string => {
+  const companyInfo = customer.companyName ? 
+    `<p style="margin: 5px 0;"><strong>Podjetje:</strong> ${customer.companyName}</p>` : '';
+  
+  const vatInfo = customer.vatId ? 
+    `<p style="margin: 5px 0;"><strong>ID za DDV:</strong> ${customer.vatId}</p>` : '';
+  
+  return `
+    <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
+      <h3 style="margin-top: 0; color: #1D6EC1;">Podatki o stranki</h3>
+      <p style="margin: 5px 0;"><strong>Ime in priimek:</strong> ${customer.firstName} ${customer.lastName}</p>
+      <p style="margin: 5px 0;"><strong>Email:</strong> ${customer.email || 'Ni podan'}</p>
+      <p style="margin: 5px 0;"><strong>Telefon:</strong> ${customer.phone || 'Ni podan'}</p>
+      ${companyInfo}
+      ${vatInfo}
+      <p style="margin: 5px 0;"><strong>Naslov:</strong> ${customer.street}, ${customer.zipCode} ${customer.city}</p>
+    </div>
+  `;
+};
+
+/**
  * Creates an email with appropriate content based on order status
  */
 const createEmailContent = (
   type: 'new' | 'progress' | 'completed',
   order: Order,
+  customer: Customer,
   isAdmin = false
 ): { subject: string; body: string } => {
-  const recipient = isAdmin ? 'Administrator' : 'Stranka';
+  const recipient = isAdmin ? 'Administrator' : customer.firstName;
   
   // Payment method text
   const getPaymentMethodText = (method: string): string => {
@@ -212,6 +235,9 @@ const createEmailContent = (
   // Products table
   const productsTable = createProductsTable(order.products);
   
+  // Customer info section
+  const customerInfoSection = createCustomerInfoSection(customer);
+  
   // Base HTML structure for all emails
   const baseHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
@@ -221,6 +247,9 @@ const createEmailContent = (
       <h2 style="color: #1D6EC1;">{TITLE}</h2>
       <p>Spoštovani ${recipient},</p>
       <p>{MESSAGE}</p>
+      
+      ${customerInfoSection}
+      
       <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 15px 0;">
         <p style="margin: 5px 0;"><strong>Številka naročila:</strong> #${order.id}</p>
         <p style="margin: 5px 0;"><strong>Datum naročila:</strong> ${new Date(order.orderDate).toLocaleDateString('sl-SI')}</p>
@@ -281,6 +310,23 @@ const createEmailContent = (
 };
 
 /**
+ * Fetch customer data from API
+ */
+const fetchCustomerData = async (customerId: string): Promise<Customer | null> => {
+  try {
+    const response = await fetch(`/api/customers/customer.php?id=${customerId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch customer: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.success ? data.customer : null;
+  } catch (error) {
+    console.error('Error fetching customer data:', error);
+    return null;
+  }
+};
+
+/**
  * Main function to send order-related emails to both customer and admin
  */
 export const sendOrderEmail = async (
@@ -310,6 +356,35 @@ export const sendOrderEmail = async (
   );
   
   try {
+    // Get customer data
+    let customer: Customer | null = await fetchCustomerData(order.customerId);
+    
+    // If customer data can't be fetched, create a minimal customer object
+    if (!customer) {
+      console.warn(`[${requestId}] WARNING: Could not fetch customer data, using minimal customer object`);
+      
+      // Create minimal customer object from available information
+      customer = {
+        id: order.customerId,
+        firstName: 'Cenjeni',
+        lastName: 'Kupec',
+        email: customerEmail,
+        street: '',
+        city: '',
+        zipCode: '',
+        totalPurchases: 0
+      };
+      
+      addLog(
+        'warning',
+        `Ni bilo mogoče pridobiti podatkov o stranki za naročilo #${order.id}`,
+        { 
+          requestId,
+          customerId: order.customerId
+        }
+      );
+    }
+    
     // Check if EmailJS is configured
     if (!EMAILJS_USER_ID || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
       throw new Error('EmailJS is not properly configured');
@@ -317,7 +392,7 @@ export const sendOrderEmail = async (
     
     // Create and send customer email
     console.log(`[${requestId}] CUSTOMER: Creating email content for ${customerEmail}`);
-    const customerEmailContent = createEmailContent(type, order, false);
+    const customerEmailContent = createEmailContent(type, order, customer, false);
     
     console.log(`[${requestId}] CUSTOMER: Sending email to ${customerEmail}`);
     const customerResult = await sendEmail(
@@ -330,7 +405,7 @@ export const sendOrderEmail = async (
     // Create and send admin email
     const adminEmail = 'info@lcc.si';
     console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
-    const adminEmailContent = createEmailContent(type, order, true);
+    const adminEmailContent = createEmailContent(type, order, customer, true);
     
     console.log(`[${requestId}] ADMIN: Sending email to ${adminEmail}`);
     const adminResult = await sendEmail(

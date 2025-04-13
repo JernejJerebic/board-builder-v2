@@ -1,4 +1,3 @@
-
 <?php
 // PHPMailer classes
 use PHPMailer\PHPMailer\PHPMailer;
@@ -215,6 +214,46 @@ function textToHtml($plainText) {
 }
 
 /**
+ * Create HTML for customer information section
+ * 
+ * @param array $customer Customer information
+ * @return string HTML formatted customer information
+ */
+function createCustomerInfoHtml($customer) {
+    $companyInfo = !empty($customer['companyName']) ? 
+        "<tr><th>Podjetje:</th><td>" . htmlspecialchars($customer['companyName']) . "</td></tr>" : '';
+    
+    $vatInfo = !empty($customer['vatId']) ? 
+        "<tr><th>ID za DDV:</th><td>" . htmlspecialchars($customer['vatId']) . "</td></tr>" : '';
+    
+    $phone = !empty($customer['phone']) ? htmlspecialchars($customer['phone']) : 'Ni podan';
+    
+    return '
+        <h2>Podatki o stranki</h2>
+        <table>
+            <tr>
+                <th>Ime in priimek:</th>
+                <td>' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . '</td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>' . htmlspecialchars($customer['email']) . '</td>
+            </tr>
+            <tr>
+                <th>Telefon:</th>
+                <td>' . $phone . '</td>
+            </tr>
+            ' . $companyInfo . '
+            ' . $vatInfo . '
+            <tr>
+                <th>Naslov:</th>
+                <td>' . htmlspecialchars($customer['street'] . ', ' . $customer['zipCode'] . ' ' . $customer['city']) . '</td>
+            </tr>
+        </table>
+    ';
+}
+
+/**
  * Send order confirmation email
  * 
  * @param string $orderId Order ID
@@ -231,6 +270,8 @@ function sendOrderConfirmationEmail($orderId, $customerEmail, $orderDetails, $cu
         <h1>Potrditev naročila</h1>
         <p>Spoštovani ' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . ',</p>
         <p>Zahvaljujemo se vam za vaše naročilo. V najkrajšem možnem času bomo začeli z obdelavo.</p>
+        
+        ' . createCustomerInfoHtml($customer) . '
         
         <h2>Podrobnosti naročila</h2>
         <table>
@@ -298,6 +339,8 @@ function sendOrderStatusEmail($type, $orderId, $customerEmail, $orderDetails, $c
         <p>Spoštovani ' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . ',</p>
         <p>' . $statusMessage . '</p>
         
+        ' . createCustomerInfoHtml($customer) . '
+        
         <h2>Podrobnosti naročila</h2>
         <table>
             <tr>
@@ -333,26 +376,12 @@ function sendAdminOrderNotification($orderId, $orderDetails, $customer) {
     $adminEmail = "info@lcc.si";
     $subject = "Novo naročilo";
     
-    // Create HTML content
+    // Create HTML content with complete customer information
     $content = '
         <h1>Novo naročilo</h1>
         <p>Prejeli ste novo naročilo <strong>#' . htmlspecialchars($orderId) . '</strong>.</p>
         
-        <h2>Podatki o stranki</h2>
-        <table>
-            <tr>
-                <th>Ime in priimek:</th>
-                <td>' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . '</td>
-            </tr>
-            <tr>
-                <th>Email:</th>
-                <td>' . htmlspecialchars($customer['email']) . '</td>
-            </tr>
-            <tr>
-                <th>Telefon:</th>
-                <td>' . htmlspecialchars($customer['phone']) . '</td>
-            </tr>
-        </table>
+        ' . createCustomerInfoHtml($customer) . '
         
         <h2>Podrobnosti naročila</h2>
         <table>
@@ -393,7 +422,7 @@ function getPaymentMethodName($method) {
         case 'credit_card':
             return 'Kreditna kartica';
         case 'pickup_at_shop':
-            return 'Plačilo ob prevzemu v trgovini';
+            return 'Plačilo ob prevzem v trgovini';
         case 'payment_on_delivery':
             return 'Plačilo ob dostavi';
         default:

@@ -107,12 +107,50 @@ if ($success) {
 $conn->close();
 
 /**
+ * Create customer information HTML
+ */
+function createCustomerInfoSection($customer) {
+    $companyInfo = !empty($customer['companyName']) ? 
+        "<tr><th>Podjetje:</th><td>" . htmlspecialchars($customer['companyName']) . "</td></tr>" : '';
+    
+    $vatInfo = !empty($customer['vatId']) ? 
+        "<tr><th>ID za DDV:</th><td>" . htmlspecialchars($customer['vatId']) . "</td></tr>" : '';
+    
+    $phone = !empty($customer['phone']) ? htmlspecialchars($customer['phone']) : 'Ni podan';
+    
+    return '
+        <h2>Podatki o stranki</h2>
+        <table>
+            <tr>
+                <th>Ime in priimek:</th>
+                <td>' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . '</td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>' . htmlspecialchars($customer['email']) . '</td>
+            </tr>
+            <tr>
+                <th>Telefon:</th>
+                <td>' . $phone . '</td>
+            </tr>
+            ' . $companyInfo . '
+            ' . $vatInfo . '
+            <tr>
+                <th>Naslov:</th>
+                <td>' . htmlspecialchars($customer['street'] . ', ' . $customer['zipCode'] . ' ' . $customer['city']) . '</td>
+            </tr>
+        </table>
+    ';
+}
+
+/**
  * Create HTML email content for customer order confirmation
  */
 function createCustomerOrderConfirmation($orderId, $orderDetails, $customer) {
     $paymentMethod = getPaymentMethodName($orderDetails['paymentMethod']);
     $shippingMethod = $orderDetails['shippingMethod'] === 'pickup' ? 'Prevzem v trgovini' : 'Dostava';
     $customerName = htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']);
+    $customerInfo = createCustomerInfoSection($customer);
     
     return '
     <!DOCTYPE html>
@@ -145,6 +183,8 @@ function createCustomerOrderConfirmation($orderId, $orderDetails, $customer) {
             <div class="content">
                 <p>Spoštovani ' . $customerName . ',</p>
                 <p>Zahvaljujemo se vam za vaše naročilo. V najkrajšem možnem času bomo začeli z obdelavo.</p>
+                
+                ' . $customerInfo . '
                 
                 <h2>Podrobnosti naročila</h2>
                 <table>
@@ -184,6 +224,7 @@ function createOrderStatusEmail($type, $orderId, $orderDetails, $customer) {
     $statusMessage = '';
     $title = '';
     $customerName = htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']);
+    $customerInfo = createCustomerInfoSection($customer);
     
     if ($type === 'progress') {
         $title = 'Naročilo v obdelavi';
@@ -226,6 +267,8 @@ function createOrderStatusEmail($type, $orderId, $orderDetails, $customer) {
                 <p>Spoštovani ' . $customerName . ',</p>
                 <p>' . $statusMessage . '</p>
                 
+                ' . $customerInfo . '
+                
                 <h2>Podrobnosti naročila</h2>
                 <table>
                     <tr>
@@ -257,6 +300,8 @@ function createOrderStatusEmail($type, $orderId, $orderDetails, $customer) {
  * Create HTML email content for admin notifications
  */
 function createAdminEmailContent($orderId, $orderDetails, $customer) {
+    $customerInfo = createCustomerInfoSection($customer);
+    
     return '
     <!DOCTYPE html>
     <html lang="sl">
@@ -289,21 +334,7 @@ function createAdminEmailContent($orderId, $orderDetails, $customer) {
             <div class="content">
                 <p>Prejeli ste novo naročilo <strong>#' . htmlspecialchars($orderId) . '</strong>.</p>
                 
-                <h2>Podatki o stranki</h2>
-                <table>
-                    <tr>
-                        <th>Ime in priimek:</th>
-                        <td>' . htmlspecialchars($customer['firstName'] . ' ' . $customer['lastName']) . '</td>
-                    </tr>
-                    <tr>
-                        <th>Email:</th>
-                        <td>' . htmlspecialchars($customer['email']) . '</td>
-                    </tr>
-                    <tr>
-                        <th>Telefon:</th>
-                        <td>' . htmlspecialchars($customer['phone']) . '</td>
-                    </tr>
-                </table>
+                ' . $customerInfo . '
                 
                 <h2>Podrobnosti naročila</h2>
                 <table>
