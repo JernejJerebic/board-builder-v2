@@ -1,4 +1,5 @@
-import { Order, Product } from '@/types';
+
+import { Order, Product, Customer } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
 import emailjs from 'emailjs-com';
@@ -185,20 +186,18 @@ const createProductsTable = (products: Product[]): string => {
 /**
  * Creates an HTML section with customer information
  */
-const createCustomerInfoSection = (order: Order): string => {
+const createCustomerInfoSection = (customer: Customer): string => {
   return `
     <h3 style="margin-top: 20px; margin-bottom: 10px;">Podatki o stranki</h3>
     <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-      <p style="margin: 5px 0;"><strong>Ime in priimek:</strong> ${order.customer.firstName} ${order.customer.lastName}</p>
-      <p style="margin: 5px 0;"><strong>Email:</strong> ${order.customer.email}</p>
-      <p style="margin: 5px 0;"><strong>Telefon:</strong> ${order.customer.phone || 'Ni podan'}</p>
-      ${order.customer.address ? `
-        <p style="margin: 5px 0;"><strong>Naslov:</strong> ${order.customer.address}</p>
-        <p style="margin: 5px 0;"><strong>Mesto:</strong> ${order.customer.city}, ${order.customer.postalCode}</p>
-      ` : ''}
-      ${order.customer.companyName ? `
-        <p style="margin: 5px 0;"><strong>Podjetje:</strong> ${order.customer.companyName}</p>
-        ${order.customer.vatNumber ? `<p style="margin: 5px 0;"><strong>ID za DDV:</strong> ${order.customer.vatNumber}</p>` : ''}
+      <p style="margin: 5px 0;"><strong>Ime in priimek:</strong> ${customer.firstName} ${customer.lastName}</p>
+      <p style="margin: 5px 0;"><strong>Email:</strong> ${customer.email}</p>
+      <p style="margin: 5px 0;"><strong>Telefon:</strong> ${customer.phone || 'Ni podan'}</p>
+      <p style="margin: 5px 0;"><strong>Naslov:</strong> ${customer.street}</p>
+      <p style="margin: 5px 0;"><strong>Mesto:</strong> ${customer.city}, ${customer.zipCode}</p>
+      ${customer.companyName ? `
+        <p style="margin: 5px 0;"><strong>Podjetje:</strong> ${customer.companyName}</p>
+        ${customer.vatId ? `<p style="margin: 5px 0;"><strong>ID za DDV:</strong> ${customer.vatId}</p>` : ''}
       ` : ''}
     </div>
   `;
@@ -210,6 +209,7 @@ const createCustomerInfoSection = (order: Order): string => {
 const createEmailContent = (
   type: 'new' | 'progress' | 'completed',
   order: Order,
+  customer: Customer,
   isAdmin = false
 ): { subject: string; body: string } => {
   const recipient = isAdmin ? 'Administrator' : 'Stranka';
@@ -231,7 +231,7 @@ const createEmailContent = (
   };
   
   // Customer information section - always include in all email types
-  const customerInfoSection = createCustomerInfoSection(order);
+  const customerInfoSection = createCustomerInfoSection(customer);
   
   // Products table
   const productsTable = createProductsTable(order.products);
@@ -341,9 +341,23 @@ export const sendOrderEmail = async (
       throw new Error('EmailJS is not properly configured');
     }
     
+    // Create a simple customer object based on the available information
+    // This is a temporary solution until we have a proper API to fetch the customer
+    const customer: Customer = {
+      id: order.customerId,
+      firstName: 'Valued',
+      lastName: 'Customer',
+      email: customerEmail,
+      phone: '',
+      street: '',
+      city: '',
+      zipCode: '',
+      totalPurchases: order.totalCostWithVat
+    };
+    
     // Create and send customer email
     console.log(`[${requestId}] CUSTOMER: Creating email content for ${customerEmail}`);
-    const customerEmailContent = createEmailContent(type, order, false);
+    const customerEmailContent = createEmailContent(type, order, customer, false);
     
     console.log(`[${requestId}] CUSTOMER: Sending email to ${customerEmail}`);
     const customerResult = await sendEmail(
@@ -356,7 +370,7 @@ export const sendOrderEmail = async (
     // Create and send admin email
     const adminEmail = 'info@lcc.si';
     console.log(`[${requestId}] ADMIN: Creating email content for ${adminEmail}`);
-    const adminEmailContent = createEmailContent(type, order, true);
+    const adminEmailContent = createEmailContent(type, order, customer, true);
     
     console.log(`[${requestId}] ADMIN: Sending email to ${adminEmail}`);
     const adminResult = await sendEmail(
