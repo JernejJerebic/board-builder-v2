@@ -18,7 +18,7 @@ interface BoardConfiguratorProps {
       top: boolean;
       right: boolean;
       bottom: boolean;
-      left: false;
+      left: boolean;
     };
     drilling: boolean;
   }) => void;
