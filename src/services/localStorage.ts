@@ -108,8 +108,14 @@ export const addLog = (level: 'info' | 'warning' | 'error', message: string, det
   const trimmedLogs = logs.slice(0, 1000);
   localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(trimmedLogs));
   
-  // Also log to console for debugging
-  console[level](message, details || '');
+  // Use direct console methods instead of dynamic access
+  if (level === 'info') {
+    console.log(message, details || '');
+  } else if (level === 'warning') {
+    console.warn(message, details || '');
+  } else if (level === 'error') {
+    console.error(message, details || '');
+  }
   
   return newLog;
 };

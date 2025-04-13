@@ -1,4 +1,3 @@
-
 import { Order, Product, Customer } from '@/types';
 import { addLog } from '@/services/localStorage';
 import { toast } from 'sonner';
@@ -311,18 +310,20 @@ const createEmailContent = (
 };
 
 /**
- * Fetch customer data from API
+ * Fetch customer data directly from localStorage instead of API
  */
-const fetchCustomerData = async (customerId: string): Promise<Customer | null> => {
+const fetchCustomerData = (customerId: string): Customer | null => {
   try {
-    const response = await fetch(`/api/customers/customer.php?id=${customerId}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch customer: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data.success ? data.customer : null;
+    // Get customer directly from localStorage instead of API
+    const customers = JSON.parse(localStorage.getItem('woodboard_customers') || '[]');
+    const customer = customers.find((c: Customer) => c.id === customerId);
+    return customer || null;
   } catch (error) {
     console.error('Error fetching customer data:', error);
+    addLog('error', 'Error fetching customer data', { 
+      customerId, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
     return null;
   }
 };
@@ -358,8 +359,8 @@ export const sendOrderEmail = async (
   );
   
   try {
-    // Get customer data
-    let customer: Customer | null = await fetchCustomerData(order.customerId);
+    // Get customer data from localStorage
+    let customer: Customer | null = fetchCustomerData(order.customerId);
     
     // If customer data can't be fetched, create a minimal customer object
     if (!customer) {
