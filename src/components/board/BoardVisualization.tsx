@@ -74,7 +74,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   return (
     <div className="h-[350px] w-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 relative overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center">
-        {/* 3D board container */}
+        {/* 3D board container with perspective */}
         <div
           className="transition-all duration-300 ease-out"
           style={{
@@ -85,27 +85,22 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             transform: `perspective(800px) rotateX(30deg)`,
           }}
         >
-          {/* Main board surface */}
+          {/* Main board surface - top face */}
           <div 
-            className={cn(
-              "absolute inset-0 w-full h-full",
-              shouldRotate ? "origin-center rotate-90" : ""
-            )}
             style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
               backgroundColor: color.imageUrl ? 'transparent' : (color.htmlColor || '#d2b48c'),
               backgroundImage: color.imageUrl ? `url(${color.imageUrl})` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
+              transform: shouldRotate ? 'rotate(90deg)' : 'none',
+              transformOrigin: 'center',
+              backfaceVisibility: 'hidden',
             }}
-          />
-          
-          {/* Borders container - rotates with the background */}
-          <div
-            className={cn(
-              "absolute inset-0 w-full h-full",
-              shouldRotate ? "origin-center rotate-90" : ""
-            )}
           >
+            {/* Borders on top surface */}
             {borders.top && (
               <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700"></div>
             )}
@@ -118,29 +113,27 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             {borders.left && (
               <div className="absolute top-0 left-0 bottom-0 w-1 bg-gray-700"></div>
             )}
-          </div>
 
-          {/* Drilling holes - always positioned relative to the unrotated board */}
-          {drilling && (
-            <div className="absolute inset-0">
-              <div
-                className="absolute w-3 h-3 rounded-full bg-black"
-                style={{
-                  left: holeDistanceFromEdge - holeSize/2,
-                  top: '20px',
-                  zIndex: 10
-                }}
-              ></div>
-              <div
-                className="absolute w-3 h-3 rounded-full bg-black"
-                style={{
-                  right: holeDistanceFromEdge - holeSize/2,
-                  top: '20px',
-                  zIndex: 10
-                }}
-              ></div>
-            </div>
-          )}
+            {/* Drilling holes */}
+            {drilling && (
+              <>
+                <div
+                  className="absolute w-3 h-3 rounded-full bg-black"
+                  style={{
+                    left: holeDistanceFromEdge - holeSize/2,
+                    top: '20px',
+                  }}
+                ></div>
+                <div
+                  className="absolute w-3 h-3 rounded-full bg-black"
+                  style={{
+                    right: holeDistanceFromEdge - holeSize/2,
+                    top: '20px',
+                  }}
+                ></div>
+              </>
+            )}
+          </div>
 
           {/* Bottom edge - 3D effect */}
           <div
@@ -153,6 +146,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -20) : '#b69b7d',
               transform: 'rotateX(-90deg)',
               transformOrigin: 'top',
+              backfaceVisibility: 'hidden',
             }}
           ></div>
 
@@ -167,6 +161,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               backgroundColor: color.htmlColor ? adjustColorBrightness(color.htmlColor, -40) : '#8c7a63',
               transform: 'rotateY(90deg)',
               transformOrigin: 'left',
+              backfaceVisibility: 'hidden',
             }}
           ></div>
         </div>
