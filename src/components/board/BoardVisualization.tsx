@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Color } from '@/types';
 
@@ -37,8 +36,11 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
 
   // Calculate hole positioning
   const holeInsetX = Math.max(scaledLength * 0.2, 20); // 20% from left/right sides
-  const holeInsetY = Math.max(scaledWidth * 0.05, 10); // 5% from top
+  const holeInsetY = Math.max(scaledWidth * 0.05, 10);   // 5% from top
   const holeSize = 10;
+
+  // Determine if the board is landscape oriented (length greater than width)
+  const isLandscape = length > width;
 
   // Update board visualization whenever props change
   useEffect(() => {
@@ -91,13 +93,32 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           {/* Wood texture or color image as absolute overlay */}
           {color?.imageUrl && (
             <div 
-              className="absolute inset-0 z-0" 
-              style={{ 
-                backgroundImage: `url(${color.imageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
+              className="absolute z-0 overflow-hidden"
+              style={
+                isLandscape
+                ? {
+                    // Swap dimensions when board is landscape:
+                    // width becomes scaledWidth and height becomes scaledLength.
+                    width: `${scaledWidth}px`,
+                    height: `${scaledLength}px`,
+                    top: '50%',
+                    left: '50%',
+                    // Center and rotate the image 90deg
+                    transform: 'translate(-50%, -50%) rotate(90deg)',
+                    backgroundImage: `url(${color.imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }
+                : {
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: `url(${color.imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }
+              }
             />
           )}
           
