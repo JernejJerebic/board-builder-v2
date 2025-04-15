@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Color } from '@/types';
 
@@ -17,8 +18,8 @@ interface BoardVisualizationProps {
 
 const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   color,
-  length,
-  width,
+  length: rawLength,
+  width: rawWidth,
   thickness,
   borders,
   drilling
@@ -27,12 +28,25 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const boardRef = useRef<HTMLDivElement>(null);
   const isInitialRender = useRef(true);
 
-  // Convert real-world dimensions to visualization scale - increased by 50%
+  // Apply constraints to length and width
+  const MIN_LENGTH = 200;
+  const MAX_LENGTH = 2760;
+  const MIN_WIDTH = 70;
+  const MAX_WIDTH = 1200;
+  
+  // Constrain dimensions to allowed ranges
+  const length = Math.max(MIN_LENGTH, Math.min(rawLength, MAX_LENGTH));
+  const width = Math.max(MIN_WIDTH, Math.min(rawWidth, MAX_WIDTH));
+
+  // Convert real-world dimensions to visualization scale
   const scale = 0.375; // 1mm = 0.375px
   
   const scaledLength = length * scale;
   const scaledWidth = width * scale;
   const scaledThickness = thickness * scale;
+
+  // Determine if the board needs to be rotated (length > width)
+  const shouldRotate = length > width;
 
   // Calculate hole positioning
   const holeInsetX = Math.max(scaledLength * 0.2, 20); // 20% from left/right sides
@@ -49,7 +63,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     }
     
     updateBoardVisualization();
-  }, [color, length, width, thickness, borders, drilling]);
+  }, [color, length, width, thickness, borders, drilling, shouldRotate]);
 
   // Function to update the board visualization
   const updateBoardVisualization = () => {
@@ -58,7 +72,13 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     // Update board dimensions
     boardRef.current.style.width = `${scaledLength}px`;
     boardRef.current.style.height = `${scaledWidth}px`;
-    boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(0deg)`;
+    
+    // Apply rotation if length > width
+    if (shouldRotate) {
+      boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(90deg)`;
+    } else {
+      boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(0deg)`;
+    }
     
     // Add thickness using box-shadow
     boardRef.current.style.boxShadow = `0 ${scaledThickness}px 0 #a0826c`;
@@ -82,8 +102,11 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           style={{
             width: `${scaledLength}px`,
             height: `${scaledWidth}px`,
-            transform: 'perspective(1000px) rotateX(45deg) rotateZ(0deg)',
+            transform: shouldRotate 
+              ? 'perspective(1000px) rotateX(45deg) rotateZ(90deg)'
+              : 'perspective(1000px) rotateX(45deg) rotateZ(0deg)',
             transformStyle: 'preserve-3d',
+            transformOrigin: 'center center',
             boxShadow: `0 ${scaledThickness}px 0 #a0826c`,
             backgroundColor: color?.htmlColor || '#d2b48c',
             backgroundImage: 'none',
@@ -172,7 +195,12 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
         
         {/* Dimensions labels */}
         <div className="absolute top-full left-0 right-0 text-center text-sm text-gray-600 mt-4">
-          {length} x {width} x {thickness} mm
+          {rawLength} x {rawWidth} x {thickness} mm
+          {(rawLength !== length || rawWidth !== width) && (
+            <span className="block text-amber-600">
+              (prilagojeno na {length} x {width} mm)
+            </span>
+          )}
         </div>
         
         {/* Side surfaces to create 3D effect */}
