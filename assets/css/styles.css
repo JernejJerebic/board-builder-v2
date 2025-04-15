@@ -1,3 +1,4 @@
+
 /* Import Poppins font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -401,6 +402,11 @@ a:hover {
 .board-hole-right.rotated {
   right: auto;
   left: 11.25px;
+}
+
+.board-hole-left.rotated {
+  left: auto;
+  right: 11.25px;
 }
 
 .board-container {

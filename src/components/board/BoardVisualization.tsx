@@ -38,8 +38,17 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const length = Math.max(MIN_LENGTH, Math.min(rawLength, MAX_LENGTH));
   const width = Math.max(MIN_WIDTH, Math.min(rawWidth, MAX_WIDTH));
 
-  // Convert real-world dimensions to visualization scale
-  const scale = 0.375; // 1mm = 0.375px
+  // Max height for visualization
+  const MAX_VISUALIZATION_HEIGHT = 600;
+  
+  // Calculate the scale factor based on maximum height
+  // If the board is rotated, width becomes the limiting dimension, otherwise length
+  const maxDimension = Math.max(width, length);
+  const baseScale = 0.375; // Base scale factor: 1mm = 0.375px
+  const heightLimitScale = MAX_VISUALIZATION_HEIGHT / maxDimension;
+  
+  // Use the smaller scale factor to ensure board fits within constraints
+  const scale = Math.min(baseScale, heightLimitScale);
   
   const scaledLength = length * scale;
   const scaledWidth = width * scale;
@@ -100,8 +109,11 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     left: borders.bottom
   } : borders;
 
-  // Calculate dynamic position for the right hole when rotated
-  // When the board is rotated, the right hole needs position adjustments
+  // Calculate dynamic positions for both holes when rotated
+  const leftHolePosition = shouldRotate 
+    ? { top: holeInsetX, left: holeInsetY } // When rotated, use left and top
+    : { top: holeInsetY, left: holeInsetX }; // Normal position using top and left
+
   const rightHolePosition = shouldRotate 
     ? { top: scaledWidth - holeInsetX, left: holeInsetY } // When rotated, use left and top
     : { top: holeInsetY, right: holeInsetX }; // Normal position using top and right
@@ -177,16 +189,18 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
           
-          {/* Drilling holes - positioned along the top side with adjusted positions based on rotation */}
+          {/* Drilling holes - positions adjusted based on rotation */}
           {drilling && (
             <>
-              {/* Left top hole */}
+              {/* Left top hole - position adjusted based on rotation */}
               <div className="board-hole board-hole-left absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
                      width: `${holeSize}px`, 
                      height: `${holeSize}px`, 
-                     top: `${holeInsetY}px`, 
-                     left: `${holeInsetX}px`,
+                     top: shouldRotate ? `${leftHolePosition.top}px` : `${leftHolePosition.top}px`,
+                     ...(shouldRotate 
+                        ? { left: `${leftHolePosition.left}px` } // When rotated, use calculated left position 
+                        : { left: `${leftHolePosition.left}px` }), // Otherwise use calculated left position
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>
