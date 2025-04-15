@@ -27,6 +27,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const isInitialRender = useRef(true);
+  const prevRotateState = useRef<boolean | null>(null);
 
   // Apply constraints to length and width
   const MIN_LENGTH = 200;
@@ -69,9 +70,13 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   useEffect(() => {
     if (isInitialRender.current) {
       isInitialRender.current = false;
+      prevRotateState.current = shouldRotate;
     }
     
     updateBoardVisualization();
+    
+    // Update the previous rotation state for next render
+    prevRotateState.current = shouldRotate;
   }, [color, length, width, thickness, borders, drilling, shouldRotate]);
 
   // Function to update the board visualization
@@ -82,12 +87,11 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     boardRef.current.style.width = `${scaledLength}px`;
     boardRef.current.style.height = `${scaledWidth}px`;
     
-    // Apply rotation if length > width
-    if (shouldRotate) {
-      boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(90deg)`;
-    } else {
-      boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(0deg)`;
-    }
+    // Determine the rotation direction based on previous state
+    const rotationAngle = shouldRotate ? 90 : 0;
+    
+    // Apply the appropriate transform
+    boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(${rotationAngle}deg)`;
     
     // Add thickness using box-shadow - direction changes based on rotation
     if (shouldRotate) {
@@ -129,12 +133,13 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     : { top: holeInsetY, right: holeInsetX }; // Normal position using top and right
 
   return (
-    <div className="board-visualization-container flex justify-center items-center my-8" ref={containerRef}>
+    <div className="board-visualization-container flex justify-center items-center my-8" ref={containerRef}
+         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <div className="board-wrapper relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
         {/* The wooden board */}
         <div
           ref={boardRef}
-          className={`board-main relative transition-all duration-300 ${shouldRotate ? 'board-rotated' : 'board-normal'}`}
+          className={`board-main relative ${shouldRotate ? 'board-rotated' : 'board-normal'}`}
           style={{
             width: `${scaledLength}px`,
             height: `${scaledWidth}px`,
@@ -148,7 +153,8 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               : `0 ${scaledThickness}px 0 #a0826c`, // Vertical shadow when not rotated
             backgroundColor: color?.htmlColor || '#d2b48c',
             backgroundImage: 'none',
-            border: '1px solid rgba(0,0,0,0.2)'
+            border: '1px solid rgba(0,0,0,0.2)',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease'
           }}
         >
           {/* Wood texture or color image as absolute overlay */}
@@ -211,8 +217,8 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                      height: `${holeSize}px`, 
                      top: shouldRotate ? `${leftHolePosition.top}px` : `${leftHolePosition.top}px`,
                      ...(shouldRotate 
-                        ? { left: `${leftHolePosition.left}px` } // When rotated, use calculated left position 
-                        : { left: `${leftHolePosition.left}px` }), // Otherwise use calculated left position
+                        ? { left: `${leftHolePosition.left}px` } 
+                        : { left: `${leftHolePosition.left}px` }),
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>
@@ -225,8 +231,8 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                      height: `${holeSize}px`, 
                      top: shouldRotate ? `${rightHolePosition.top}px` : `${rightHolePosition.top}px`,
                      ...(shouldRotate 
-                        ? { left: `${rightHolePosition.left}px` } // When rotated, use fixed left position 
-                        : { right: `${rightHolePosition.right}px` }), // Otherwise use calculated right position
+                        ? { left: `${rightHolePosition.left}px` } 
+                        : { right: `${rightHolePosition.right}px` }),
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>
@@ -253,6 +259,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             height: `${scaledWidth}px`,
             transform: `translateX(${scaledLength}px) rotateY(90deg) translateZ(${scaledThickness/2}px)`,
             transformOrigin: 'left center',
+            transition: 'transform 0.3s ease'
           }}
         ></div>
         
@@ -263,6 +270,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             height: `${scaledThickness}px`,
             transform: `translateY(${scaledWidth}px) rotateX(90deg) translateZ(${scaledThickness/2}px)`,
             transformOrigin: 'top center',
+            transition: 'transform 0.3s ease'
           }}
         ></div>
       </div>
