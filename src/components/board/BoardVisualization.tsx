@@ -100,6 +100,12 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     left: borders.bottom
   } : borders;
 
+  // Calculate dynamic position for the right hole when rotated
+  // When the board is rotated, the right hole needs position adjustments
+  const rightHolePosition = shouldRotate 
+    ? { top: scaledWidth - holeInsetX, left: holeInsetY } // When rotated, use left and top
+    : { top: holeInsetY, right: holeInsetX }; // Normal position using top and right
+
   return (
     <div className="board-visualization-container flex justify-center items-center my-8" ref={containerRef}>
       <div className="board-wrapper relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
@@ -186,13 +192,15 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                 <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>
               </div>
               
-              {/* Right top hole */}
+              {/* Right top hole - position adjusted based on rotation */}
               <div className="board-hole board-hole-right absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
                      width: `${holeSize}px`, 
                      height: `${holeSize}px`, 
-                     top: `${holeInsetY}px`, 
-                     right: `${holeInsetX}px`,
+                     top: shouldRotate ? `${rightHolePosition.top}px` : `${rightHolePosition.top}px`,
+                     ...(shouldRotate 
+                        ? { left: '11.25px' } // When rotated, use fixed left position 
+                        : { right: `${rightHolePosition.right}px` }), // Otherwise use calculated right position
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
                 <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,12 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [pricePerUnit, setPricePerUnit] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
+
+  // Constraints for dimensions
+  const MIN_LENGTH = 200;
+  const MAX_LENGTH = 2760;
+  const MIN_WIDTH = 70;
+  const MAX_WIDTH = 1200;
 
   // Update thickness when color changes
   useEffect(() => {
@@ -116,6 +123,18 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }));
   };
 
+  const handleLengthChange = (value: number) => {
+    // Constrain length to min/max values
+    const constrainedLength = Math.max(MIN_LENGTH, Math.min(value || MIN_LENGTH, MAX_LENGTH));
+    setLength(constrainedLength);
+  };
+
+  const handleWidthChange = (value: number) => {
+    // Constrain width to min/max values
+    const constrainedWidth = Math.max(MIN_WIDTH, Math.min(value || MIN_WIDTH, MAX_WIDTH));
+    setWidth(constrainedWidth);
+  };
+
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div>
@@ -128,11 +147,31 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="length">Dolžina (mm)</Label>
-            <Input id="length" type="number" min="100" max="3000" value={length} onChange={e => setLength(parseInt(e.target.value) || 0)} />
+            <Input 
+              id="length" 
+              type="number" 
+              min={MIN_LENGTH} 
+              max={MAX_LENGTH} 
+              value={length} 
+              onChange={e => handleLengthChange(parseInt(e.target.value) || MIN_LENGTH)}
+            />
+            <div className="text-xs text-gray-500">
+              Min: {MIN_LENGTH}mm, Max: {MAX_LENGTH}mm
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="width">Širina (mm)</Label>
-            <Input id="width" type="number" min="100" max="2000" value={width} onChange={e => setWidth(parseInt(e.target.value) || 0)} />
+            <Input 
+              id="width" 
+              type="number" 
+              min={MIN_WIDTH} 
+              max={MAX_WIDTH} 
+              value={width} 
+              onChange={e => handleWidthChange(parseInt(e.target.value) || MIN_WIDTH)}
+            />
+            <div className="text-xs text-gray-500">
+              Min: {MIN_WIDTH}mm, Max: {MAX_WIDTH}mm
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="thickness">Debelina (mm)</Label>
