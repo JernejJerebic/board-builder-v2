@@ -106,11 +106,17 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   };
 
   // Create adjusted borders based on rotation
+  // When rotated, remap the borders to their new positions
   const adjustedBorders = shouldRotate ? {
+    // In rotated state, the actual borders need to be remapped:
+    // top checkbox → left border
+    // right checkbox → bottom border
+    // bottom checkbox → right border
+    // left checkbox → top border
     top: borders.left,
-    right: borders.top,
+    right: borders.bottom,
     bottom: borders.right,
-    left: borders.bottom
+    left: borders.top
   } : borders;
 
   // Calculate dynamic positions for both holes when rotated
@@ -219,7 +225,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                      height: `${holeSize}px`, 
                      top: shouldRotate ? `${rightHolePosition.top}px` : `${rightHolePosition.top}px`,
                      ...(shouldRotate 
-                        ? { left: '11.25px' } // When rotated, use fixed left position 
+                        ? { left: `${rightHolePosition.left}px` } // When rotated, use fixed left position 
                         : { right: `${rightHolePosition.right}px` }), // Otherwise use calculated right position
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>

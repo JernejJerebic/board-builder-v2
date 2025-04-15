@@ -54,7 +54,7 @@ const Index = () => {
         <div>
           <BoardConfigurator onConfigChange={setBoardConfig} />
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-center h-full">
           <h3 className="font-medium mb-4 text-xl">Vizualizacija plošče</h3>
           <BoardVisualization
             color={boardConfig.color}
