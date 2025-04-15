@@ -39,7 +39,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   const width = Math.max(MIN_WIDTH, Math.min(rawWidth, MAX_WIDTH));
 
   // Max height for visualization
-  const MAX_VISUALIZATION_HEIGHT = 600;
+  const MAX_VISUALIZATION_HEIGHT = 500;
   
   // Calculate the scale factor based on maximum height
   // If the board is rotated, width becomes the limiting dimension, otherwise length

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +32,8 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const [color, setColor] = useState<Color | null>(null);
   const [length, setLength] = useState<number>(800);
   const [width, setWidth] = useState<number>(600);
+  const [rawLength, setRawLength] = useState<number>(800);
+  const [rawWidth, setRawWidth] = useState<number>(600);
   const [thickness, setThickness] = useState<number>(18);
   const [surfaceArea, setSurfaceArea] = useState<number>(0);
   const [borders, setBorders] = useState({
@@ -45,6 +46,8 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [pricePerUnit, setPricePerUnit] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [lengthTimeout, setLengthTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [widthTimeout, setWidthTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Constraints for dimensions
   const MIN_LENGTH = 200;
@@ -123,17 +126,53 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }));
   };
 
+  // Debounced length change handler
   const handleLengthChange = (value: number) => {
-    // Constrain length to min/max values
-    const constrainedLength = Math.max(MIN_LENGTH, Math.min(value || MIN_LENGTH, MAX_LENGTH));
-    setLength(constrainedLength);
+    setRawLength(value);
+    
+    // Clear previous timeout if it exists
+    if (lengthTimeout) {
+      clearTimeout(lengthTimeout);
+    }
+    
+    // Set a new timeout to update the constrained length after 1 second
+    const timeout = setTimeout(() => {
+      // Constrain length to min/max values
+      const constrainedLength = Math.max(MIN_LENGTH, Math.min(value || MIN_LENGTH, MAX_LENGTH));
+      setLength(constrainedLength);
+      setRawLength(constrainedLength);
+    }, 1000);
+    
+    setLengthTimeout(timeout);
   };
 
+  // Debounced width change handler
   const handleWidthChange = (value: number) => {
-    // Constrain width to min/max values
-    const constrainedWidth = Math.max(MIN_WIDTH, Math.min(value || MIN_WIDTH, MAX_WIDTH));
-    setWidth(constrainedWidth);
+    setRawWidth(value);
+    
+    // Clear previous timeout if it exists
+    if (widthTimeout) {
+      clearTimeout(widthTimeout);
+    }
+    
+    // Set a new timeout to update the constrained width after 1 second
+    const timeout = setTimeout(() => {
+      // Constrain width to min/max values
+      const constrainedWidth = Math.max(MIN_WIDTH, Math.min(value || MIN_WIDTH, MAX_WIDTH));
+      setWidth(constrainedWidth);
+      setRawWidth(constrainedWidth);
+    }, 1000);
+    
+    setWidthTimeout(timeout);
   };
+
+  // Clean up timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (lengthTimeout) clearTimeout(lengthTimeout);
+      if (widthTimeout) clearTimeout(widthTimeout);
+    };
+  }, [lengthTimeout, widthTimeout]);
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
@@ -152,7 +191,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
               type="number" 
               min={MIN_LENGTH} 
               max={MAX_LENGTH} 
-              value={length} 
+              value={rawLength} 
               onChange={e => handleLengthChange(parseInt(e.target.value) || MIN_LENGTH)}
             />
             <div className="text-xs text-gray-500">
@@ -166,7 +205,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
               type="number" 
               min={MIN_WIDTH} 
               max={MAX_WIDTH} 
-              value={width} 
+              value={rawWidth} 
               onChange={e => handleWidthChange(parseInt(e.target.value) || MIN_WIDTH)}
             />
             <div className="text-xs text-gray-500">
