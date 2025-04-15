@@ -101,12 +101,12 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
   } : borders;
 
   return (
-    <div className="flex justify-center items-center my-8" ref={containerRef}>
-      <div className="relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
+    <div className="board-visualization-container flex justify-center items-center my-8" ref={containerRef}>
+      <div className="board-wrapper relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
         {/* The wooden board */}
         <div
           ref={boardRef}
-          className={`relative transition-all duration-300 ${shouldRotate ? 'board-rotated' : 'board-normal'}`}
+          className={`board-main relative transition-all duration-300 ${shouldRotate ? 'board-rotated' : 'board-normal'}`}
           style={{
             width: `${scaledLength}px`,
             height: `${scaledWidth}px`,
@@ -124,7 +124,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           {/* Wood texture or color image as absolute overlay */}
           {color?.imageUrl && (
             <div 
-              className="absolute z-0 overflow-hidden"
+              className="board-texture absolute z-0 overflow-hidden"
               style={
                 isLandscape
                 ? {
@@ -155,19 +155,19 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           
           {/* Borders - using adjusted borders based on rotation */}
           {adjustedBorders.top && (
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
+            <div className="board-border board-border-top absolute top-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(-1px)' }}></div>
           )}
           {adjustedBorders.right && (
-            <div className="absolute top-0 bottom-0 right-0 w-2 bg-gray-300 border border-gray-400 z-10" 
+            <div className="board-border board-border-right absolute top-0 bottom-0 right-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(1px)' }}></div>
           )}
           {adjustedBorders.bottom && (
-            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
+            <div className="board-border board-border-bottom absolute bottom-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(1px)' }}></div>
           )}
           {adjustedBorders.left && (
-            <div className="absolute top-0 bottom-0 left-0 w-2 bg-gray-300 border border-gray-400 z-10" 
+            <div className="board-border board-border-left absolute top-0 bottom-0 left-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
           
@@ -175,7 +175,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
           {drilling && (
             <>
               {/* Left top hole */}
-              <div className="absolute rounded-full bg-gray-800 z-10" 
+              <div className="board-hole board-hole-left absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
                      width: `${holeSize}px`, 
                      height: `${holeSize}px`, 
@@ -183,11 +183,11 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                      left: `${holeInsetX}px`,
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
-                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
+                <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>
               </div>
               
               {/* Right top hole */}
-              <div className="absolute rounded-full bg-gray-800 z-10" 
+              <div className="board-hole board-hole-right absolute rounded-full bg-gray-800 z-10" 
                    style={{ 
                      width: `${holeSize}px`, 
                      height: `${holeSize}px`, 
@@ -195,17 +195,17 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
                      right: `${holeInsetX}px`,
                      boxShadow: 'inset 0 0 2px #000, 0 0 0 1px rgba(0,0,0,0.3)'
                    }}>
-                <div className="absolute inset-0 rounded-full bg-black opacity-70"></div>
+                <div className="board-hole-inner absolute inset-0 rounded-full bg-black opacity-70"></div>
               </div>
             </>
           )}
         </div>
         
         {/* Dimensions labels */}
-        <div className="absolute top-full left-0 right-0 text-center text-sm text-gray-600 mt-4">
+        <div className="board-dimensions absolute top-full left-0 right-0 text-center text-sm text-gray-600 mt-4">
           {rawLength} x {rawWidth} x {thickness} mm
           {(rawLength !== length || rawWidth !== width) && (
-            <span className="block text-amber-600">
+            <span className="board-dimensions-adjusted block text-amber-600">
               (prilagojeno na {length} x {width} mm)
             </span>
           )}
@@ -213,7 +213,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
         
         {/* Side surfaces to create 3D effect */}
         <div
-          className="absolute bg-neutral-700 opacity-80"
+          className="board-side board-side-right absolute bg-neutral-700 opacity-80"
           style={{
             width: `${scaledThickness}px`,
             height: `${scaledWidth}px`,
@@ -223,7 +223,7 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
         ></div>
         
         <div
-          className="absolute bg-neutral-800 opacity-80"
+          className="board-side board-side-bottom absolute bg-neutral-800 opacity-80"
           style={{
             width: `${scaledLength}px`,
             height: `${scaledThickness}px`,
