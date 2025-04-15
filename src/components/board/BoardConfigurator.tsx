@@ -49,20 +49,17 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const [lengthTimeout, setLengthTimeout] = useState<NodeJS.Timeout | null>(null);
   const [widthTimeout, setWidthTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Constraints for dimensions
   const MIN_LENGTH = 200;
   const MAX_LENGTH = 2760;
   const MIN_WIDTH = 70;
   const MAX_WIDTH = 1200;
 
-  // Update thickness when color changes
   useEffect(() => {
     if (color) {
       setThickness(color.thickness);
     }
   }, [color]);
 
-  // Calculate surface area
   useEffect(() => {
     if (length && width) {
       const area = length * width / 1000000; // Convert to m²
@@ -70,17 +67,13 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }
   }, [length, width]);
 
-  // Calculate price
   useEffect(() => {
     if (color && surfaceArea) {
-      // Base price based on material and surface area
       let price = color.priceWithVat * surfaceArea;
 
-      // Add cost for borders
       const borderCount = Object.values(borders).filter(Boolean).length;
       const borderPrice = borderCount * (length + width) / 1000 * 3; // €3 per meter
 
-      // Add cost for drilling
       const drillingPrice = drilling ? 5 : 0;
       const unitPrice = price + borderPrice + drillingPrice;
       setPricePerUnit(parseFloat(unitPrice.toFixed(2)));
@@ -88,7 +81,6 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }
   }, [color, surfaceArea, borders, drilling, quantity, length, width]);
 
-  // Update parent component when configuration changes
   useEffect(() => {
     onConfigChange({
       color,
@@ -126,47 +118,38 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }));
   };
 
-  // Debounced length change handler
   const handleLengthChange = (value: number) => {
     setRawLength(value);
     
-    // Clear previous timeout if it exists
     if (lengthTimeout) {
       clearTimeout(lengthTimeout);
     }
     
-    // Set a new timeout to update the constrained length after 1 second
     const timeout = setTimeout(() => {
-      // Constrain length to min/max values
       const constrainedLength = Math.max(MIN_LENGTH, Math.min(value || MIN_LENGTH, MAX_LENGTH));
       setLength(constrainedLength);
       setRawLength(constrainedLength);
-    }, 1000);
+    }, 300);
     
     setLengthTimeout(timeout);
   };
 
-  // Debounced width change handler
   const handleWidthChange = (value: number) => {
     setRawWidth(value);
     
-    // Clear previous timeout if it exists
     if (widthTimeout) {
       clearTimeout(widthTimeout);
     }
     
-    // Set a new timeout to update the constrained width after 1 second
     const timeout = setTimeout(() => {
-      // Constrain width to min/max values
       const constrainedWidth = Math.max(MIN_WIDTH, Math.min(value || MIN_WIDTH, MAX_WIDTH));
       setWidth(constrainedWidth);
       setRawWidth(constrainedWidth);
-    }, 1000);
+    }, 300);
     
     setWidthTimeout(timeout);
   };
 
-  // Clean up timeouts when component unmounts
   useEffect(() => {
     return () => {
       if (lengthTimeout) clearTimeout(lengthTimeout);

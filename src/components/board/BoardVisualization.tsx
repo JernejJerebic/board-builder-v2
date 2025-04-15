@@ -89,8 +89,12 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
       boardRef.current.style.transform = `perspective(1000px) rotateX(45deg) rotateZ(0deg)`;
     }
     
-    // Add thickness using box-shadow
-    boardRef.current.style.boxShadow = `0 ${scaledThickness}px 0 #a0826c`;
+    // Add thickness using box-shadow - direction changes based on rotation
+    if (shouldRotate) {
+      boardRef.current.style.boxShadow = `${scaledThickness}px 0 0 #a0826c`; // Horizontal shadow when rotated
+    } else {
+      boardRef.current.style.boxShadow = `0 ${scaledThickness}px 0 #a0826c`; // Vertical shadow when not rotated
+    }
     
     // Update board color
     if (color) {
@@ -133,7 +137,9 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
               : 'perspective(1000px) rotateX(45deg) rotateZ(0deg)',
             transformStyle: 'preserve-3d',
             transformOrigin: 'center center',
-            boxShadow: `0 ${scaledThickness}px 0 #a0826c`,
+            boxShadow: shouldRotate
+              ? `${scaledThickness}px 0 0 #a0826c` // Horizontal shadow when rotated
+              : `0 ${scaledThickness}px 0 #a0826c`, // Vertical shadow when not rotated
             backgroundColor: color?.htmlColor || '#d2b48c',
             backgroundImage: 'none',
             border: '1px solid rgba(0,0,0,0.2)'
