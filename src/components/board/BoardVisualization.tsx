@@ -92,13 +92,21 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
     }
   };
 
+  // Create adjusted borders based on rotation
+  const adjustedBorders = shouldRotate ? {
+    top: borders.left,
+    right: borders.top,
+    bottom: borders.right,
+    left: borders.bottom
+  } : borders;
+
   return (
     <div className="flex justify-center items-center my-8" ref={containerRef}>
       <div className="relative" style={{ height: `${scaledWidth + scaledThickness + 60}px` }}>
         {/* The wooden board */}
         <div
           ref={boardRef}
-          className="relative transition-all duration-300"
+          className={`relative transition-all duration-300 ${shouldRotate ? 'board-rotated' : 'board-normal'}`}
           style={{
             width: `${scaledLength}px`,
             height: `${scaledWidth}px`,
@@ -145,25 +153,25 @@ const BoardVisualization: React.FC<BoardVisualizationProps> = ({
             />
           )}
           
-          {/* Borders */}
-          {borders.top && (
+          {/* Borders - using adjusted borders based on rotation */}
+          {adjustedBorders.top && (
             <div className="absolute top-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(-1px)' }}></div>
           )}
-          {borders.right && (
+          {adjustedBorders.right && (
             <div className="absolute top-0 bottom-0 right-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(1px)' }}></div>
           )}
-          {borders.bottom && (
+          {adjustedBorders.bottom && (
             <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateY(1px)' }}></div>
           )}
-          {borders.left && (
+          {adjustedBorders.left && (
             <div className="absolute top-0 bottom-0 left-0 w-2 bg-gray-300 border border-gray-400 z-10" 
                  style={{ transform: 'translateX(-1px)' }}></div>
           )}
           
-          {/* Drilling holes - positioned along the top side */}
+          {/* Drilling holes - positioned along the top side with adjusted positions based on rotation */}
           {drilling && (
             <>
               {/* Left top hole */}
