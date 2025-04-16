@@ -1,4 +1,3 @@
-
 import { Customer, Order, Color, Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -35,48 +34,58 @@ export const initializeStorage = () => {
     const defaultColors: Color[] = [
       {
         id: uuidv4(),
+        name: 'Oak Natural',
         title: 'Oak Natural',
         htmlColor: '#d2b48c',
         thickness: 18,
         priceWithoutVat: 45.00,
         priceWithVat: 54.90,
         active: true,
+        darkShadow: '#8a6a58'
       },
       {
         id: uuidv4(),
+        name: 'Walnut Dark',
         title: 'Walnut Dark',
         htmlColor: '#614126',
         thickness: 25,
         priceWithoutVat: 65.00,
         priceWithVat: 79.30,
         active: true,
+        darkShadow: '#3a2719'
       },
       {
         id: uuidv4(),
+        name: 'Pine Light',
         title: 'Pine Light',
         htmlColor: '#e8d0a9',
         thickness: 18,
         priceWithoutVat: 35.00,
         priceWithVat: 42.70,
         active: true,
+        darkShadow: '#b29e7c'
       },
       {
         id: uuidv4(),
+        name: 'Mahogany Red',
         title: 'Mahogany Red',
         htmlColor: '#c04000',
         thickness: 25,
         priceWithoutVat: 75.00,
         priceWithVat: 91.50,
         active: true,
+        darkShadow: '#7a2800'
       },
       {
         id: uuidv4(),
+        name: 'Maple White',
         title: 'Maple White',
         htmlColor: '#f5deb3',
         thickness: 18,
         priceWithoutVat: 50.00,
         priceWithVat: 61.00,
         active: false,
+        darkShadow: '#c5ae83'
       },
     ];
     
