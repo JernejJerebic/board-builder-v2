@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -20,11 +19,9 @@ const ThankYouPage = () => {
   const order = location.state?.order as Order | undefined;
   
   useEffect(() => {
-    // If no order data is present, redirect to the home page
     if (!order) {
       navigate('/', { replace: true });
     } else {
-      // Log that the thank you page was viewed for this order
       addLog(
         'info',
         `Ogled strani za zahvalo za naročilo #${order.id}`,
@@ -41,7 +38,6 @@ const ThankYouPage = () => {
     return null;
   }
   
-  // Format payment method for display
   const getPaymentMethodText = (method: string) => {
     switch (method) {
       case 'credit_card': return 'Kreditna kartica';
@@ -75,8 +71,10 @@ const ThankYouPage = () => {
             </div>
             <div>
               <p className="text-base font-medium text-gray-500">Status naročila</p>
-              <p className="text-lg capitalize">{order.status === 'placed' ? 'Oddano' : 
-                order.status === 'in_progress' ? 'V obdelavi' : 'Zaključeno'}</p>
+              <p className="text-lg capitalize">
+                {order.status === 'placed' || order.status === 'new' ? 'Oddano' : 
+                order.status === 'in_progress' || order.status === 'processing' ? 'V obdelavi' : 'Zaključeno'}
+              </p>
             </div>
             <div>
               <p className="text-base font-medium text-gray-500">Način plačila</p>

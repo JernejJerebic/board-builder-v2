@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +30,7 @@ import {
 import { toast } from 'sonner';
 import { Truck, Store, Building, Loader2 } from 'lucide-react';
 import EmailNotice from '@/components/EmailNotice';
+import { v4 as uuidv4 } from 'uuid';
 
 interface CheckoutFormProps {
   onCancel: () => void;
@@ -177,14 +177,20 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log(`Created new customer with ID: ${customerId}`);
       }
       
+      // Convert BasketItem[] to Product[] by ensuring all items have required properties
+      const productsWithIds = items.map(item => ({
+        ...item,
+        id: item.id || uuidv4(), // Ensure every product has an id
+      })) as Product[];
+      
       const newOrder = await createOrder({
         customerId: existingCustomer ? existingCustomer.id : customerId,
-        products: items,
+        products: productsWithIds,
         totalCostWithoutVat: total.withoutVat,
         totalCostWithVat: total.withVat,
         shippingMethod: formValues.paymentMethod === 'pickup_at_shop' ? 'pickup' : 'delivery',
-        paymentMethod: formValues.paymentMethod,
-        status: 'placed',
+        paymentMethod: formValues.paymentMethod as Order['paymentMethod'],
+        status: 'placed' as Order['status'],
       });
       
       console.log('New order created:', newOrder);
