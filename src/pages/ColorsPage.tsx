@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchColors, updateColorStatus, createColor, updateColor, deleteColor } from '@/services/api';
@@ -96,7 +97,6 @@ const ColorsPage = () => {
 
       if (data.id) {
         return updateColor(data.id, {
-          name: data.title,
           title: data.title,
           htmlColor: data.htmlColor,
           thickness: data.thickness,
@@ -106,7 +106,6 @@ const ColorsPage = () => {
         });
       } else {
         return createColor({
-          name: data.title,
           title: data.title,
           htmlColor: data.htmlColor,
           thickness: data.thickness,

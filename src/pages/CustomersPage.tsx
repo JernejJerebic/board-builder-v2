@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer } from '@/services/api';
@@ -88,18 +89,7 @@ const CustomersPage = () => {
       if (data.id) {
         return updateCustomer(data.id, data);
       } else {
-        const customerData = {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          street: data.street,
-          city: data.city,
-          zipCode: data.zipCode,
-          companyName: data.companyName || '',
-          vatId: data.vatId || '',
-          email: data.email || null,
-          phone: data.phone || null
-        };
-        return createCustomer(customerData);
+        return createCustomer(data);
       }
     },
     onSuccess: () => {

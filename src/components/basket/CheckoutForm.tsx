@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +9,6 @@ import { createOrder, createCustomer, findCustomerByEmail, updateOrder } from '@
 import { sendOrderEmail } from '@/services/emailService';
 import { Button } from '@/components/ui/button';
 import { addLog } from '@/services/localStorage';
-import { Order, Product } from '@/types';
 import {
   Form,
   FormControl,
@@ -31,7 +31,6 @@ import {
 import { toast } from 'sonner';
 import { Truck, Store, Building, Loader2 } from 'lucide-react';
 import EmailNotice from '@/components/EmailNotice';
-import { v4 as uuidv4 } from 'uuid';
 
 interface CheckoutFormProps {
   onCancel: () => void;
@@ -178,19 +177,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log(`Created new customer with ID: ${customerId}`);
       }
       
-      const productsWithIds = items.map(item => ({
-        ...item,
-        id: item.id || uuidv4(),
-      })) as Product[];
-      
       const newOrder = await createOrder({
         customerId: existingCustomer ? existingCustomer.id : customerId,
-        products: productsWithIds,
+        products: items,
         totalCostWithoutVat: total.withoutVat,
         totalCostWithVat: total.withVat,
         shippingMethod: formValues.paymentMethod === 'pickup_at_shop' ? 'pickup' : 'delivery',
-        paymentMethod: formValues.paymentMethod as Order['paymentMethod'],
-        status: 'placed' as Order['status'],
+        paymentMethod: formValues.paymentMethod,
+        status: 'placed',
       });
       
       console.log('New order created:', newOrder);
