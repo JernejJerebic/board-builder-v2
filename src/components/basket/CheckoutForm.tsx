@@ -8,6 +8,7 @@ import { createOrder, createCustomer, findCustomerByEmail, updateOrder } from '@
 import { sendOrderEmail } from '@/services/emailService';
 import { Button } from '@/components/ui/button';
 import { addLog } from '@/services/localStorage';
+import { Order, Product } from '@/types';
 import {
   Form,
   FormControl,
@@ -177,10 +178,9 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onCancel }) => {
         console.log(`Created new customer with ID: ${customerId}`);
       }
       
-      // Convert BasketItem[] to Product[] by ensuring all items have required properties
       const productsWithIds = items.map(item => ({
         ...item,
-        id: item.id || uuidv4(), // Ensure every product has an id
+        id: item.id || uuidv4(),
       })) as Product[];
       
       const newOrder = await createOrder({
