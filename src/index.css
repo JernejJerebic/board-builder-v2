@@ -56,7 +56,7 @@
     @apply bg-background text-foreground;
   }
 
-  // New rule for h1 tags in dark mode
+  /* New rule for h1 tags in dark mode */
   .dark h1 {
     @apply text-white;
   }
