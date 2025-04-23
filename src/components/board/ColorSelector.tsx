@@ -15,42 +15,54 @@ const colors: Color[] = [
     title: 'Bela',
     htmlColor: '#FFFFFF',
     priceWithVat: 60,
+    priceWithoutVat: 49.18, // Added missing property
     thickness: 18,
+    active: true, // Added missing property
   },
   {
     id: "2",
     title: 'Bukev',
     htmlColor: '#F2D7A2',
     priceWithVat: 70,
+    priceWithoutVat: 57.38, // Added missing property
     thickness: 18,
+    active: true, // Added missing property
   },
   {
     id: "3",
     title: 'Hrast',
     htmlColor: '#D1B079',
     priceWithVat: 75,
+    priceWithoutVat: 61.48, // Added missing property
     thickness: 18,
+    active: true, // Added missing property
   },
   {
     id: "4",
     title: 'Črna',
     htmlColor: '#000000',
     priceWithVat: 80,
+    priceWithoutVat: 65.57, // Added missing property
     thickness: 18,
+    active: true, // Added missing property
   },
   {
     id: "5",
     title: 'Siva',
     htmlColor: '#808080',
     priceWithVat: 72,
+    priceWithoutVat: 59.02, // Added missing property
     thickness: 18,
+    active: true, // Added missing property
   },
   {
     id: "6",
     title: 'Javor',
     htmlColor: '#E5D499',
     priceWithVat: 68,
+    priceWithoutVat: 55.74, // Added missing property
     thickness: 18,
+    active: true, // Added missing property
   },
 ];
 
