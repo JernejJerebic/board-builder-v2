@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -82,7 +84,7 @@ const Layout: React.FC<LayoutProps> = ({
     });
   };
   return <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white dark:bg-background-dark border-b border-gray-200 dark:border-border-dark">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
@@ -90,20 +92,27 @@ const Layout: React.FC<LayoutProps> = ({
                 <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" className="h-12 md:h-16" />
               </Link>
             </div>
-            <nav className="hidden md:flex space-x-8">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map(item => <Link key={item.path} to={item.path} className="mx-[17px] py-[7px]">
-                    {item.name}
-                  </Link>)}
+            <nav className="hidden md:flex space-x-8 items-center">
+              {navItems.filter(item => !item.adminOnly || isAdmin).map(item => (
+                <Link 
+                  key={item.path} 
+                  to={item.path} 
+                  className="mx-[17px] py-[7px] text-foreground dark:text-foreground-dark"
+                >
+                  {item.name}
+                </Link>
+              ))}
+              <ThemeToggle />
             </nav>
           </div>
         </div>
       </header>
-      <main className="flex-grow bg-muted">
+      <main className="flex-grow bg-muted dark:bg-background-dark">
         <div className="container mx-auto px-4 py-8">
           {children}
         </div>
       </main>
-      <footer className="bg-white border-t border-gray-200 py-4">
+      <footer className="bg-white dark:bg-background-dark border-t border-gray-200 dark:border-border-dark py-4">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center">
             <p className="text-center text-gray-500 text-sm">

@@ -7,6 +7,7 @@ export default {
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
+  darkMode: ["class"],
   prefix: "",
   theme: {
     container: {
@@ -18,18 +19,35 @@ export default {
     },
     extend: {
       colors: {
-        border: '#e2e8f0',
-        input: '#e2e8f0',
-        ring: '#333',
-        background: '#fff',
-        foreground: '#333',
+        border: {
+          DEFAULT: '#e2e8f0',
+          dark: '#223C65'
+        },
+        input: {
+          DEFAULT: '#e2e8f0',
+          dark: '#223C65'
+        },
+        ring: {
+          DEFAULT: '#333',
+          dark: '#1D6EC1'
+        },
+        background: {
+          DEFAULT: '#fff',
+          dark: '#0A1F3C'
+        },
+        foreground: {
+          DEFAULT: '#333',
+          dark: '#E6E8EC'
+        },
         primary: {
           DEFAULT: '#1D6EC1',
           foreground: '#FFFFFF'
         },
         secondary: {
           DEFAULT: '#F6F6F7',
-          foreground: '#333'
+          foreground: '#333',
+          dark: '#122A44',
+          'dark-foreground': '#ADB1B8'
         },
         destructive: {
           DEFAULT: '#ef4444',
@@ -41,15 +59,21 @@ export default {
         },
         accent: {
           DEFAULT: '#F1F1F1',
-          foreground: '#403E43'
+          foreground: '#403E43',
+          dark: '#142A5C',
+          'dark-foreground': '#CDD0DC'
         },
         popover: {
           DEFAULT: '#fff',
-          foreground: '#333'
+          foreground: '#333',
+          dark: '#0A1F3C',
+          'dark-foreground': '#E6E8EC'
         },
         card: {
           DEFAULT: '#fff',
-          foreground: '#333'
+          foreground: '#333',
+          dark: '#0A1F3C',
+          'dark-foreground': '#E6E8EC'
         },
         sidebar: {
           DEFAULT: '#f8f9fa',
@@ -59,7 +83,12 @@ export default {
           accent: '#F1F1F1',
           'accent-foreground': '#403E43',
           border: '#e2e8f0',
-          ring: '#1D6EC1'
+          ring: '#1D6EC1',
+          dark: '#0E1E39',
+          'dark-foreground': '#E6E8EC',
+          'dark-accent': '#142A5C',
+          'dark-accent-foreground': '#CDD0DC',
+          'dark-border': '#223C65'
         }
       },
       borderRadius: {
