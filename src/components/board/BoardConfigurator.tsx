@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import ColorSelector from './ColorSelector';
 import { useBasket } from '@/context/BasketContext';
+
 interface BoardConfiguratorProps {
   onConfigChange: (config: {
     color: Color | null;
@@ -21,6 +22,7 @@ interface BoardConfiguratorProps {
     drilling: boolean;
   }) => void;
 }
+
 const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   onConfigChange
 }) => {
@@ -50,17 +52,20 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const MAX_LENGTH = 2760;
   const MIN_WIDTH = 70;
   const MAX_WIDTH = 1200;
+
   useEffect(() => {
     if (color) {
       setThickness(color.thickness);
     }
   }, [color]);
+
   useEffect(() => {
     if (length && width) {
       const area = length * width / 1000000; // Convert to m²
       setSurfaceArea(area);
     }
   }, [length, width]);
+
   useEffect(() => {
     if (color && surfaceArea) {
       let price = color.priceWithVat * surfaceArea;
@@ -73,6 +78,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       setTotalPrice(parseFloat((unitPrice * quantity).toFixed(2)));
     }
   }, [color, surfaceArea, borders, drilling, quantity, length, width]);
+
   useEffect(() => {
     onConfigChange({
       color,
@@ -83,6 +89,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       drilling
     });
   }, [color, length, width, thickness, borders, drilling, onConfigChange]);
+
   const handleAddToBasket = () => {
     if (!color) return;
     const product: Omit<Product, 'id'> = {
@@ -99,12 +106,14 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     };
     addItem(product);
   };
+
   const handleBorderChange = (side: keyof typeof borders, checked: boolean) => {
     setBorders(prev => ({
       ...prev,
       [side]: checked
     }));
   };
+
   const handleLengthChange = (value: number) => {
     setRawLength(value);
     if (lengthTimeout) {
@@ -117,6 +126,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }, 300);
     setLengthTimeout(timeout);
   };
+
   const handleWidthChange = (value: number) => {
     setRawWidth(value);
     if (widthTimeout) {
@@ -129,16 +139,22 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
     }, 300);
     setWidthTimeout(timeout);
   };
+
   useEffect(() => {
     return () => {
       if (lengthTimeout) clearTimeout(lengthTimeout);
       if (widthTimeout) clearTimeout(widthTimeout);
     };
   }, [lengthTimeout, widthTimeout]);
-  return <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+
+  return <div className="space-y-6 bg-white dark:bg-background-dark p-6 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm">
       <div>
         <h3 className="font-medium mb-2 text-xl">1. Izbira materiala</h3>
-        <ColorSelector selectedColor={color} onSelectColor={setColor} />
+        <ColorSelector 
+          selectedColor={color} 
+          onSelectColor={setColor} 
+          className="dark:bg-gray-800 dark:border-gray-700 dark:text-foreground-dark" 
+        />
       </div>
       
       <div>
@@ -233,4 +249,5 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       </Button>
     </div>;
 };
+
 export default BoardConfigurator;
