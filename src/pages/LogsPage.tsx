@@ -114,16 +114,16 @@ const LogsPage = () => {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full dark:bg-background-dark dark:border-gray-800">
       <CardHeader>
-        <CardTitle className="flex justify-between items-center">
+        <CardTitle className="flex justify-between items-center text-foreground dark:text-foreground-dark">
           <span>Application Logs</span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefreshLogs}>
+            <Button variant="outline" size="sm" className="dark:text-foreground-dark dark:border-gray-600 dark:hover:bg-gray-700" onClick={handleRefreshLogs}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" onClick={downloadLogs}>
+            <Button variant="outline" size="sm" className="dark:text-foreground-dark dark:border-gray-600 dark:hover:bg-gray-700" onClick={downloadLogs}>
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>
@@ -133,7 +133,7 @@ const LogsPage = () => {
             </Button>
           </div>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="dark:text-gray-400">
           View and analyze application logs. Total entries: {logs.length}
         </CardDescription>
         <div className="flex gap-4 mt-4">
@@ -160,8 +160,8 @@ const LogsPage = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
-          <div className="bg-muted px-4 py-2 font-medium flex items-center">
+        <div className="rounded-md border dark:border-gray-800">
+          <div className="bg-muted dark:bg-gray-900 px-4 py-2 font-medium flex items-center text-foreground dark:text-foreground-dark">
             <div className="w-48">Timestamp</div>
             <div className="w-24">Level</div>
             <div className="flex-1">Message</div>
@@ -171,7 +171,7 @@ const LogsPage = () => {
               filteredLogs.map((log, index) => (
                 <div 
                   key={index} 
-                  className="px-4 py-3 border-t flex items-start hover:bg-muted/50"
+                  className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 flex items-start hover:bg-muted/50 dark:hover:bg-gray-900/50"
                 >
                   <div className="w-48 text-xs text-muted-foreground">
                     {formatTimestamp(log.timestamp)}
@@ -194,7 +194,7 @@ const LogsPage = () => {
                 </div>
               ))
             ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
+              <div className="px-4 py-8 text-center text-muted-foreground dark:text-foreground-dark/70">
                 No logs found. {search || filter !== 'all' ? 'Try adjusting your filters.' : ''}
               </div>
             )}

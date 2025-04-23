@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '@/context/BasketContext';
 import BoardConfigurator from '@/components/board/BoardConfigurator';
@@ -42,16 +43,16 @@ const Index = () => {
         <h1 className="text-3xl font-bold mb-2 text-foreground dark:text-foreground-dark">
           LCC Naročilo razreza
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-base mb-2">
+        <p className="text-gray-500 dark:text-gray-300 text-base mb-2">
           Oblikujte svojo leseno ploščo po meri z izbiro materiala, dimenzij in dodatnih možnosti
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Za pomoč pri naročilu nas lahko kontaktirate na{' '}
-          <a href="mailto:info@lcc.si" className="font-medium hover:underline">
+          <a href="mailto:info@lcc.si" className="font-medium hover:underline text-primary dark:text-primary-foreground">
             info@lcc.si
           </a>{' '}
           ali po telefonu na{' '}
-          <a href="tel:+38673930700" className="font-medium hover:underline">
+          <a href="tel:+38673930700" className="font-medium hover:underline text-primary dark:text-primary-foreground">
             +386 7 393 07 00
           </a>
         </p>
