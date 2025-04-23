@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Color } from '@/types';
 import { cn } from '@/lib/utils';
@@ -10,42 +11,42 @@ interface ColorSelectorProps {
 
 const colors: Color[] = [
   {
-    id: 1,
+    id: "1",
     title: 'Bela',
     htmlColor: '#FFFFFF',
     priceWithVat: 60,
     thickness: 18,
   },
   {
-    id: 2,
+    id: "2",
     title: 'Bukev',
     htmlColor: '#F2D7A2',
     priceWithVat: 70,
     thickness: 18,
   },
   {
-    id: 3,
+    id: "3",
     title: 'Hrast',
     htmlColor: '#D1B079',
     priceWithVat: 75,
     thickness: 18,
   },
   {
-    id: 4,
+    id: "4",
     title: 'Črna',
     htmlColor: '#000000',
     priceWithVat: 80,
     thickness: 18,
   },
   {
-    id: 5,
+    id: "5",
     title: 'Siva',
     htmlColor: '#808080',
     priceWithVat: 72,
     thickness: 18,
   },
   {
-    id: 6,
+    id: "6",
     title: 'Javor',
     htmlColor: '#E5D499',
     priceWithVat: 68,
