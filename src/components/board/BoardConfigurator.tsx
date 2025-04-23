@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Color, Product } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -153,7 +154,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
         <ColorSelector 
           selectedColor={color} 
           onSelectColor={setColor} 
-          className="dark:bg-gray-800 dark:border-gray-700 dark:text-foreground-dark" 
+          className="w-full" 
         />
       </div>
       
