@@ -82,4 +82,29 @@
   .dark .border-gray-200 {
     @apply border-gray-700;
   }
+
+  /* Dark mode table styles */
+  .dark table {
+    @apply border-gray-700;
+  }
+
+  .dark th,
+  .dark td {
+    @apply border-gray-700 text-white;
+  }
+
+  .dark thead {
+    @apply bg-[#142A44];
+  }
+
+  .dark tbody tr:hover {
+    @apply bg-[#1E3A5F];
+  }
+
+  /* Dark mode button styles */
+  .dark .btn,
+  .dark button:not(.glass-morphism):not([class*="bg-"]) {
+    @apply bg-[#1761AF] text-white hover:bg-[#1B76CC];
+  }
 }
+
