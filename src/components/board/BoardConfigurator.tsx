@@ -6,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import ColorSelector from './ColorSelector';
 import { useBasket } from '@/context/BasketContext';
-
 interface BoardConfiguratorProps {
   onConfigChange: (config: {
     color: Color | null;
@@ -22,7 +21,6 @@ interface BoardConfiguratorProps {
     drilling: boolean;
   }) => void;
 }
-
 const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   onConfigChange
 }) => {
@@ -48,29 +46,24 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [lengthTimeout, setLengthTimeout] = useState<NodeJS.Timeout | null>(null);
   const [widthTimeout, setWidthTimeout] = useState<NodeJS.Timeout | null>(null);
-
   const MIN_LENGTH = 200;
   const MAX_LENGTH = 2760;
   const MIN_WIDTH = 70;
   const MAX_WIDTH = 1200;
-
   useEffect(() => {
     if (color) {
       setThickness(color.thickness);
     }
   }, [color]);
-
   useEffect(() => {
     if (length && width) {
       const area = length * width / 1000000; // Convert to m²
       setSurfaceArea(area);
     }
   }, [length, width]);
-
   useEffect(() => {
     if (color && surfaceArea) {
       let price = color.priceWithVat * surfaceArea;
-
       const borderCount = Object.values(borders).filter(Boolean).length;
       const borderPrice = borderCount * (length + width) / 1000 * 3; // €3 per meter
 
@@ -80,7 +73,6 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       setTotalPrice(parseFloat((unitPrice * quantity).toFixed(2)));
     }
   }, [color, surfaceArea, borders, drilling, quantity, length, width]);
-
   useEffect(() => {
     onConfigChange({
       color,
@@ -91,10 +83,8 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       drilling
     });
   }, [color, length, width, thickness, borders, drilling, onConfigChange]);
-
   const handleAddToBasket = () => {
     if (!color) return;
-    
     const product: Omit<Product, 'id'> = {
       colorId: color.id,
       length,
@@ -107,58 +97,45 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
       pricePerUnit,
       totalPrice
     };
-    
     addItem(product);
   };
-
   const handleBorderChange = (side: keyof typeof borders, checked: boolean) => {
     setBorders(prev => ({
       ...prev,
       [side]: checked
     }));
   };
-
   const handleLengthChange = (value: number) => {
     setRawLength(value);
-    
     if (lengthTimeout) {
       clearTimeout(lengthTimeout);
     }
-    
     const timeout = setTimeout(() => {
       const constrainedLength = Math.max(MIN_LENGTH, Math.min(value || MIN_LENGTH, MAX_LENGTH));
       setLength(constrainedLength);
       setRawLength(constrainedLength);
     }, 300);
-    
     setLengthTimeout(timeout);
   };
-
   const handleWidthChange = (value: number) => {
     setRawWidth(value);
-    
     if (widthTimeout) {
       clearTimeout(widthTimeout);
     }
-    
     const timeout = setTimeout(() => {
       const constrainedWidth = Math.max(MIN_WIDTH, Math.min(value || MIN_WIDTH, MAX_WIDTH));
       setWidth(constrainedWidth);
       setRawWidth(constrainedWidth);
     }, 300);
-    
     setWidthTimeout(timeout);
   };
-
   useEffect(() => {
     return () => {
       if (lengthTimeout) clearTimeout(lengthTimeout);
       if (widthTimeout) clearTimeout(widthTimeout);
     };
   }, [lengthTimeout, widthTimeout]);
-
-  return (
-    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+  return <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div>
         <h3 className="font-medium mb-2 text-xl">1. Izbira materiala</h3>
         <ColorSelector selectedColor={color} onSelectColor={setColor} />
@@ -169,28 +146,14 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="length">Dolžina (mm)</Label>
-            <Input 
-              id="length" 
-              type="number" 
-              min={MIN_LENGTH} 
-              max={MAX_LENGTH} 
-              value={rawLength} 
-              onChange={e => handleLengthChange(parseInt(e.target.value) || MIN_LENGTH)}
-            />
+            <Input id="length" type="number" min={MIN_LENGTH} max={MAX_LENGTH} value={rawLength} onChange={e => handleLengthChange(parseInt(e.target.value) || MIN_LENGTH)} />
             <div className="text-xs text-gray-500">
               Min: {MIN_LENGTH}mm, Max: {MAX_LENGTH}mm
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="width">Širina (mm)</Label>
-            <Input 
-              id="width" 
-              type="number" 
-              min={MIN_WIDTH} 
-              max={MAX_WIDTH} 
-              value={rawWidth} 
-              onChange={e => handleWidthChange(parseInt(e.target.value) || MIN_WIDTH)}
-            />
+            <Input id="width" type="number" min={MIN_WIDTH} max={MAX_WIDTH} value={rawWidth} onChange={e => handleWidthChange(parseInt(e.target.value) || MIN_WIDTH)} />
             <div className="text-xs text-gray-500">
               Min: {MIN_WIDTH}mm, Max: {MAX_WIDTH}mm
             </div>
@@ -227,7 +190,7 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
         </div>
       </div>
       
-      <div>
+      <div className="hidden">
         <h3 className="font-medium mb-2 text-xl">4. Vrtanje lukenj</h3>
         <div className="flex items-center space-x-2">
           <Checkbox id="drilling" checked={drilling} onCheckedChange={checked => setDrilling(checked === true)} />
@@ -256,23 +219,18 @@ const BoardConfigurator: React.FC<BoardConfiguratorProps> = ({
           <div className="flex items-center gap-2 text-sm text-gray-700">
             <span className="font-semibold">Dimenzije:</span> {length} x {width} x {thickness} mm
           </div>
-          {color && (
-            <div className="flex items-center gap-2 text-sm text-gray-700 mt-1">
+          {color && <div className="flex items-center gap-2 text-sm text-gray-700 mt-1">
               <span className="font-semibold">Material:</span> {color.title}
-              <div 
-                className="w-4 h-4 rounded-full border border-gray-300" 
-                style={{ backgroundColor: color.htmlColor || 'transparent' }}
-              ></div>
-            </div>
-          )}
+              <div className="w-4 h-4 rounded-full border border-gray-300" style={{
+            backgroundColor: color.htmlColor || 'transparent'
+          }}></div>
+            </div>}
         </div>
       </div>
       
       <Button className="w-full py-6 text-lg" disabled={!color || quantity < 1} onClick={handleAddToBasket}>
         Dodaj v košarico
       </Button>
-    </div>
-  );
+    </div>;
 };
-
 export default BoardConfigurator;
