@@ -106,10 +106,10 @@ const LogsPage = () => {
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case 'error': return 'text-red-500 bg-red-50';
-      case 'warning': return 'text-amber-500 bg-amber-50';
-      case 'info': return 'text-blue-500 bg-blue-50';
-      default: return 'text-gray-500 bg-gray-50';
+      case 'error': return 'text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-500/10';
+      case 'warning': return 'text-amber-500 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10';
+      case 'info': return 'text-blue-500 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10';
+      default: return 'text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-500/10';
     }
   };
 
@@ -142,14 +142,15 @@ const LogsPage = () => {
               placeholder="Search logs..."
               value={search}
               onChange={handleSearchChange}
+              className="dark:bg-gray-800 dark:border-gray-700"
             />
           </div>
           <div className="w-40">
             <Select value={filter} onValueChange={handleFilterChange}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-foreground-dark">
                 <SelectValue placeholder="Filter by level" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                 <SelectItem value="all">All Levels</SelectItem>
                 <SelectItem value="info">Info</SelectItem>
                 <SelectItem value="warning">Warning</SelectItem>
@@ -173,7 +174,7 @@ const LogsPage = () => {
                   key={index} 
                   className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 flex items-start hover:bg-muted/50 dark:hover:bg-gray-900/50"
                 >
-                  <div className="w-48 text-xs text-muted-foreground">
+                  <div className="w-48 text-xs text-muted-foreground dark:text-gray-400">
                     {formatTimestamp(log.timestamp)}
                   </div>
                   <div className="w-24">
@@ -182,9 +183,9 @@ const LogsPage = () => {
                     </span>
                   </div>
                   <div className="flex-1">
-                    <div>{log.message}</div>
+                    <div className="dark:text-foreground-dark">{log.message}</div>
                     {log.details && (
-                      <pre className="mt-1 text-xs bg-muted p-2 rounded whitespace-pre-wrap">
+                      <pre className="mt-1 text-xs bg-muted dark:bg-gray-800 p-2 rounded whitespace-pre-wrap dark:text-gray-300">
                         {typeof log.details === 'object' 
                           ? JSON.stringify(log.details, null, 2) 
                           : log.details}

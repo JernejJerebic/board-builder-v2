@@ -59,7 +59,7 @@ const Index = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
+        <div className="bg-white dark:bg-background-dark p-6 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm">
           <BoardConfigurator onConfigChange={setBoardConfig} />
         </div>
         <div className="bg-white dark:bg-background-dark p-6 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col">
