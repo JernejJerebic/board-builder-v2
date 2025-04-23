@@ -1,137 +1,80 @@
-
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchColors } from '@/services/api';
 import { Color } from '@/types';
-import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
+import { Skeleton } from '@/components/ui/skeleton';
 interface ColorSelectorProps {
   selectedColor: Color | null;
   onSelectColor: (color: Color) => void;
-  className?: string;
 }
-
-const colors: Color[] = [
-  {
-    id: "1",
-    title: 'Bela',
-    htmlColor: '#FFFFFF',
-    priceWithVat: 60,
-    priceWithoutVat: 49.18,
-    thickness: 18,
-    active: true,
-  },
-  {
-    id: "2",
-    title: 'Bukev',
-    htmlColor: '#F2D7A2',
-    priceWithVat: 70,
-    priceWithoutVat: 57.38,
-    thickness: 18,
-    active: true,
-  },
-  {
-    id: "3",
-    title: 'Hrast',
-    htmlColor: '#D1B079',
-    priceWithVat: 75,
-    priceWithoutVat: 61.48,
-    thickness: 18,
-    active: true,
-  },
-  {
-    id: "4",
-    title: 'Črna',
-    htmlColor: '#000000',
-    priceWithVat: 80,
-    priceWithoutVat: 65.57,
-    thickness: 18,
-    active: true,
-  },
-  {
-    id: "5",
-    title: 'Siva',
-    htmlColor: '#808080',
-    priceWithVat: 72,
-    priceWithoutVat: 59.02,
-    thickness: 18,
-    active: true,
-  },
-  {
-    id: "6",
-    title: 'Javor',
-    htmlColor: '#E5D499',
-    priceWithVat: 68,
-    priceWithoutVat: 55.74,
-    thickness: 18,
-    active: true,
-  },
-];
-
-const ColorSelector: React.FC<ColorSelectorProps> = ({ 
-  selectedColor, 
-  onSelectColor, 
-  className 
+const ColorSelector: React.FC<ColorSelectorProps> = ({
+  selectedColor,
+  onSelectColor
 }) => {
   const [open, setOpen] = useState(false);
-  
+  const {
+    data: colors,
+    isLoading
+  } = useQuery({
+    queryKey: ['colors'],
+    queryFn: fetchColors
+  });
   const handleColorSelect = (color: Color) => {
     onSelectColor(color);
     setOpen(false);
   };
-
-  return (
-    <div className={className}>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            className="w-full flex justify-between items-center" 
-            variant="outline"
-          >
-            <span>Izberite barvo</span>
-            {selectedColor && (
-              <div className="flex items-center gap-2">
-                <span>{selectedColor.title}</span>
-                <div 
-                  className="w-4 h-4 rounded-full border border-gray-300" 
-                  style={{ backgroundColor: selectedColor.htmlColor || 'transparent' }} 
-                />
-              </div>
-            )}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Izberite barvo</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 py-4">
-            {colors.map((color) => (
-              <div 
-                key={color.id}
-                data-lov-id="src/components/board/BoardConfigurator.tsx:138:9"
-                onClick={() => handleColorSelect(color)}
-                className={cn(
-                  "p-2 rounded-lg border cursor-pointer transition-all duration-200 ease-in-out",
-                  selectedColor?.id === color.id 
-                    ? "border-primary dark:border-primary-foreground ring-2 ring-offset-2 ring-primary dark:ring-primary-foreground" 
-                    : "border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary-foreground",
-                  "flex flex-col items-center space-y-2"
-                )}
-              >
-                <div 
-                  className="w-full h-16 rounded-md border border-gray-300 dark:border-gray-600" 
-                  style={{ backgroundColor: color.htmlColor || 'transparent' }}
-                />
-                <span className="text-xs text-gray-700 dark:text-gray-300 text-center">
-                  {color.title}
-                </span>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+  const renderColorPreview = (color: Color) => {
+    if (color.imageUrl) {
+      return <div className="w-8 h-8 rounded border border-gray-300 bg-cover bg-center" style={{
+        backgroundImage: `url(${color.imageUrl})`
+      }} />;
+    } else {
+      return <div className="w-8 h-8 rounded border border-gray-300" style={{
+        backgroundColor: color.htmlColor || '#d2b48c'
+      }} />;
+    }
+  };
+  return <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full justify-between flex items-center h-16 px-4">
+          {selectedColor ? <div className="flex items-center gap-2">
+              {renderColorPreview(selectedColor)}
+              <span>{selectedColor.title} ({selectedColor.thickness}mm)</span>
+            </div> : <span className="text-lg">Izberite barvo</span>}
+          <span className="text-gray-400">▼</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Izberite barvo materiala</DialogTitle>
+          <DialogDescription>
+            Izberite material in barvo plošče za vaše naročilo.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto py-4">
+          {isLoading ? Array(6).fill(0).map((_, i) => <div key={i} className="flex gap-2 items-center">
+                <Skeleton className="w-10 h-10 rounded" />
+                <div>
+                  <Skeleton className="w-24 h-4 mb-1" />
+                  <Skeleton className="w-16 h-3" />
+                </div>
+              </div>) : colors?.filter(c => c.active).map(color => <Button key={color.id} variant="outline" className="h-auto py-2 justify-start" onClick={() => handleColorSelect(color)}>
+                <div className="flex items-center gap-2 w-full">
+                  {color.imageUrl ? <div className="w-10 h-10 rounded border border-gray-300 bg-cover bg-center" style={{
+              backgroundImage: `url(${color.imageUrl})`
+            }} /> : <div className="w-10 h-10 rounded border border-gray-300" style={{
+              backgroundColor: color.htmlColor || '#d2b48c'
+            }} />}
+                  <div className="text-left">
+                    <p className="font-medium">{color.title}</p>
+                    <p className="text-sm text-gray-500">{color.thickness}mm - €{color.priceWithVat.toFixed(2)}</p>
+                  </div>
+                </div>
+              </Button>)}
+        </div>
+      </DialogContent>
+    </Dialog>;
 };
-
 export default ColorSelector;
