@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -17,6 +18,7 @@ const ADMIN_CREDENTIALS = [{
   email: "jerebic.jernej@gmail.com",
   password: "12jernej34"
 }];
+
 const Layout: React.FC<LayoutProps> = ({
   children
 }) => {
@@ -52,6 +54,7 @@ const Layout: React.FC<LayoutProps> = ({
     path: '/logs',
     adminOnly: true
   }];
+
   const handleLogin = () => {
     const isValidCredentials = ADMIN_CREDENTIALS.some(cred => cred.email === email && cred.password === password);
     if (isValidCredentials) {
@@ -70,6 +73,7 @@ const Layout: React.FC<LayoutProps> = ({
       });
     }
   };
+
   const handleLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('isAdmin');
@@ -81,38 +85,60 @@ const Layout: React.FC<LayoutProps> = ({
       description: "Uspešno ste se odjavili."
     });
   };
-  return <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-gray-200">
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors">
+      <header className="bg-white dark:bg-background-dark border-b border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Link to="/">
-                <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" alt="LCC" className="h-12 md:h-16" />
+                <img src="https://www.lcc.si/wp-content/uploads/2020/03/Logo-COREL-Brez-ozadja-2-1024x462-1.png" 
+                     alt="LCC" 
+                     className="h-12 md:h-16 dark:invert" />
               </Link>
             </div>
             <nav className="hidden md:flex space-x-8">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map(item => <Link key={item.path} to={item.path} className="mx-[17px] py-[7px]">
-                    {item.name}
-                  </Link>)}
+              {navItems.filter(item => !item.adminOnly || isAdmin).map(item => (
+                <Link 
+                  key={item.path} 
+                  to={item.path} 
+                  className="mx-[17px] py-[7px] text-foreground dark:text-foreground-dark hover:text-primary dark:hover:text-primary-foreground"
+                >
+                  {item.name}
+                </Link>
+              ))}
             </nav>
           </div>
         </div>
       </header>
-      <main className="flex-grow bg-muted">
+      <main className="flex-grow bg-muted dark:bg-background-dark transition-colors">
         <div className="container mx-auto px-4 py-8">
           {children}
         </div>
       </main>
-      <footer className="bg-white border-t border-gray-200 py-4">
+      <footer className="bg-white dark:bg-background-dark border-t border-gray-200 dark:border-gray-800 py-4">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center">
-            <p className="text-center text-gray-500 text-sm">
+            <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
               © {new Date().getFullYear()} LCC Naročilo razreza - Aplikacija za rezanje po meri
             </p>
             <div className="mt-1">
-              {isAdmin ? <button onClick={handleLogout} className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-50 px-[12px] py-[5px] rounded-full">Odjava</button> : <button onClick={() => setLoginOpen(true)} className="text-gray-400 text-xs hover:text-gray-600">
+              {isAdmin ? (
+                <button 
+                  onClick={handleLogout} 
+                  className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-50 px-[12px] py-[5px] rounded-full dark:bg-white dark:text-slate-950 dark:hover:bg-gray-200"
+                >
+                  Odjava
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setLoginOpen(true)} 
+                  className="text-gray-400 text-xs hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
                   administrator
-                </button>}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -120,10 +146,10 @@ const Layout: React.FC<LayoutProps> = ({
 
       {/* Admin Login Dialog */}
       <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-background-dark">
           <DialogHeader>
             <DialogTitle>Administratorska prijava</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="dark:text-gray-400">
               Vnesite podatke za dostop do administratorskega področja.
             </DialogDescription>
           </DialogHeader>
@@ -147,6 +173,8 @@ const Layout: React.FC<LayoutProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 };
+
 export default Layout;
