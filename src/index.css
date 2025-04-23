@@ -56,8 +56,30 @@
     @apply bg-background text-foreground;
   }
 
-  /* New rule for h1 tags in dark mode */
+  /* Dark mode styles for containers */
+  .dark .bg-white {
+    @apply bg-[#0A1E39] text-white;
+  }
+
+  /* Dark mode styles for inputs within dark containers */
+  .dark .bg-white input:not([type="radio"]):not([type="checkbox"]),
+  .dark .bg-white select,
+  .dark .bg-white textarea {
+    @apply bg-[#142A44] border-gray-700 text-white placeholder-gray-400;
+  }
+
+  /* Dark mode styles for form labels */
+  .dark .bg-white label {
+    @apply text-gray-200;
+  }
+
+  /* Dark mode styles for heading tags */
   .dark h1 {
     @apply text-white;
+  }
+
+  /* Dark mode border colors */
+  .dark .border-gray-200 {
+    @apply border-gray-700;
   }
 }
