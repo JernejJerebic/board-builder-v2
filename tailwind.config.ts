@@ -41,7 +41,9 @@ export default {
         },
         primary: {
           DEFAULT: '#1D6EC1',
-          foreground: '#FFFFFF'
+          foreground: '#FFFFFF',
+          dark: '#1D6EC1',
+          'dark-foreground': '#FFFFFF'
         },
         secondary: {
           DEFAULT: '#F6F6F7',
