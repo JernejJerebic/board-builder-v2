@@ -114,4 +114,15 @@
   .dark [role="dialog"] button {
     @apply bg-primary-dark text-primary-foreground-dark hover:bg-primary-dark/90;
   }
+
+  .dark .dialog-button {
+    background-color: var(--background-dark);
+    color: var(--foreground-dark);
+    border-color: var(--border-dark);
+  }
+
+  .dark .dialog-button:hover {
+    background-color: var(--primary-dark);
+    color: var(--primary-dark-foreground);
+  }
 }
