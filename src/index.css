@@ -57,22 +57,44 @@
 }
 
 @layer components {
+  /* Custom dark mode classes */
+  .text-primary-foreground-dark {
+    @apply text-white;
+  }
+
+  .bg-background-dark {
+    @apply bg-[#1a1f2e];
+  }
+
+  .text-foreground-dark {
+    @apply text-white;
+  }
+
+  .bg-secondary-dark {
+    @apply bg-[#1e293b];
+  }
+
+  .border-border-dark {
+    @apply border-[#1e293b];
+  }
+
+  /* Dark mode component styles */
   .dark .bg-white {
-    @apply bg-background text-white;
+    @apply bg-background-dark text-foreground-dark;
   }
 
   .dark .bg-white input:not([type="radio"]):not([type="checkbox"]),
   .dark .bg-white select,
   .dark .bg-white textarea {
-    @apply bg-secondary text-white border-border;
+    @apply bg-secondary-dark text-foreground-dark border-border-dark;
   }
 
   .dark .bg-white label {
-    @apply text-white;
+    @apply text-foreground-dark;
   }
 
   .dark .bg-white.border-gray-200 {
-    @apply border-border;
+    @apply border-border-dark;
   }
 
   .dark .bg-white.shadow-sm {
@@ -80,46 +102,46 @@
   }
 
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-    @apply text-white;
+    @apply text-foreground-dark;
   }
 
   .dark .border-gray-200 {
-    @apply border-border;
+    @apply border-border-dark;
   }
 
   .dark [role="dialog"] {
-    @apply bg-background text-white border-border;
+    @apply bg-background-dark text-foreground-dark border-border-dark;
   }
 
   .dark [role="dialog"] .bg-white {
-    @apply bg-background text-white;
+    @apply bg-background-dark text-foreground-dark;
   }
 
   .dark [role="dialog"] input,
   .dark [role="dialog"] select,
   .dark [role="dialog"] textarea {
-    @apply bg-secondary text-white border-border;
+    @apply bg-secondary-dark text-foreground-dark border-border-dark;
   }
 
   .dark [role="dialog"] label {
-    @apply text-white;
+    @apply text-foreground-dark;
   }
 
   .dark [role="dialog"] button {
-    @apply bg-primary text-white hover:bg-primary/90;
+    @apply bg-primary text-primary-foreground-dark hover:bg-primary/90;
   }
 
   .dark .dialog-button {
-    @apply bg-background text-white border-border;
+    @apply bg-background-dark text-foreground-dark border-border-dark;
   }
 
   .dark .dialog-button:hover {
-    @apply bg-primary text-white;
+    @apply bg-primary text-primary-foreground-dark;
   }
 
   /* Additional dark mode styles for common elements */
   .dark p, .dark span, .dark div {
-    @apply text-white;
+    @apply text-foreground-dark;
   }
 
   .dark .text-gray-500, .dark .text-gray-400 {
@@ -127,14 +149,14 @@
   }
 
   .dark .bg-gray-100 {
-    @apply bg-secondary;
+    @apply bg-secondary-dark;
   }
 
   .dark .bg-gray-50 {
-    @apply bg-background;
+    @apply bg-background-dark;
   }
 
   .dark .hover\:bg-gray-100:hover {
-    @apply hover:bg-secondary;
+    @apply hover:bg-secondary-dark;
   }
 }
