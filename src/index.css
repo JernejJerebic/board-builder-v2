@@ -91,4 +91,27 @@
   .dark .border-gray-200 {
     @apply border-red-500;
   }
+
+  /* Dark mode styles for dialogs */
+  .dark [role="dialog"] {
+    @apply bg-background-dark text-foreground-dark border-red-500;
+  }
+
+  .dark [role="dialog"] .bg-white {
+    @apply bg-background-dark text-foreground-dark;
+  }
+
+  .dark [role="dialog"] input,
+  .dark [role="dialog"] select,
+  .dark [role="dialog"] textarea {
+    @apply bg-secondary-dark border-red-500 text-foreground-dark;
+  }
+
+  .dark [role="dialog"] label {
+    @apply text-foreground-dark;
+  }
+
+  .dark [role="dialog"] button {
+    @apply bg-primary-dark text-primary-foreground-dark hover:bg-primary-dark/90;
+  }
 }
