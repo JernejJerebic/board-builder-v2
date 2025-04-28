@@ -89,6 +89,10 @@ export default {
           'dark-accent': '#142A5C',
           'dark-accent-foreground': '#CDD0DC',
           'dark-border': '#223C65'
+        },
+        gray: {
+          200: '#e5e7eb',
+          700: '#374151'
         }
       },
       borderRadius: {
