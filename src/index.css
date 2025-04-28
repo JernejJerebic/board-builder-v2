@@ -42,7 +42,7 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
+    --border: 0 84% 60%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
@@ -74,7 +74,7 @@
 
   /* Dark mode styles for borders */
   .dark .bg-white.border-gray-200 {
-    @apply border-border-dark;
+    @apply border-red-500;
   }
 
   /* Dark mode styles for shadows */
@@ -89,6 +89,6 @@
 
   /* Dark mode border colors */
   .dark .border-gray-200 {
-    @apply border-gray-700;
+    @apply border-red-500;
   }
 }
