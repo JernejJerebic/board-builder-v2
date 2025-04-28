@@ -58,24 +58,36 @@
 
 @layer components {
   /* Custom dark mode classes */
-  .text-primary-foreground-dark {
+  .dark .text-primary-foreground-dark {
     @apply text-white;
   }
 
-  .bg-background-dark {
+  .dark .bg-background-dark {
     @apply bg-[#1a1f2e];
   }
 
-  .text-foreground-dark {
+  .dark .text-foreground-dark {
     @apply text-white;
   }
 
-  .bg-secondary-dark {
+  .dark .bg-secondary-dark {
     @apply bg-[#1e293b];
   }
 
-  .border-border-dark {
+  .dark .border-border-dark {
     @apply border-[#1e293b];
+  }
+
+  .dark .bg-primary-dark {
+    @apply bg-[#2563eb];
+  }
+
+  .dark .text-primary-dark {
+    @apply text-[#2563eb];
+  }
+
+  .dark .border-primary-dark {
+    @apply border-[#2563eb];
   }
 
   /* Dark mode component styles */
@@ -128,7 +140,7 @@
   }
 
   .dark [role="dialog"] button {
-    @apply bg-primary text-primary-foreground-dark hover:bg-primary/90;
+    @apply bg-primary-dark text-primary-foreground-dark hover:bg-primary-dark/90;
   }
 
   .dark .dialog-button {
@@ -136,7 +148,7 @@
   }
 
   .dark .dialog-button:hover {
-    @apply bg-primary text-primary-foreground-dark;
+    @apply bg-primary-dark text-primary-foreground-dark;
   }
 
   /* Additional dark mode styles for common elements */
