@@ -57,36 +57,36 @@
 }
 
 @layer components {
-  /* Custom dark mode classes */
-  .dark .text-primary-foreground-dark {
+  /* Base custom classes */
+  .text-primary-foreground-dark {
     @apply text-white;
   }
 
-  .dark .bg-background-dark {
+  .bg-background-dark {
     @apply bg-[#1a1f2e];
   }
 
-  .dark .text-foreground-dark {
+  .text-foreground-dark {
     @apply text-white;
   }
 
-  .dark .bg-secondary-dark {
+  .bg-secondary-dark {
     @apply bg-[#1e293b];
   }
 
-  .dark .border-border-dark {
+  .border-border-dark {
     @apply border-[#1e293b];
   }
 
-  .dark .bg-primary-dark {
+  .bg-primary-dark {
     @apply bg-[#2563eb];
   }
 
-  .dark .text-primary-dark {
+  .text-primary-dark {
     @apply text-[#2563eb];
   }
 
-  .dark .border-primary-dark {
+  .border-primary-dark {
     @apply border-[#2563eb];
   }
 
