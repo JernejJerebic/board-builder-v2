@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import DevChangeBar from '@/components/DevChangeBar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -84,6 +85,7 @@ const Layout: React.FC<LayoutProps> = ({
     });
   };
   return <div className="min-h-screen flex flex-col">
+      <DevChangeBar />
       <header className="bg-white dark:bg-background-dark border-b border-gray-200 dark:border-border-dark">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
