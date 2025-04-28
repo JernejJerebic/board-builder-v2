@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -58,19 +57,29 @@
 
   /* Dark mode styles for containers */
   .dark .bg-white {
-    @apply bg-[#0A1E39] text-white;
+    @apply bg-background-dark text-foreground-dark;
   }
 
   /* Dark mode styles for inputs within dark containers */
   .dark .bg-white input:not([type="radio"]):not([type="checkbox"]),
   .dark .bg-white select,
   .dark .bg-white textarea {
-    @apply bg-[#142A44] border-gray-700 text-white placeholder-gray-400;
+    @apply bg-secondary-dark border-border-dark text-foreground-dark placeholder-gray-400;
   }
 
   /* Dark mode styles for form labels */
   .dark .bg-white label {
-    @apply text-gray-200;
+    @apply text-foreground-dark;
+  }
+
+  /* Dark mode styles for borders */
+  .dark .bg-white.border-gray-200 {
+    @apply border-border-dark;
+  }
+
+  /* Dark mode styles for shadows */
+  .dark .bg-white.shadow-sm {
+    @apply shadow-lg;
   }
 
   /* Dark mode styles for heading tags */
