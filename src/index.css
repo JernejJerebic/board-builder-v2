@@ -42,7 +42,7 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 0 84% 60%;
+    --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
@@ -54,75 +54,66 @@
   body {
     @apply bg-background text-foreground;
   }
+}
 
-  /* Dark mode styles for containers */
+@layer components {
   .dark .bg-white {
-    @apply bg-background-dark text-foreground-dark;
+    @apply bg-background text-foreground;
   }
 
-  /* Dark mode styles for inputs within dark containers */
   .dark .bg-white input:not([type="radio"]):not([type="checkbox"]),
   .dark .bg-white select,
   .dark .bg-white textarea {
-    @apply bg-secondary-dark border-border-dark text-foreground-dark placeholder-gray-400;
+    @apply bg-secondary text-foreground border-border;
   }
 
-  /* Dark mode styles for form labels */
   .dark .bg-white label {
-    @apply text-foreground-dark;
+    @apply text-foreground;
   }
 
-  /* Dark mode styles for borders */
   .dark .bg-white.border-gray-200 {
-    @apply border-red-500;
+    @apply border-border;
   }
 
-  /* Dark mode styles for shadows */
   .dark .bg-white.shadow-sm {
     @apply shadow-lg;
   }
 
-  /* Dark mode styles for heading tags */
   .dark h1 {
-    @apply text-white;
+    @apply text-foreground;
   }
 
-  /* Dark mode border colors */
   .dark .border-gray-200 {
-    @apply border-red-500;
+    @apply border-border;
   }
 
-  /* Dark mode styles for dialogs */
   .dark [role="dialog"] {
-    @apply bg-background-dark text-foreground-dark border-red-500;
+    @apply bg-background text-foreground border-border;
   }
 
   .dark [role="dialog"] .bg-white {
-    @apply bg-background-dark text-foreground-dark;
+    @apply bg-background text-foreground;
   }
 
   .dark [role="dialog"] input,
   .dark [role="dialog"] select,
   .dark [role="dialog"] textarea {
-    @apply bg-secondary-dark border-red-500 text-foreground-dark;
+    @apply bg-secondary text-foreground border-border;
   }
 
   .dark [role="dialog"] label {
-    @apply text-foreground-dark;
+    @apply text-foreground;
   }
 
   .dark [role="dialog"] button {
-    @apply bg-primary-dark text-primary-foreground-dark hover:bg-primary-dark/90;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
   }
 
   .dark .dialog-button {
-    background-color: var(--background-dark);
-    color: var(--foreground-dark);
-    border-color: var(--border-dark);
+    @apply bg-background text-foreground border-border;
   }
 
   .dark .dialog-button:hover {
-    background-color: var(--primary-dark);
-    color: var(--primary-dark-foreground);
+    @apply bg-primary text-primary-foreground;
   }
 }
